@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mobile Text Editor</title>
+<style>
+  /* Dark theme inspired by Discord and VS Code */
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #1e1e2f;
+    color: #ddd;
+    padding: 10px;
+    margin: 0;
+  }
+
+  textarea {
+    width: 100%;
+    height: 70vh;
+    background-color: #2f3136;
+    color: #ddd;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 16px;
+    font-family: 'Consolas', monospace;
+    resize: none;
+    outline: none;
+    box-shadow: inset 0 0 5px #000;
+  }
+
+  button {
+    margin: 5px 1%;
+    padding: 10px;
+    width: 48%;
+    font-size: 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #7289da;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px #5865f2;
+  }
+
+  button:active {
+    box-shadow: none;
+    transform: translateY(2px);
+  }
+
+  ::placeholder {
+    color: #888;
+  }
+</style>
+</head>
+<body>
+
+<textarea id="editor" placeholder="Start typing..."></textarea>
+<br>
+<button onclick="saveFile()">Save</button>
+<button onclick="loadFile()">Load</button>
+<input type="file" id="fileInput" style="display:none" />
+
+<script>
+function saveFile() {
+    const text = document.getElementById('editor').value;
+    const blob = new Blob([text], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'notes.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function loadFile() {
+    document.getElementById('fileInput').click();
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e){
+        document.getElementById('editor').value = e.target.result;
+    }
+    reader.readAsText(file);
+});
+</script>
+
+</body>
+</html>
