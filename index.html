@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Funky Skull Splash + Tools</title>
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +36,19 @@
             color: var(--text-light);
             overflow-x: hidden;
             scroll-behavior: smooth;
+            /* Disable user selection on non-input elements */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* Re-enable user selection for inputs and textareas */
+        textarea, input[type="text"] {
+            user-select: auto;
+            -webkit-user-select: auto;
+            -moz-user-select: auto;
+            -ms-user-select: auto;
         }
 
         /* Utility classes */
@@ -216,7 +229,6 @@
             justify-content: center;
             padding: 2rem;
             font-size: 22px;
-            user-select: none;
             transition: transform .3s, box-shadow .3s;
             cursor: pointer;
             touch-action: pan-y;
@@ -379,7 +391,7 @@
                 <div class="card-label">Notes</div>
             </div>
             <div class="card" onclick="showTool('calc')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8 2h2v2h-2zm-2 0h2v2H9zm-2 0h2v2H7zm10 14H7v-2h2v-2h2v2h2v-2h2zm0-4h-2V9h-2v2h-2v-2h-2v2h-2V9H7v2H5V7h14z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8 2h2v2h-2zm-2 0h2v2H9zm-2 0h2v2H7zm10 14H7v-2h2v-2h2v2h2v-2h2v-2h2V9h-2v2h-2v-2h-2v2h-2V9H7v2H5V7h14z"/></svg>
                 <div class="card-label">Calculator</div>
             </div>
             <div class="card" onclick="showTool('text-base64')">
