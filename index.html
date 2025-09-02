@@ -3,121 +3,251 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Funky Landing</title>
+<title>Funky Skull Splash + Tools</title>
 <style>
-  body, html {
-    margin: 0;
-    padding: 0;
-    font-family: 'Arial', sans-serif;
-    overflow: hidden;
-    background: linear-gradient(120deg, #ff5f6d, #ffc371);
-    color: #fff;
+  * {margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif;}
+  body, html {height:100%; background:#1f1f1f; color:#fff; overflow-x:hidden;}
+
+  /* Navbar */
+  nav {
+    position: fixed;
+    top:0; left:0; right:0;
+    height:60px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 1em;
+    background: rgba(31,31,31,0.95);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    z-index: 20;
+    opacity:0;
+    transition: opacity 1s;
   }
+  nav.show {opacity:1;}
+  nav h2 {font-size:1.5em; color:#ff4e4e;}
+  nav div button {
+    background:none; border:none; color:#fff; font-size:1em; padding:10px;
+    border-radius:5px; cursor:pointer;
+  }
+  nav div button:hover {color:#ff4e4e;}
 
   /* Splash */
   #splash {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 3em;
-    color: #ff5f6d;
-    animation: fadeOut 3s forwards 2s;
-    z-index: 10;
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:#1f1f1f;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:10;
   }
-  @keyframes fadeOut { to {opacity:0; pointer-events:none;} }
+
+  /* Skull icon */
+  #splash-icon {
+    width:100px; height:100px;
+    background:#ff4e4e;
+    border-radius:50%;
+    display:flex; justify-content:center; align-items:center;
+    font-size:3em; 
+    position:relative;
+    animation: skullBounce 1.2s infinite alternate;
+  }
+
+  /* skull eyes */
+  #splash-icon::before, #splash-icon::after {
+    content:'';
+    position:absolute;
+    width:15px; height:15px;
+    background:#1f1f1f;
+    border-radius:50%;
+    top:30px;
+  }
+  #splash-icon::before {left:25px;}
+  #splash-icon::after {right:25px;}
+
+  @keyframes skullBounce {
+    0% {transform: translateY(0) rotate(0deg);}
+    50% {transform: translateY(-15px) rotate(10deg);}
+    100% {transform: translateY(0) rotate(-5deg);}
+  }
+
+  /* "ha ha ha" loader */
+  .loader {
+    display:flex;
+    margin-top:20px;
+    gap:15px;
+    font-size:1.5em;
+    animation: fade 1s infinite alternate;
+  }
+  .loader span {animation: bounce 0.6s infinite alternate;}
+  .loader span:nth-child(2) {animation-delay:0.2s;}
+  .loader span:nth-child(3) {animation-delay:0.4s;}
+  @keyframes bounce {0%{transform:translateY(0);}100%{transform:translateY(-15px);} }
 
   /* Landing */
   #landing {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    opacity: 0;
-    animation: fadeIn 2s forwards;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    animation: fadeIn 1s forwards;
+    padding-top:80px;
+    min-height:100vh;
   }
-  @keyframes fadeIn { to {opacity:1;} }
+  @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
 
-  h1 { font-size: 4em; animation: float 3s infinite alternate; }
-  @keyframes float { 0%{transform:translateY(0);} 100%{transform:translateY(-20px);} }
+  h1 {font-size:2.5em; margin-bottom:0.5em;}
+  p {font-size:1.1em; color:#aaa; padding:0 10px;}
 
-  button {
-    margin-top: 1em;
-    padding: 0.8em 2em;
-    font-size: 1.2em;
-    border:none;
-    border-radius: 25px;
-    background:#fff;
-    color:#ff5f6d;
-    cursor:pointer;
-    box-shadow:0 4px 15px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
+  /* Tools */
+  #tools {display:none; padding:80px 20px 20px 20px; max-width:800px; margin:auto;} /* top padding = nav height */
+  #tabs {display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;}
+  #tabs button {padding:10px 15px; cursor:pointer; background:#ff4e4e; border:none; color:#fff; border-radius:5px;}
+  #tabs button:hover {background:#ff7878;}
+  .tab {margin-top:10px;}
+  textarea {width:100%; background:#2f2f2f; color:#fff; border:none; padding:10px; border-radius:5px; resize:none;}
+  input[type=text] {width:70%; padding:8px; border:none; border-radius:5px; margin-right:5px;}
+  button {padding:8px 12px; border:none; border-radius:5px; background:#ff4e4e; color:#fff; cursor:pointer;}
+  button:hover {background:#ff7878;}
+  p.output {margin-top:10px; word-wrap:break-word;}
+
+  /* Mobile adjustments */
+  @media (max-width:600px){
+    #tabs {flex-direction:column; gap:10px; align-items:center;}
+    #tabs button {width:80%; font-size:16px;}
+    nav {padding:0 10px;}
+    h1 {font-size:2em;}
+    p {font-size:1em;}
   }
-  button:hover { transform: scale(1.1); }
-
-  /* 404 */
-  #error404 {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: #222;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 3em;
-    opacity: 0;
-    transition: opacity 1s;
-  }
-
 </style>
 </head>
 <body>
 
-<div id="splash">🌟 Welcome 🌟</div>
+<nav id="navbar">
+  <h2>FunkySkull</h2>
+  <div>
+    <button onclick="showLanding()">Home</button>
+    <button onclick="showTab('notes')">Tools</button>
+  </div>
+</nav>
 
-<div id="landing">
-  <h1>Funky Landing Page</h1>
-  <button onclick="goto404()">Go to 404</button>
+<div id="splash">
+  <div id="splash-icon"></div>
+  <div class="loader">
+    <span>ha</span><span>ha</span><span>ha</span>
+  </div>
 </div>
 
-<div id="error404">
-  <div>404 - Not Found 🤷‍♂️</div>
-  <button onclick="gotoLanding()">Back</button>
+<div id="landing">
+  <h1>Welcome to Funky Skull Page</h1>
+  <p>Testing GitHub Pages animation splash with mobile-friendly navbar and tools</p>
+</div>
+
+<div id="tools">
+  <div id="tabs">
+    <button onclick="showTab('notes')">Notes</button>
+    <button onclick="showTab('calc')">Calculator</button>
+    <button onclick="showTab('base64')">Base64</button>
+    <button onclick="showTab('utils')">Utils</button>
+  </div>
+
+  <div id="notes" class="tab" style="display:none;">
+    <textarea id="noteArea" rows="10" placeholder="Write your notes here..."></textarea><br>
+    <button onclick="saveNote()">Save</button>
+    <button onclick="downloadNote()">Download</button>
+  </div>
+
+  <div id="calc" class="tab" style="display:none;">
+    <input type="text" id="calcInput" placeholder="Enter expression">
+    <button onclick="calculate()">=</button>
+    <p id="calcResult" class="output"></p>
+  </div>
+
+  <div id="base64" class="tab" style="display:none;">
+    <textarea id="base64Input" rows="5" placeholder="Paste text or Base64"></textarea><br>
+    <button onclick="encodeBase64()">Encode</button>
+    <button onclick="decodeBase64()">Decode</button>
+    <button onclick="downloadBase64()">Download</button>
+    <p id="base64Output" class="output"></p>
+  </div>
+
+  <div id="utils" class="tab" style="display:none;">
+    <p>Coming soon: Color picker, JSON formatter, Regex tester, Password generator...</p>
+  </div>
 </div>
 
 <script>
-  const splash = document.getElementById('splash');
-  const landing = document.getElementById('landing');
-  const error404 = document.getElementById('error404');
-
+  // Splash to landing
   setTimeout(() => {
-    splash.style.display = 'none';
-    landing.style.opacity = 1;
-  }, 3000);
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('landing').style.display = 'flex';
+    document.getElementById('navbar').classList.add('show');
+  }, 4000);
 
-  function goto404() {
-    landing.style.opacity = 0;
-    setTimeout(() => {
-      landing.style.display = 'none';
-      error404.style.opacity = 1;
-    }, 500);
+  // Tabs
+  function showTab(tabId){
+    document.querySelectorAll('.tab').forEach(t => t.style.display='none');
+    document.getElementById(tabId).style.display='block';
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('tools').style.display='block';
+
+    // Scroll to top of tools minus navbar height
+    window.scrollTo({top: document.getElementById('tools').offsetTop - 70, behavior:'smooth'});
   }
 
-  function gotoLanding() {
-    error404.style.opacity = 0;
-    setTimeout(() => {
-      error404.style.display = 'none';
-      landing.style.display = 'flex';
-      landing.style.opacity = 1;
-    }, 500);
+  function showLanding(){
+    document.getElementById('tools').style.display='none';
+    document.getElementById('landing').style.display='flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  // Notes
+  function saveNote(){
+    localStorage.setItem('note', document.getElementById('noteArea').value);
+    alert('Note saved locally!');
+  }
+  function downloadNote(){
+    const blob = new Blob([document.getElementById('noteArea').value], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'note.txt';
+    a.click();
+  }
+
+  // Calculator
+  function calculate(){
+    try{
+      document.getElementById('calcResult').innerText = eval(document.getElementById('calcInput').value);
+    }catch(e){
+      document.getElementById('calcResult').innerText = 'Error';
+    }
+  }
+
+  // Base64
+  function encodeBase64(){
+    const val = document.getElementById('base64Input').value;
+    document.getElementById('base64Output').innerText = btoa(val);
+  }
+  function decodeBase64(){
+    const val = document.getElementById('base64Input').value;
+    try{ document.getElementById('base64Output').innerText = atob(val); }catch(e){ document.getElementById('base64Output').innerText = 'Invalid Base64'; }
+  }
+  function downloadBase64(){
+    const blob = new Blob([document.getElementById('base64Output').innerText], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'output.txt';
+    a.click();
+  }
+
+  // Load saved note on open
+  window.onload = () => {
+    if(localStorage.getItem('note')){
+      document.getElementById('noteArea').value = localStorage.getItem('note');
+    }
   }
 </script>
 
