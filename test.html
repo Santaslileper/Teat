@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text/Bin Editor</title>
+<style>
+  body {
+    background: #000;
+    color: #fff;
+    font-family: monospace;
+    padding: 10px;
+  }
+  textarea {
+    width: 100%;
+    height: 70vh;
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
+    font-family: monospace;
+    font-size: 16px;
+    resize: none;
+  }
+  input, button {
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
+    padding: 10px;
+    margin: 5px 0;
+    font-size: 16px;
+    width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<input type="file" id="fileInput">
+<textarea id="editor" placeholder="Load a file to edit..."></textarea>
+<button id="saveTxt">Save as TXT</button>
+<button id="saveBin">Save as BIN</button>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const editor = document.getElementById('editor');
+const saveTxt = document.getElementById('saveTxt');
+const saveBin = document.getElementById('saveBin');
+let fileData = null;
+
+// Load file
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    fileData = reader.result;
+    if (file.type === "application/octet-stream" || file.name.endsWith(".bin")) {
+      // Convert binary to hex string for editing
+      const bytes = new Uint8Array(fileData);
+      editor.value = Array.from(bytes).map(b => String.fromCharCode(b)).join('');
+    } else {
+      editor.value = fileData;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// Save as TXT
+saveTxt.addEventListener('click', () => {
+  const blob = new Blob([editor.value], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'file.txt';
+  a.click();
+});
+
+// Save as BIN
+saveBin.addEventListener('click', () => {
+  const bytes = new Uint8Array(editor.value.split('').map(c => c.charCodeAt(0)));
+  const blob = new Blob([bytes], {type: 'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'file.bin';
+  a.click();
+});
+</script>
+
+</body>
+</html>
