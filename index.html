@@ -1,89 +1,77 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mobile Text Editor</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text/Base64 Editor</title>
 <style>
-  /* Dark theme inspired by Discord and VS Code */
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background-color: #1e1e2f;
-    color: #ddd;
-    padding: 10px;
-    margin: 0;
-  }
-
-  textarea {
-    width: 100%;
-    height: 70vh;
-    background-color: #2f3136;
-    color: #ddd;
-    border: none;
-    border-radius: 6px;
-    padding: 10px;
-    font-size: 16px;
-    font-family: 'Consolas', monospace;
-    resize: none;
-    outline: none;
-    box-shadow: inset 0 0 5px #000;
-  }
-
-  button {
-    margin: 5px 1%;
-    padding: 10px;
-    width: 48%;
-    font-size: 16px;
-    border: none;
-    border-radius: 6px;
-    background-color: #7289da;
-    color: #fff;
-    cursor: pointer;
-    box-shadow: 0 2px #5865f2;
-  }
-
-  button:active {
-    box-shadow: none;
-    transform: translateY(2px);
-  }
-
-  ::placeholder {
-    color: #888;
-  }
+  body { background: #000; color: #fff; font-family: monospace; padding: 10px; }
+  textarea { width: 100%; height: 60vh; background: #000; color: #fff; border: 1px solid #fff; font-family: monospace; font-size: 16px; resize: none; }
+  input, button { background: #000; color: #fff; border: 1px solid #fff; padding: 10px; margin: 5px 0; font-size: 16px; width: 100%; }
 </style>
 </head>
 <body>
 
-<textarea id="editor" placeholder="Start typing..."></textarea>
-<br>
-<button onclick="saveFile()">Save</button>
-<button onclick="loadFile()">Load</button>
-<input type="file" id="fileInput" style="display:none" />
+<input type="file" id="fileInput">
+<input type="text" id="filename" placeholder="Enter filename (without extension)">
+<textarea id="editor" placeholder="Load a file to edit..."></textarea>
+<button id="saveTxt">Save as TXT</button>
+<button id="saveB64">Save as Base64</button>
 
 <script>
-function saveFile() {
-    const text = document.getElementById('editor').value;
-    const blob = new Blob([text], {type: 'text/plain'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'notes.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+const fileInput = document.getElementById('fileInput');
+const editor = document.getElementById('editor');
+const saveTxt = document.getElementById('saveTxt');
+const saveB64 = document.getElementById('saveB64');
+const filenameInput = document.getElementById('filename');
+
+// Load saved filename from localStorage
+filenameInput.value = localStorage.getItem('lastFilename') || '';
+
+function isBase64(str) {
+  try { return btoa(atob(str)) === str.replace(/\r?\n/g, ''); } catch(e) { return false; }
 }
 
-function loadFile() {
-    document.getElementById('fileInput').click();
-}
+// Load file
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-document.getElementById('fileInput').addEventListener('change', function(e){
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e){
-        document.getElementById('editor').value = e.target.result;
+  const defaultName = file.name.replace(/\.(txt|b64\.txt)$/i,'');
+  filenameInput.value = defaultName;
+  localStorage.setItem('lastFilename', defaultName);
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    let text = reader.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    if (isBase64(text.trim())) {
+      try { text = atob(text.trim()); } catch(e) {}
     }
-    reader.readAsText(file);
+    editor.value = text;
+  };
+  reader.readAsText(file);
 });
+
+// Save functions
+function saveFile(asBase64=false) {
+  const name = filenameInput.value.trim() || 'file';
+  localStorage.setItem('lastFilename', name);
+  let content = editor.value;
+  let extension = '.txt';
+  if (asBase64) {
+    content = btoa(content);
+    extension = '.b64.txt';
+  }
+  const blob = new Blob([content], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name + extension;
+  a.click();
+}
+
+saveTxt.addEventListener('click', () => saveFile(false));
+saveB64.addEventListener('click', () => saveFile(true));
 </script>
 
 </body>
