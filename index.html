@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dumbi Navd</title>
+<title>Funky Landing</title>
 <style>
-  /* General styles */
   body, html {
     margin: 0;
     padding: 0;
     font-family: 'Arial', sans-serif;
     overflow: hidden;
     background: linear-gradient(120deg, #ff5f6d, #ffc371);
+    color: #fff;
   }
 
-  /* Splash animation */
+  /* Splash */
   #splash {
     position: absolute;
     width: 100%;
@@ -28,13 +28,9 @@
     animation: fadeOut 3s forwards 2s;
     z-index: 10;
   }
+  @keyframes fadeOut { to {opacity:0; pointer-events:none;} }
 
-  @keyframes fadeOut {
-    0% {opacity: 1;}
-    100% {opacity: 0; pointer-events: none;}
-  }
-
-  /* Landing page content */
+  /* Landing */
   #landing {
     position: absolute;
     width: 100%;
@@ -43,56 +39,40 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    color: #fff;
     text-align: center;
-    animation: fadeIn 2s forwards;
     opacity: 0;
+    animation: fadeIn 2s forwards;
   }
+  @keyframes fadeIn { to {opacity:1;} }
 
-  @keyframes fadeIn {
-    to {opacity: 1;}
-  }
-
-  h1 {
-    font-size: 4em;
-    margin: 0.2em 0;
-    animation: float 3s infinite alternate;
-  }
-
-  @keyframes float {
-    0% {transform: translateY(0);}
-    100% {transform: translateY(-20px);}
-  }
+  h1 { font-size: 4em; animation: float 3s infinite alternate; }
+  @keyframes float { 0%{transform:translateY(0);} 100%{transform:translateY(-20px);} }
 
   button {
     margin-top: 1em;
     padding: 0.8em 2em;
     font-size: 1.2em;
-    border: none;
+    border:none;
     border-radius: 25px;
-    background: #fff;
-    color: #ff5f6d;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    background:#fff;
+    color:#ff5f6d;
+    cursor:pointer;
+    box-shadow:0 4px 15px rgba(0,0,0,0.2);
     transition: transform 0.2s;
   }
+  button:hover { transform: scale(1.1); }
 
-  button:hover {
-    transform: scale(1.1);
-  }
-
-  /* 404 screen */
+  /* 404 */
   #error404 {
     position: absolute;
     width: 100%;
     height: 100%;
     background: #222;
-    color: #ff5f6d;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     font-size: 3em;
-    flex-direction: column;
     opacity: 0;
     transition: opacity 1s;
   }
@@ -101,16 +81,16 @@
 </head>
 <body>
 
-<div id="splash">🌟 Dumbi Navd 🌟</div>
+<div id="splash">🌟 Welcome 🌟</div>
 
 <div id="landing">
-  <h1>Welcome to Dumbi Navd</h1>
-  <button onclick="goto404()">Take Me to 404</button>
+  <h1>Funky Landing Page</h1>
+  <button onclick="goto404()">Go to 404</button>
 </div>
 
 <div id="error404">
   <div>404 - Not Found 🤷‍♂️</div>
-  <button onclick="gotoLanding()">Back to Landing</button>
+  <button onclick="gotoLanding()">Back</button>
 </div>
 
 <script>
@@ -118,7 +98,6 @@
   const landing = document.getElementById('landing');
   const error404 = document.getElementById('error404');
 
-  // Splash disappears and landing fades in
   setTimeout(() => {
     splash.style.display = 'none';
     landing.style.opacity = 1;
