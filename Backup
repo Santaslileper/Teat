@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base64 Image/Text Editor</title>
+<style>
+body { background: #000; color: #fff; font-family: monospace; padding: 10px; }
+textarea { width: 100%; height: 40vh; background: #000; color: #fff; border: 1px solid #fff; font-family: monospace; font-size: 16px; resize: none; }
+input, button { background: #000; color: #fff; border: 1px solid #fff; padding: 10px; margin: 5px 0; font-size: 16px; width: 100%; }
+img { max-width: 100%; margin-top: 10px; border: 1px solid #fff; display: block; }
+</style>
+</head>
+<body>
+
+<input type="file" id="fileInput">
+<input type="text" id="filename" placeholder="Enter filename (without extension)">
+<textarea id="editor" placeholder="Load Base64 text or image..."></textarea>
+<button id="saveTxt">Save as TXT</button>
+<button id="saveB64">Save as Base64</button>
+<img id="preview" alt="Image preview">
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const editor = document.getElementById('editor');
+const saveTxt = document.getElementById('saveTxt');
+const saveB64 = document.getElementById('saveB64');
+const filenameInput = document.getElementById('filename');
+const preview = document.getElementById('preview');
+
+// Load saved filename from localStorage
+filenameInput.value = localStorage.getItem('lastFilename') || '';
+
+function isBase64(str) {
+  try { return btoa(atob(str)) === str.replace(/\r?\n/g, ''); } catch(e) { return false; }
+}
+
+// Update image preview if content is data:image
+function updatePreview(text) {
+  if (text.startsWith('data:image/')) {
+    preview.src = text;
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// Load file
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const defaultName = file.name.replace(/\.(txt|b64\.txt)$/i,'');
+  filenameInput.value = defaultName;
+  localStorage.setItem('lastFilename', defaultName);
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    let text = reader.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+    // If full data:image Base64, keep it
+    if (text.trim().startsWith('data:image/')) {
+      editor.value = text.trim();
+    }
+    // Otherwise, decode Base64 if detected
+    else if (isBase64(text.trim())) {
+      try { text = atob(text.trim()); } catch(e) {}
+      editor.value = text;
+    } else {
+      editor.value = text;
+    }
+    updatePreview(editor.value);
+  };
+  reader.readAsText(file);
+});
+
+// Update preview on edit
+editor.addEventListener('input', () => updatePreview(editor.value));
+
+// Save functions
+function saveFile(asBase64=false) {
+  const name = filenameInput.value.trim() || 'file';
+  localStorage.setItem('lastFilename', name);
+  let content = editor.value;
+  let extension = '.txt';
+  if (asBase64) {
+    content = btoa(content);
+    extension = '.b64.txt';
+  }
+  const blob = new Blob([content], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name + extension;
+  a.click();
+}
+
+saveTxt.addEventListener('click', () => saveFile(false));
+saveB64.addEventListener('click', () => saveFile(true));
+</script>
+
+</body>
+</html>
