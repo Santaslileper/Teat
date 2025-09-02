@@ -1,255 +1,733 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Funky Skull Splash + Tools</title>
-<style>
-  * {margin:0; padding:0; box-sizing:border-box; font-family: 'Segoe UI', sans-serif;}
-  body, html {height:100%; background:#1f1f1f; color:#fff; overflow-x:hidden;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funky Skull Splash + Tools</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Math.js for advanced and secure calculations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.0.0/math.js"></script>
+    <style>
+        /* Base styles for a clean, responsive layout */
+        :root {
+            --primary-color: #ff4e4e;
+            --secondary-color: #4299e1;
+            --background-dark: #1a202c;
+            --container-dark: #2d3748;
+            --text-light: #e2e8f0;
+            --text-faded: #a0aec0;
+        }
 
-  /* Navbar */
-  nav {
-    position: fixed;
-    top:0; left:0; right:0;
-    height:60px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 1em;
-    background: rgba(31,31,31,0.95);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
-    z-index: 20;
-    opacity:0;
-    transition: opacity 1s;
-  }
-  nav.show {opacity:1;}
-  nav h2 {font-size:1.5em; color:#ff4e4e;}
-  nav div button {
-    background:none; border:none; color:#fff; font-size:1em; padding:10px;
-    border-radius:5px; cursor:pointer;
-  }
-  nav div button:hover {color:#ff4e4e;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
 
-  /* Splash */
-  #splash {
-    position:absolute;
-    width:100%;
-    height:100%;
-    background:#1f1f1f;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    z-index:10;
-  }
+        body, html {
+            height: 100%;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
 
-  /* Skull icon */
-  #splash-icon {
-    width:100px; height:100px;
-    background:#ff4e4e;
-    border-radius:50%;
-    display:flex; justify-content:center; align-items:center;
-    font-size:3em; 
-    position:relative;
-    animation: skullBounce 1.2s infinite alternate;
-  }
+        /* Utility classes */
+        .container {
+            max-width: 900px;
+            width: 95%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            background-color: var(--container-dark);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
 
-  /* skull eyes */
-  #splash-icon::before, #splash-icon::after {
-    content:'';
-    position:absolute;
-    width:15px; height:15px;
-    background:#1f1f1f;
-    border-radius:50%;
-    top:30px;
-  }
-  #splash-icon::before {left:25px;}
-  #splash-icon::after {right:25px;}
+        .section {
+            padding-top: 5rem;
+            margin-top: 1rem;
+        }
 
-  @keyframes skullBounce {
-    0% {transform: translateY(0) rotate(0deg);}
-    50% {transform: translateY(-15px) rotate(10deg);}
-    100% {transform: translateY(0) rotate(-5deg);}
-  }
+        /* Custom buttons for a better feel */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        .btn:hover {
+            background-color: #ff7878;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+        .btn.blue {
+            background-color: var(--secondary-color);
+        }
+        .btn.blue:hover {
+            background-color: #3182ce;
+        }
 
-  /* "ha ha ha" loader */
-  .loader {
-    display:flex;
-    margin-top:20px;
-    gap:15px;
-    font-size:1.5em;
-    animation: fade 1s infinite alternate;
-  }
-  .loader span {animation: bounce 0.6s infinite alternate;}
-  .loader span:nth-child(2) {animation-delay:0.2s;}
-  .loader span:nth-child(3) {animation-delay:0.4s;}
-  @keyframes bounce {0%{transform:translateY(0);}100%{transform:translateY(-15px);} }
+        /* Splash Screen */
+        #splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--background-dark);
+            z-index: 100;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        #splash-icon {
+            width: 100px;
+            height: 100px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            animation: skullBounce 1.2s infinite alternate;
+        }
+        #splash-icon::before, #splash-icon::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: var(--background-dark);
+            border-radius: 50%;
+            top: 30px;
+        }
+        #splash-icon::before { left: 25px; }
+        #splash-icon::after { right: 25px; }
 
-  /* Landing */
-  #landing {
-    display:none;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
-    animation: fadeIn 1s forwards;
-    padding-top:80px;
-    min-height:100vh;
-  }
-  @keyframes fadeIn {from {opacity:0;} to {opacity:1;}}
+        @keyframes skullBounce {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(10deg); }
+            100% { transform: translateY(0) rotate(-5deg); }
+        }
 
-  h1 {font-size:2.5em; margin-bottom:0.5em;}
-  p {font-size:1.1em; color:#aaa; padding:0 10px;}
+        .loader {
+            display: flex;
+            margin-top: 20px;
+            gap: 15px;
+            font-size: 1.5em;
+        }
+        .loader span { animation: bounce 0.6s infinite alternate; }
+        .loader span:nth-child(2) { animation-delay: 0.2s; }
+        .loader span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce { 0% { transform: translateY(0); } 100% { transform: translateY(-15px); } }
 
-  /* Tools */
-  #tools {display:none; padding:80px 20px 20px 20px; max-width:800px; margin:auto;} /* top padding = nav height */
-  #tabs {display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;}
-  #tabs button {padding:10px 15px; cursor:pointer; background:#ff4e4e; border:none; color:#fff; border-radius:5px;}
-  #tabs button:hover {background:#ff7878;}
-  .tab {margin-top:10px;}
-  textarea {width:100%; background:#2f2f2f; color:#fff; border:none; padding:10px; border-radius:5px; resize:none;}
-  input[type=text] {width:70%; padding:8px; border:none; border-radius:5px; margin-right:5px;}
-  button {padding:8px 12px; border:none; border-radius:5px; background:#ff4e4e; color:#fff; cursor:pointer;}
-  button:hover {background:#ff7878;}
-  p.output {margin-top:10px; word-wrap:break-word;}
+        /* Navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1rem;
+            background: rgba(26, 32, 44, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+        nav.show { opacity: 1; }
+        nav h2 { font-size: 1.5em; color: var(--primary-color); }
+        nav div button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1em;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        nav div button:hover { color: var(--primary-color); }
 
-  /* Mobile adjustments */
-  @media (max-width:600px){
-    #tabs {flex-direction:column; gap:10px; align-items:center;}
-    #tabs button {width:80%; font-size:16px;}
-    nav {padding:0 10px;}
-    h1 {font-size:2em;}
-    p {font-size:1em;}
-  }
-</style>
+        /* Landing Page */
+        #landing {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            animation: fadeIn 1s forwards;
+            padding-top: 80px;
+            min-height: 100vh;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        h1 { font-size: 2.5em; margin-bottom: 0.5em; }
+        p { font-size: 1.1em; color: var(--text-faded); padding: 0 10px; }
+
+        /* Tools section */
+        #tools {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+        }
+        .tool-content {
+            display: none;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        /* New card-based navigation styles from 'cLk' */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            animation: fadeIn 0.5s forwards;
+        }
+        .card {
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            font-size: 22px;
+            user-select: none;
+            transition: transform .3s, box-shadow .3s;
+            cursor: pointer;
+            touch-action: pan-y;
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+        }
+        .card-label {
+            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Form elements with zoom effect */
+        textarea, input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background-color: #4a5568;
+            border: 1px solid #4a5568;
+            color: var(--text-light);
+            resize: vertical;
+            outline: none;
+            transition: all 0.2s;
+        }
+        textarea:focus, input[type="text"]:focus, input[type="file"]:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+            transform: scale(1.01);
+        }
+
+        /* Specific tab styles */
+        #calc {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+        #calc .btn {
+            width: 100%;
+        }
+        .output {
+            margin-top: 1rem;
+            word-wrap: break-word;
+            padding: 1rem;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            border: 1px dashed #a0aec0;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 1rem;
+            border: 1px solid #4a5568;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        
+        /* Custom message box */
+        #customMessageBox {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            color: white;
+            z-index: 50;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transform: translateX(120%);
+            opacity: 0;
+            min-width: 250px;
+        }
+        #customMessageBox.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        /* Calculator specific grid */
+        #calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+        #calc-grid button {
+            padding: 1rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        #calc-grid button:hover {
+            background-color: #6a768c;
+        }
+        .op-btn {
+            background-color: var(--secondary-color) !important;
+        }
+        .op-btn:hover {
+            background-color: #3182ce !important;
+        }
+        .equal-btn {
+            background-color: var(--primary-color) !important;
+            grid-column: span 2;
+        }
+        .equal-btn:hover {
+            background-color: #ff7878 !important;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+                width: 100%;
+                border-radius: 0;
+            }
+            .section {
+                padding-top: 4rem;
+            }
+            nav {
+                padding: 0 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
-<nav id="navbar">
-  <h2>FunkySkull</h2>
-  <div>
-    <button onclick="showLanding()">Home</button>
-    <button onclick="showTab('notes')">Tools</button>
-  </div>
-</nav>
+    <nav id="navbar">
+        <h2>FunkySkull</h2>
+        <div>
+            <button onclick="showLanding()">Home</button>
+            <button onclick="showTools()">Tools</button>
+        </div>
+    </nav>
 
-<div id="splash">
-  <div id="splash-icon"></div>
-  <div class="loader">
-    <span>ha</span><span>ha</span><span>ha</span>
-  </div>
-</div>
+    <div id="splash">
+        <div id="splash-icon"></div>
+        <div class="loader">
+            <span>ha</span><span>ha</span><span>ha</span>
+        </div>
+    </div>
 
-<div id="landing">
-  <h1>Welcome to Funky Skull Page</h1>
-  <p>Testing GitHub Pages animation splash with mobile-friendly navbar and tools</p>
-</div>
+    <div id="landing" class="section">
+        <h1 class="text-3xl font-bold">Welcome to Funky Skull Page</h1>
+        <p class="text-lg mt-4 max-w-lg">A multi-tool web app for notes, calculations, and Base64 conversions.</p>
+    </div>
 
-<div id="tools">
-  <div id="tabs">
-    <button onclick="showTab('notes')">Notes</button>
-    <button onclick="showTab('calc')">Calculator</button>
-    <button onclick="showTab('base64')">Base64</button>
-    <button onclick="showTab('utils')">Utils</button>
-  </div>
+    <div id="tools" class="section">
+        <div class="card-container" id="tool-cards">
+            <div class="card" onclick="showTool('notes')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24"><path fill="currentColor" d="M19 22H5a3 3 0 0 1-3-3V3a1 1 0 0 1 1-1h10a1 1 0 0 1 .7.3L21.7 8a1 1 0 0 1 .3.7v10a3 3 0 0 1-3 3M7 11h10v2H7zm0 4h10v2H7z"/></svg>
+                <div class="card-label">Notes</div>
+            </div>
+            <div class="card" onclick="showTool('calc')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-8 2h2v2h-2zm-2 0h2v2H9zm-2 0h2v2H7zm10 14H7v-2h2v-2h2v2h2v-2h2zm0-4h-2V9h-2v2h-2v-2h-2v2h-2V9H7v2H5V7h14z"/></svg>
+                <div class="card-label">Calculator</div>
+            </div>
+            <div class="card" onclick="showTool('text-base64')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24"><path fill="currentColor" d="M19 19H5V5h14M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-5.04 11.23h-1.63L11.83 17h-1.61l-1.61-4.77H6.94L8.55 17h-1.61L6.15 15.22H3.77L2.4 17.5h-1.5L4.01 13l-3.1-4.5h1.5l1.37 2.28h2.38L8.16 8.5h1.61l1.61 4.77h1.63L14.75 8.5h1.63l-1.39 2.27h2.37L18.42 8.5h1.61L17 12.01l3.1 4.49h-1.61L17 14.77h-2.22z"/></svg>
+                <div class="card-label">Base64 Text</div>
+            </div>
+            <div class="card" onclick="showTool('image-base64')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="3em" height="3em" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 13.5a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3m-6 0a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3m11 2.5a4 4 0 1 1-8 0a4 4 0 0 1 8 0m-8-8a4 4 0 1 1-8 0a4 4 0 0 1 8 0m-4-6a2 2 0 1 1-4 0a2 2 0 0 1 4 0m10 6a2 2 0 1 1-4 0a2 2 0 0 1 4 0M9 3v4.06l-.5 1.25l-.2-.5c-1.35-3.37-4.59-4.75-8-2.67c-1.7 1.05-3.1 2.92-3.1 5.62V21h12.5v-2h-10v-5h10V9H9.5L9 8z"/></svg>
+                <div class="card-label">Base64 Image</div>
+            </div>
+        </div>
 
-  <div id="notes" class="tab" style="display:none;">
-    <textarea id="noteArea" rows="10" placeholder="Write your notes here..."></textarea><br>
-    <button onclick="saveNote()">Save</button>
-    <button onclick="downloadNote()">Download</button>
-  </div>
+        <div class="container tab tool-content" id="notes">
+            <button class="btn blue my-4" onclick="showToolCards()">Back to Tools</button>
+            <h2 class="text-2xl font-bold text-center mb-4">Notes</h2>
+            <div class="tab-content">
+                <textarea id="noteArea" rows="10" placeholder="Write your notes here..."></textarea>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button class="btn" onclick="saveNote()">Save Note</button>
+                    <button class="btn blue" onclick="downloadNote()">Download Note</button>
+                </div>
+            </div>
+        </div>
 
-  <div id="calc" class="tab" style="display:none;">
-    <input type="text" id="calcInput" placeholder="Enter expression">
-    <button onclick="calculate()">=</button>
-    <p id="calcResult" class="output"></p>
-  </div>
+        <div class="container tab tool-content" id="calc">
+            <button class="btn blue my-4" onclick="showToolCards()">Back to Tools</button>
+            <h2 class="text-2xl font-bold text-center mb-4">Calculator</h2>
+            <div class="tab-content">
+                <input type="text" id="calcInput" readonly class="text-right mb-4" placeholder="0">
+                <div id="calc-grid">
+                    <button onclick="clearCalc()">C</button>
+                    <button onclick="delCalc()">DEL</button>
+                    <button onclick="insertCalcOp('(')">(</button>
+                    <button onclick="insertCalcOp(')')">)</button>
+                    <button onclick="insertCalcOp('/')" class="op-btn">/</button>
+                    <button onclick="insertCalcDigit('7')">7</button>
+                    <button onclick="insertCalcDigit('8')">8</button>
+                    <button onclick="insertCalcDigit('9')">9</button>
+                    <button onclick="insertCalcOp('*')" class="op-btn">*</button>
+                    <button onclick="insertCalcDigit('4')">4</button>
+                    <button onclick="insertCalcDigit('5')">5</button>
+                    <button onclick="insertCalcDigit('6')">6</button>
+                    <button onclick="insertCalcOp('-')" class="op-btn">-</button>
+                    <button onclick="insertCalcDigit('1')">1</button>
+                    <button onclick="insertCalcDigit('2')">2</button>
+                    <button onclick="insertCalcDigit('3')">3</button>
+                    <button onclick="insertCalcOp('+')" class="op-btn">+</button>
+                    <button onclick="insertCalcDigit('0')">0</button>
+                    <button onclick="insertCalcOp('.')">.</button>
+                    <button onclick="calculate()" class="equal-btn">=</button>
+                </div>
+            </div>
+        </div>
 
-  <div id="base64" class="tab" style="display:none;">
-    <textarea id="base64Input" rows="5" placeholder="Paste text or Base64"></textarea><br>
-    <button onclick="encodeBase64()">Encode</button>
-    <button onclick="decodeBase64()">Decode</button>
-    <button onclick="downloadBase64()">Download</button>
-    <p id="base64Output" class="output"></p>
-  </div>
+        <div class="container tab tool-content" id="text-base64">
+            <button class="btn blue my-4" onclick="showToolCards()">Back to Tools</button>
+            <h2 class="text-2xl font-bold text-center mb-4">Base64 Text Converter</h2>
+            <div class="tab-content">
+                <textarea id="base64Input" rows="5" placeholder="Paste text or Base64 string..."></textarea>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button class="btn" onclick="encodeTextBase64()">Encode</button>
+                    <button class="btn" onclick="decodeTextBase64()">Decode</button>
+                    <button class="btn blue" onclick="downloadTextBase64()">Download</button>
+                </div>
+                <p id="base64Output" class="output"></p>
+            </div>
+        </div>
 
-  <div id="utils" class="tab" style="display:none;">
-    <p>Coming soon: Color picker, JSON formatter, Regex tester, Password generator...</p>
-  </div>
-</div>
+        <div class="container tab tool-content" id="image-base64">
+            <button class="btn blue my-4" onclick="showToolCards()">Back to Tools</button>
+            <h2 class="text-2xl font-bold text-center mb-4">Base64 Image Converter</h2>
+            <div class="tab-content">
+                <label for="imageInput" class="block text-sm font-bold mb-2 text-gray-400">Choose Image File:</label>
+                <input type="file" id="imageInput" accept="image/*" class="w-full">
+                <textarea id="imageBase64Output" readonly placeholder="Your Base64 string will appear here..."
+                    class="mt-4" rows="8"></textarea>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button id="copyImageButton" class="btn blue">Copy HTML Image Tag</button>
+                    <button id="saveImageButton" class="btn blue">Save Base64 as File</button>
+                </div>
+                <label for="loadFileInput" class="block text-sm font-bold my-4 text-gray-400">Load Base64 from File:</label>
+                <input type="file" id="loadFileInput" accept=".txt,.b64" class="w-full">
+                <h3 class="text-xl font-semibold mb-2 mt-4 text-center">Image Preview</h3>
+                <img id="imagePreview" src="#" alt="Image Preview">
+            </div>
+        </div>
 
-<script>
-  // Splash to landing
-  setTimeout(() => {
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('landing').style.display = 'flex';
-    document.getElementById('navbar').classList.add('show');
-  }, 4000);
+    </div>
 
-  // Tabs
-  function showTab(tabId){
-    document.querySelectorAll('.tab').forEach(t => t.style.display='none');
-    document.getElementById(tabId).style.display='block';
-    document.getElementById('landing').style.display = 'none';
-    document.getElementById('tools').style.display='block';
+    <div id="customMessageBox"></div>
 
-    // Scroll to top of tools minus navbar height
-    window.scrollTo({top: document.getElementById('tools').offsetTop - 70, behavior:'smooth'});
-  }
+    <script>
+        // Custom message box function
+        function showMessageBox(message, type = 'info') {
+            const messageBox = document.getElementById('customMessageBox');
+            messageBox.textContent = message;
+            messageBox.style.opacity = 1;
+            messageBox.style.transform = 'translateX(0)';
+            messageBox.className = ''; // Reset classes
+            messageBox.classList.add('show');
 
-  function showLanding(){
-    document.getElementById('tools').style.display='none';
-    document.getElementById('landing').style.display='flex';
-    window.scrollTo({top:0, behavior:'smooth'});
-  }
+            if (type === 'success') { messageBox.style.backgroundColor = '#48bb78'; }
+            else if (type === 'error') { messageBox.style.backgroundColor = '#e53e3e'; }
+            else if (type === 'warning') { messageBox.style.backgroundColor = '#ecc94b'; messageBox.style.color = '#2d3748'; }
+            else { messageBox.style.backgroundColor = '#4299e1'; }
 
-  // Notes
-  function saveNote(){
-    localStorage.setItem('note', document.getElementById('noteArea').value);
-    alert('Note saved locally!');
-  }
-  function downloadNote(){
-    const blob = new Blob([document.getElementById('noteArea').value], {type:'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'note.txt';
-    a.click();
-  }
+            setTimeout(() => {
+                messageBox.style.opacity = 0;
+                messageBox.style.transform = 'translateX(120%)';
+            }, 3000);
+        }
 
-  // Calculator
-  function calculate(){
-    try{
-      document.getElementById('calcResult').innerText = eval(document.getElementById('calcInput').value);
-    }catch(e){
-      document.getElementById('calcResult').innerText = 'Error';
-    }
-  }
+        // --- Splash and Navigation ---
+        setTimeout(() => {
+            document.getElementById('splash').style.display = 'none';
+            document.getElementById('landing').style.display = 'flex';
+            document.getElementById('navbar').classList.add('show');
+        }, 1500);
 
-  // Base64
-  function encodeBase64(){
-    const val = document.getElementById('base64Input').value;
-    document.getElementById('base64Output').innerText = btoa(val);
-  }
-  function decodeBase64(){
-    const val = document.getElementById('base64Input').value;
-    try{ document.getElementById('base64Output').innerText = atob(val); }catch(e){ document.getElementById('base64Output').innerText = 'Invalid Base64'; }
-  }
-  function downloadBase64(){
-    const blob = new Blob([document.getElementById('base64Output').innerText], {type:'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'output.txt';
-    a.click();
-  }
+        function showToolCards() {
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('tools').style.display = 'flex';
+            document.getElementById('tool-cards').style.display = 'grid';
+            document.querySelectorAll('.tool-content').forEach(t => t.style.display = 'none');
+        }
 
-  // Load saved note on open
-  window.onload = () => {
-    if(localStorage.getItem('note')){
-      document.getElementById('noteArea').value = localStorage.getItem('note');
-    }
-  }
-</script>
+        function showTool(toolId) {
+            document.getElementById('tool-cards').style.display = 'none';
+            document.getElementById(toolId).style.display = 'block';
+            window.scrollTo({ top: document.getElementById('tools').offsetTop - 70, behavior: 'smooth' });
+        }
 
+        function showLanding() {
+            document.getElementById('tools').style.display = 'none';
+            document.getElementById('landing').style.display = 'flex';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showTools() {
+            showToolCards();
+        }
+
+        // --- Notes ---
+        function saveNote() {
+            localStorage.setItem('note', document.getElementById('noteArea').value);
+            showMessageBox('Note saved locally!', 'success');
+        }
+        function downloadNote() {
+            const blob = new Blob([document.getElementById('noteArea').value], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'note.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showMessageBox('Note downloaded!', 'success');
+        }
+
+        // --- Calculator (Upgraded) ---
+        let expression = '';
+
+        function updateCalcDisplay() {
+            document.getElementById('calcInput').value = expression || '0';
+        }
+
+        function insertCalcDigit(digit) {
+            if (expression === '0') {
+                expression = digit;
+            } else {
+                expression += digit;
+            }
+            updateCalcDisplay();
+        }
+
+        function insertCalcOp(op) {
+            // Prevent multiple operators in a row
+            const lastChar = expression.slice(-1);
+            if (['+', '-', '*', '/', '.'].includes(lastChar) && ['+', '-', '*', '/', '.'].includes(op)) {
+                expression = expression.slice(0, -1) + op;
+            } else {
+                expression += op;
+            }
+            updateCalcDisplay();
+        }
+        
+        function clearCalc() {
+            expression = '';
+            updateCalcDisplay();
+        }
+
+        function delCalc() {
+            expression = expression.slice(0, -1);
+            updateCalcDisplay();
+        }
+
+        function calculate() {
+            try {
+                const result = math.evaluate(expression);
+                expression = String(result);
+                updateCalcDisplay();
+            } catch (e) {
+                expression = 'Error';
+                updateCalcDisplay();
+                showMessageBox('Invalid expression.', 'error');
+            }
+        }
+
+        // --- Base64 Text Converter ---
+        function encodeTextBase64() {
+            const val = document.getElementById('base64Input').value;
+            if (val) {
+                document.getElementById('base64Output').innerText = btoa(val);
+                showMessageBox('Text encoded successfully!', 'success');
+            } else {
+                showMessageBox('Please enter text to encode.', 'warning');
+            }
+        }
+        function decodeTextBase64() {
+            const val = document.getElementById('base64Input').value;
+            try {
+                if (val) {
+                    document.getElementById('base64Output').innerText = atob(val);
+                    showMessageBox('Base64 decoded successfully!', 'success');
+                } else {
+                    showMessageBox('Please enter a Base64 string to decode.', 'warning');
+                }
+            } catch (e) {
+                document.getElementById('base64Output').innerText = 'Invalid Base64 string.';
+                showMessageBox('Invalid Base64 string.', 'error');
+            }
+        }
+        function downloadTextBase64() {
+            const blob = new Blob([document.getElementById('base64Output').innerText], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'text_output.txt';
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showMessageBox('Text downloaded!', 'success');
+        }
+
+        // --- Base64 Image Converter ---
+        document.getElementById('imageInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64String = e.target.result;
+                    document.getElementById('imageBase64Output').value = base64String;
+                    displayImagePreview(base64String);
+                };
+                reader.onerror = function(error) {
+                    console.error("Error reading image file:", error);
+                    showMessageBox("Error reading image file. Please try again.", "error");
+                };
+                reader.readAsDataURL(file);
+            } else {
+                document.getElementById('imageBase64Output').value = '';
+                displayImagePreview(null);
+            }
+        });
+
+        document.getElementById('copyImageButton').addEventListener('click', function() {
+            const base64Output = document.getElementById('imageBase64Output');
+            const base64String = base64Output.value;
+            if (base64String) {
+                const imgTag = `<img src="${base64String}" alt="Embedded Image">`;
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = imgTag;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                try {
+                    document.execCommand('copy');
+                    showMessageBox("HTML Image Tag copied to clipboard!", "success");
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                    showMessageBox("Failed to copy. Please copy manually.", "error");
+                } finally {
+                    document.body.removeChild(tempTextArea);
+                }
+            } else {
+                showMessageBox("No Base64 string to copy. Please select an image first.", "warning");
+            }
+        });
+
+        document.getElementById('saveImageButton').addEventListener('click', function() {
+            const base64String = document.getElementById('imageBase64Output').value;
+            if (base64String) {
+                const filename = 'image_base64.txt';
+                const blob = new Blob([base64String], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showMessageBox("Base64 string saved as " + filename, "success");
+            } else {
+                showMessageBox("No Base64 string to save. Please convert an image first.", "warning");
+            }
+        });
+
+        document.getElementById('loadFileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const loadedBase64String = e.target.result;
+                    if (loadedBase64String.startsWith('data:image/')) {
+                        document.getElementById('imageBase64Output').value = loadedBase64String;
+                        displayImagePreview(loadedBase64String);
+                        showMessageBox("Image loaded from file!", "success");
+                    } else {
+                        showMessageBox("The selected file does not contain a valid Base64 image string.", "error");
+                        document.getElementById('imageBase64Output').value = '';
+                        displayImagePreview(null);
+                    }
+                };
+                reader.onerror = function(error) {
+                    console.error("Error reading Base64 file:", error);
+                    showMessageBox("Error reading Base64 file. Please try again.", "error");
+                };
+                reader.readAsText(file);
+            } else {
+                document.getElementById('imageBase64Output').value = '';
+                displayImagePreview(null);
+            }
+        });
+
+        // Helper function to display or hide image preview
+        function displayImagePreview(base64String) {
+            const imagePreview = document.getElementById('imagePreview');
+            if (base64String) {
+                imagePreview.src = base64String;
+                imagePreview.style.display = 'block';
+            } else {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+            }
+        }
+
+        // Load saved note on open
+        window.onload = () => {
+            if (localStorage.getItem('note')) {
+                document.getElementById('noteArea').value = localStorage.getItem('note');
+            }
+        }
+    </script>
 </body>
 </html>
