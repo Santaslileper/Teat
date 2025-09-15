@@ -7,7 +7,7 @@
 <style>
 body {
     font-family: Arial; margin: 0; padding: 10px;
-    background: #1a1a1a; color: #fff;
+    background: #1a1a1a; color: #fff; position: relative;
 }
 input, button {
     font-size: 16px; margin: 5px 0; width: 100%;
@@ -26,6 +26,15 @@ button:hover { background: #555; cursor: pointer; }
     background-color: rgba(0,0,0,0.3); border-radius: 5px; margin-bottom: 5px;
 }
 pre { white-space: pre-wrap; word-wrap: break-word; color: #fff; }
+.download-btn {
+    margin-top: 5px; background: #444; width: auto; padding: 5px 10px;
+}
+.download-btn:hover { background: #666; }
+#version {
+    position: fixed; bottom: 10px; left: 10px;
+    background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 5px;
+    font-size: 14px; color: #fff;
+}
 </style>
 </head>
 <body>
@@ -35,12 +44,15 @@ pre { white-space: pre-wrap; word-wrap: break-word; color: #fff; }
 <input type="file" id="fileInput" multiple><br>
 <button onclick="processFiles()">Analyze Files</button>
 <button onclick="downloadCSV()">Download CSV</button>
-<button onclick="downloadRenamedFiles()">Download All Renamed Files</button>
 
 <div id="results"></div>
+<div id="version"></div>
 
 <script>
 let fileData = [];
+let version = parseInt(localStorage.getItem('projectVersion') || '1');
+
+document.getElementById('version').textContent = 'Version: ' + version;
 
 function stripCode(text) {
     text = text.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,' ');
@@ -64,6 +76,11 @@ function processFiles() {
     resultsDiv.innerHTML = '';
     fileData = [];
 
+    // increment version each time new files are processed
+    version++;
+    localStorage.setItem('projectVersion', version);
+    document.getElementById('version').textContent = 'Version: ' + version;
+
     Array.from(files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -79,25 +96,30 @@ function processFiles() {
             const suggested = sorted.slice(0,3).map(w=>w[0]).join('_') || 'untitled';
 
             const sample = text.substring(0,200) + (text.length>200?'...':'');
-            fileData.push({
+            const index = fileData.push({
                 originalName: file.name,
-                suggestedName: suggested + '.html',
+                suggestedName: suggested + '_v'+version+'.html',
                 modifiedDate: file.lastModifiedDate ? file.lastModifiedDate.toISOString() : 'N/A',
                 contentSample: sample,
                 fileContent: e.target.result
-            });
+            }) - 1;
 
-            // create collapsible item
             const div = document.createElement('div');
             const button = document.createElement('button');
             button.className = 'collapsible';
-            button.textContent = suggested + '.html';
+            button.textContent = suggested + '_v'+version+'.html';
 
             const content = document.createElement('div');
             content.className = 'content';
             content.innerHTML = `<strong>Original Name:</strong> ${file.name}<br>
                                  <strong>Date Modified:</strong> ${file.lastModifiedDate ? file.lastModifiedDate.toLocaleString() : 'N/A'}<br>
                                  <strong>Content Sample:</strong><pre>${sample}</pre>`;
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.textContent = 'Download This File';
+            downloadBtn.addEventListener('click', ()=>downloadSingleFile(index));
+            content.appendChild(downloadBtn);
 
             button.addEventListener('click', function(){
                 this.classList.toggle("active");
@@ -110,6 +132,16 @@ function processFiles() {
         }
         reader.readAsText(file);
     });
+}
+
+function downloadSingleFile(idx) {
+    const f = fileData[idx];
+    const blob = new Blob([f.fileContent], {type: 'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = f.suggestedName;
+    a.click();
+    URL.revokeObjectURL(a.href);
 }
 
 function downloadCSV() {
@@ -129,21 +161,6 @@ function downloadCSV() {
     a.download = 'project_suggestions.csv';
     a.click();
     URL.revokeObjectURL(url);
-}
-
-function downloadRenamedFiles() {
-    if(fileData.length === 0) return alert("No files processed yet!");
-
-    fileData.forEach((f, index) => {
-        setTimeout(() => {
-            const blob = new Blob([f.fileContent], {type: 'text/plain'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = f.suggestedName;
-            a.click();
-            URL.revokeObjectURL(a.href);
-        }, index * 500); // 0.5s delay between downloads
-    });
 }
 </script>
 
