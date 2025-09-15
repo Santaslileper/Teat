@@ -132,15 +132,17 @@ function downloadCSV() {
 }
 
 function downloadRenamedFiles() {
-    if(fileData.length===0) return alert("No files processed yet!");
+    if(fileData.length === 0) return alert("No files processed yet!");
 
-    fileData.forEach(f => {
-        const blob = new Blob([f.fileContent], {type: 'text/plain'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = f.suggestedName;
-        a.click();
-        URL.revokeObjectURL(a.href);
+    fileData.forEach((f, index) => {
+        setTimeout(() => {
+            const blob = new Blob([f.fileContent], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = f.suggestedName;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }, index * 500); // 0.5s delay between downloads
     });
 }
 </script>
