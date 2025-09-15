@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Project Organizer</title>
+<style>
+body {
+    font-family: Arial; margin: 0; padding: 10px;
+    background: #1a1a1a; color: #fff;
+}
+input, button {
+    font-size: 16px; margin: 5px 0; width: 100%;
+    background: #333; color: #fff; border: none; padding: 10px; border-radius: 5px;
+}
+button:hover { background: #555; cursor: pointer; }
+.collapsible {
+    background-color: rgba(0,0,0,0.5);
+    color: white; cursor: pointer; padding: 10px;
+    width: 100%; border: none; text-align: left;
+    font-size: 16px; margin-top: 5px; border-radius: 5px;
+}
+.active, .collapsible:hover { background-color: #555; }
+.content {
+    padding: 10px; display: none;
+    background-color: rgba(0,0,0,0.3); border-radius: 5px; margin-bottom: 5px;
+}
+pre { white-space: pre-wrap; word-wrap: break-word; color: #fff; }
+</style>
+</head>
+<body>
+
+<h2>Dark Project Organizer</h2>
+<p>Select multiple files:</p>
+<input type="file" id="fileInput" multiple><br>
+<button onclick="processFiles()">Analyze Files</button>
+<button onclick="downloadCSV()">Download CSV</button>
+<button onclick="downloadRenamedFiles()">Download All Renamed Files</button>
+
+<div id="results"></div>
+
+<script>
+let fileData = [];
+
+function stripCode(text) {
+    text = text.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,' ');
+    text = text.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi,' ');
+    text = text.replace(/<[^>]+>/g,' ');
+    text = text.replace(/<!--[\s\S]*?-->/g,' ');
+    text = text.replace(/\/\*[\s\S]*?\*\//g,' ');
+    text = text.replace(/\/\/.*$/gm,' ');
+    text = text.replace(/\b(var|let|const|function|return|if|else|for|while|switch|case|break|continue|=>|class|new|this)\b/g,' ');
+    text = text.replace(/\b[a-z]+[A-Z][a-zA-Z]*\b/g,' '); // camelCase
+    text = text.replace(/\b\w+_\w+\b/g,' '); // snake_case
+    text = text.replace(/[0-9]/g,' ').replace(/[^\w\s]/g,' ').replace(/\s+/g,' ');
+    return text.trim();
+}
+
+function processFiles() {
+    const files = document.getElementById('fileInput').files;
+    if (!files.length) return alert("Select files first!");
+
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = '';
+    fileData = [];
+
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            let text = e.target.result.toLowerCase();
+            text = stripCode(text);
+
+            const words = text.match(/\b\w+\b/g) || [];
+            const freq = {};
+            words.forEach(word => { 
+                if(word.length>2 && !word.includes('_')) freq[word]=(freq[word]||0)+1;
+            });
+            const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]);
+            const suggested = sorted.slice(0,3).map(w=>w[0]).join('_') || 'untitled';
+
+            const sample = text.substring(0,200) + (text.length>200?'...':'');
+            fileData.push({
+                originalName: file.name,
+                suggestedName: suggested + '.html',
+                modifiedDate: file.lastModifiedDate ? file.lastModifiedDate.toISOString() : 'N/A',
+                contentSample: sample,
+                fileContent: e.target.result
+            });
+
+            // create collapsible item
+            const div = document.createElement('div');
+            const button = document.createElement('button');
+            button.className = 'collapsible';
+            button.textContent = suggested + '.html';
+
+            const content = document.createElement('div');
+            content.className = 'content';
+            content.innerHTML = `<strong>Original Name:</strong> ${file.name}<br>
+                                 <strong>Date Modified:</strong> ${file.lastModifiedDate ? file.lastModifiedDate.toLocaleString() : 'N/A'}<br>
+                                 <strong>Content Sample:</strong><pre>${sample}</pre>`;
+
+            button.addEventListener('click', function(){
+                this.classList.toggle("active");
+                content.style.display = content.style.display === "block" ? "none" : "block";
+            });
+
+            div.appendChild(button);
+            div.appendChild(content);
+            resultsDiv.appendChild(div);
+        }
+        reader.readAsText(file);
+    });
+}
+
+function downloadCSV() {
+    if(fileData.length===0) return alert("No data to download!");
+
+    const headers = ["Original Name","Suggested Name","Date Modified","Content Sample"];
+    const csv = [
+        headers.join(','),
+        ...fileData.map(f => `"${f.originalName}","${f.suggestedName}","${f.modifiedDate}","${f.contentSample.replace(/"/g,'""')}"`
+        )
+    ].join('\n');
+
+    const blob = new Blob([csv], {type: 'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'project_suggestions.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function downloadRenamedFiles() {
+    if(fileData.length===0) return alert("No files processed yet!");
+
+    fileData.forEach(f => {
+        const blob = new Blob([f.fileContent], {type: 'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = f.suggestedName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+}
+</script>
+
+</body>
+</html>
