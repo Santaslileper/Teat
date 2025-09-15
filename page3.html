@@ -1,34 +1,46 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ page.title }}</title>
+  <title>Dynamic Nav</title>
   <style>
-    body { margin:0; font-family:sans-serif; background:#111; color:#eee; padding-top:60px; }
-    nav {
-      position: fixed; top: 0; left: 0; width: 100%;
-      background:#222; display:flex; justify-content:center;
-      overflow-x:auto; white-space:nowrap; z-index:1000;
-    }
-    nav a { padding:14px 20px; color:#0f0; text-decoration:none; }
-    nav a:hover { background:#333; }
-    .page { max-width:800px; margin:auto; padding:20px; min-height:100vh; }
+    nav { display: flex; gap: 1rem; background:#222; padding:1rem; }
+    nav a { color:white; text-decoration:none; }
+    nav a.active { text-decoration:underline; }
   </style>
 </head>
 <body>
+  <nav id="nav"></nav>
+  <main id="content"></main>
 
-<nav>
-  {% for page in site.pages %}
-    {% if page.title %}
-      <a href="{{ page.url }}">{{ page.title }}</a>
-    {% endif %}
-  {% endfor %}
-</nav>
+  <script>
+    const pages = {
+      home: "<h1>Home</h1><p>Welcome.</p>",
+      about: "<h1>About</h1><p>About page.</p>",
+      contact: "<h1>Contact</h1><p>Email us.</p>"
+    };
 
-<div class="page">
-  {{ content }}
-</div>
+    const nav = document.getElementById("nav");
+    const content = document.getElementById("content");
 
+    Object.keys(pages).forEach(p => {
+      const link = document.createElement("a");
+      link.href = "#" + p;
+      link.textContent = p[0].toUpperCase() + p.slice(1);
+      nav.appendChild(link);
+    });
+
+    function render() {
+      const page = location.hash.substring(1) || "home";
+      content.innerHTML = pages[page] || "<h1>404</h1>";
+      [...nav.querySelectorAll("a")].forEach(a =>
+        a.classList.toggle("active", a.getAttribute("href") === "#" + page)
+      );
+    }
+
+    window.addEventListener("hashchange", render);
+    render();
+  </script>
 </body>
 </html>
