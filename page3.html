@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }}</title>
+  <style>
+    body { margin:0; font-family:sans-serif; background:#111; color:#eee; padding-top:60px; }
+    nav {
+      position: fixed; top: 0; left: 0; width: 100%;
+      background:#222; display:flex; justify-content:center;
+      overflow-x:auto; white-space:nowrap; z-index:1000;
+    }
+    nav a { padding:14px 20px; color:#0f0; text-decoration:none; }
+    nav a:hover { background:#333; }
+    .page { max-width:800px; margin:auto; padding:20px; min-height:100vh; }
+  </style>
+</head>
+<body>
+
+<nav>
+  {% for page in site.pages %}
+    {% if page.title %}
+      <a href="{{ page.url }}">{{ page.title }}</a>
+    {% endif %}
+  {% endfor %}
+</nav>
+
+<div class="page">
+  {{ content }}
+</div>
+
+</body>
+</html>
