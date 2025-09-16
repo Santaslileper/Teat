@@ -7,18 +7,38 @@
 <style>
   body { font-family: sans-serif; background:#111; color:#eee; margin:0; padding:20px; }
   .panel { max-width:600px; margin:auto; }
-  a { display:block; margin:8px 0; color:#0f0; text-decoration:none; }
-  a:hover { text-decoration:underline; }
+  #nav-placeholder nav a { display:block; margin:8px 0; color:#0f0; text-decoration:none; font-weight:bold; }
+  #nav-placeholder nav a:hover { text-decoration:underline; }
+  #nav-placeholder nav a.active { text-decoration:underline; }
   h1 { text-align:center; }
 </style>
 </head>
 <body>
-  <div class="panel">
-    <h1>Dev Panel</h1>
-    <a href="page1.html">Page 1</a>
-    <a href="page2.html">Page 2</a>
-    <a href="page3.html">Page 3</a>
-    <!-- Add more links here as you prototype -->
-  </div>
+
+<!-- Nav placeholder -->
+<div id="nav-placeholder"></div>
+
+<div class="panel">
+  <h1>Dev Panel</h1>
+  <p>Welcome to the Dev Panel. Use the navigation above.</p>
+</div>
+
+<script>
+  // Load shared nav
+  fetch('nav.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('nav-placeholder').innerHTML = data;
+
+      // Highlight active page
+      const links = document.querySelectorAll('#nav-placeholder nav a');
+      const current = window.location.pathname.split('/').pop();
+      links.forEach(link => {
+        if (link.getAttribute('href') === current) link.classList.add('active');
+      });
+    })
+    .catch(err => console.error('Failed to load nav:', err));
+</script>
+
 </body>
 </html>
