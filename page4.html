@@ -1,44 +1,1176 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Page 4</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1.0"/>
+<title>Combined App</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/13.0.0/math.js"></script>
 <style>
-  body { font-family: sans-serif; background:#111; color:#eee; margin:0; padding:20px; }
-  .panel { max-width:600px; margin:auto; }
-  #nav-placeholder nav a { display:block; margin:8px 0; color:#0f0; text-decoration:none; font-weight:bold; }
-  #nav-placeholder nav a:hover { text-decoration:underline; }
-  #nav-placeholder nav a.active { text-decoration:underline; }
-  h1 { text-align:center; }
+  /* Base styles for the card-based navigation */
+  body {margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#0f0f0f;font-family:system-ui,sans-serif;color:#eee; touch-action: pan-y;}
+  .stage {position:relative;width:300px;height:420px;overflow:hidden;transform:scale(1);transition:transform 0.3s ease, opacity 0.3s ease;}
+  .stage.hidden {opacity: 0; transform: scale(0.9); pointer-events: none;}
+  .card {
+    position:absolute;inset:0;background:#1a1a1a;border:1px solid #333;border-radius:12px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;user-select:none;
+    transition:transform .3s;touch-action:none;color:#fff;
+    cursor: pointer;
+  }
+  .card-label {
+    margin-top: 10px;
+    margin-bottom: 20px;
+  }
+  .card-preview {
+    width: 80%;
+    height: 60%;
+    background: #111;
+    border-radius: 8px;
+    border: 1px solid #333;
+    padding: 10px;
+    box-sizing: border-box;
+    display: block;
+  }
+  .preview-calc-display {
+    background: #000;
+    color: #4ade80;
+    text-align: right;
+    font-size: 1.5rem;
+    padding: 5px;
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-bottom: 5px;
+  }
+  .preview-calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+  .preview-calc-btn {
+    width: 100%;
+    height: 20px;
+    background: #333;
+    border-radius: 4px;
+  }
+  .preview-notepad-line {
+    background: #333;
+    height: 15px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+  }
+  .preview-syntax-item {
+    background: #333;
+    height: 10px;
+    width: 80%;
+    margin-bottom: 4px;
+    border-radius: 2px;
+  }
+  .preview-syntax-group h4 {
+    height: 8px;
+    width: 50%;
+    background: #555;
+    margin-bottom: 4px;
+  }
+
+  /* Full-screen mode styles */
+  .mode {
+    position:fixed;inset:0;background:#1a1a1a;display:none;flex-direction:column;
+    transition:transform 0.3s ease;transform:translateX(100%);
+  }
+  .mode.active {display:flex; transform:translateX(0); z-index: 10;}
+  .head {padding:8px 16px;border-bottom:1px solid #333;font-weight:bold;position:relative;display:flex;align-items:center;justify-content:space-between; user-select: none; -webkit-user-select: none; touch-action: pan-y;}
+  .head .title-text { flex-grow: 1; text-align: center; }
+  .content {flex:1;overflow:auto;}
+  .exit-btn {
+    font-size: 20px;
+    font-weight: bold;
+    color: #888;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+  .nav-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 5px;
+      user-select: none;
+      transition: color 0.2s;
+  }
+  .nav-btn:hover {
+      color: #fff;
+  }
+  
+  /* Splash Screen specific styles (now applied to Tutorial) */
+  .splash-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 30px;
+      max-width: 600px;
+      margin: auto;
+  }
+  .splash-section {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #222;
+      width: 100%;
+  }
+  .splash-section:last-child {
+      border-bottom: none;
+  }
+  .splash-section h2 {
+      font-size: 1.5rem;
+      color: #60a5fa;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+  }
+  .splash-text {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #ccc;
+  }
+  .splash-text b {
+      color: #4ade80;
+  }
+  .splash-graphic {
+      height: 100px;
+      width: 100%;
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      border-radius: 8px;
+      border: 1px solid #333;
+      overflow: hidden;
+      position: relative;
+  }
+  .splash-graphic-calc {
+      width: 50px;
+      height: 50px;
+      background: #333;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #60a5fa;
+      animation: pulse 1.5s infinite ease-in-out;
+  }
+  @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+  }
+  .splash-graphic-notes {
+      width: 80%;
+      height: 70%;
+      background: #222;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+  }
+  .splash-line {
+      height: 15px;
+      background: #333;
+      margin-bottom: 5px;
+      border-radius: 2px;
+  }
+  .splash-graphic-swipe {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 3px solid #60a5fa;
+      position: absolute;
+      left: 20%;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: swipe-left-right 2s infinite;
+  }
+  @keyframes swipe-left-right {
+      0% { left: 20%; opacity: 0.2; }
+      50% { left: 80%; opacity: 1; }
+      100% { left: 20%; opacity: 0.2; }
+  }
+
+  /* Math Notepad styles from the user's code */
+  * { box-sizing: border-box; }
+  .editor-container { flex:1; display:flex; height:100%; }
+  .notepad { position: relative; padding:16px; overflow-y:auto; background:#111; z-index: 1; touch-action: pan-y; }
+  .line { margin:8px 0; border-radius:8px; background:#1a1a1a; position: relative; }
+  .line.selected { border: 2px solid #60a5fa; }
+  .line.dragging { opacity: 0.5; position: absolute; z-index: 2; width: 95%; }
+  .line-header { padding:12px; display:flex; align-items:center; justify-content:space-between; cursor: grab; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .toggle-btn { background: transparent; border: none; color: #666; font-size: 16px; cursor: pointer; padding: 0 8px; transition: transform 0.2s; }
+  .line-title { flex-grow: 1; font-size: 14px; color: #ccc; margin-left: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .line-result { font-weight: bold; }
+  .line.collapsed .toggle-btn { transform: rotate(-90deg); }
+  .line-content { padding:0 12px 12px; }
+  .line.collapsed .line-content { display: none; }
+  .input-area { font:16px 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; padding:12px; background:transparent; border:none; outline:none; color:#fff; resize:none; min-height:50px; width:100%; line-height:1.4; }
+  .result { padding:6px 12px; color:#4ade80; font:14px monospace; border-top:1px solid #333; background:#0f1f0f; border-bottom-left-radius:8px; border-bottom-right-radius:8px; }
+  .result.error { color:#ef4444; background:#1f0f0f; }
+  .add-line { margin:8px 0; padding:12px; border:2px dashed #333; border-radius:8px; text-align:center; color:#666; cursor:pointer; transition:all 0.2s; }
+  .add-line:hover { border-color:#555; color:#888; }
+  .syntax-panel { background:#1a1a1a; border-left:1px solid #333; padding:16px; overflow-y:auto; transition:transform 0.3s ease; z-index: 3; }
+  .syntax-title { font-size:16px; font-weight:600; margin-bottom:16px; color:#fff; }
+  .syntax-group { margin-bottom:20px; }
+  .syntax-group h4 { margin:0 0 8px 0; color:#aaa; font-size:14px; }
+  .syntax-item { margin:4px 0; font:13px monospace; color:#4ade80; cursor:pointer; padding:4px 8px; border-radius:4px; }
+  .syntax-item:hover { background:#333; }
+  .syntax-desc { color:#888; font-size:12px; margin-left:8px; }
+  .calc-input-mode { display:flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 20px; background: #0f0f0f; z-index: 2; }
+  .calc-display { font-size: 4rem; text-align: right; width: 100%; margin-bottom: 20px; padding: 10px; border-radius: 8px; background: #1a1a1a; overflow-x: hidden; white-space: nowrap; transition: font-size 0.1s ease; }
+  .calc-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; width: 100%; max-width: 400px; }
+  .calc-btn { width:100%; height:50px; background:#333; border:none; color:#fff; border-radius:8px; font-size:16px; cursor:pointer; transition:all 0.2s; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .calc-btn:hover { background:#444; transform:scale(1.05); }
+  .calc-btn:active { background: #444; transform:scale(0.95); }
+  .calc-btn.operator { background:#555; color:#4ade80; }
+  .calc-btn.function { background:#444; color:#60a5fa; font-size:12px; }
+  .calc-btn.wide { grid-column:span 2; }
+  .calc-actions { 
+    display: flex; /* The corrected change */
+    flex-direction: row; 
+    gap: 10px; 
+    margin-top: 20px; 
+    transition: opacity 0.3s ease;
+    opacity: 1; /* The corrected change */
+  }
+  .calc-actions.visible {
+    display: flex; /* This is now redundant but kept as per user request not to change other code */
+    opacity: 1;
+  }
+  .calc-action-btn { border:none; color:#fff; padding:12px 20px; border-radius:8px; cursor:pointer; font-size:16px; transition:all 0.2s; }
+  .calc-action-btn.add { background: #4ade80; color: #1a1a1a; }
+  .calc-action-btn.update { background: #60a5fa; color: #1a1a1a; }
+  .notes-input { display: none; }
+  .remove-btn { background: #ef4444; color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: absolute; top: 8px; right: 8px; z-index: 5; }
+  .remove-btn:hover { background: #dc2626; }
+  .login-mode, .tutorial-mode { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
+  .login-mode h1, .tutorial-mode h1 { font-size: 1.5rem; margin-bottom: 20px; }
+  .login-input { padding: 10px; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; font-size: 1rem; width: 80%; max-width: 250px; text-align: center; }
+  .login-btn { margin-top: 15px; padding: 10px 20px; border: none; border-radius: 8px; background: #60a5fa; color: #1a1a1a; font-size: 1rem; cursor: pointer; }
+  .message-box { margin-top: 20px; color: #4ade80; font-weight: bold; }
+  .tutorial-text { font-size: 1rem; line-height: 1.5; color: #ccc; max-width: 400px; text-align: left; }
 </style>
 </head>
 <body>
+<div class="stage" id="stage"></div>
 
-<!-- Nav placeholder -->
-<div id="nav-placeholder"></div>
+<div class="mode" id="mode-Tutorial">
+  <div class="head">
+    <button class="nav-btn left-nav">&lt;</button>
+    <span class="title-text">Welcome!</span>
+    <button class="nav-btn right-nav">&gt;</button>
+    <button class="exit-btn">X</button>
+  </div>
+  <div class="content tutorial-mode splash-content">
+    <div class="splash-section">
+      <h2>Animated Splash Screen</h2>
+      <p class="splash-text">
+        This app combines a powerful <b>scientific calculator</b> with an intelligent <b>notepad</b>.
+      </p>
+      <div class="splash-graphic">
+        <div class="splash-graphic-calc">
+          <span style="font-size: 0.5em;">1+2</span>
+        </div>
+      </div>
+    </div>
+    <div class="splash-section">
+      <h2>The Notepad</h2>
+      <p class="splash-text">
+        The <b>Notes</b> section allows you to write down and instantly solve math equations. Each line can be a separate calculation.
+      </p>
+      <div class="splash-graphic">
+        <div class="splash-graphic-notes">
+          <div class="splash-line"></div>
+          <div class="splash-line"></div>
+          <div class="splash-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="splash-section">
+      <h2>The Calculator</h2>
+      <p class="splash-text">
+        The <b>Calculator</b> mode gives you a full-screen, responsive calculator. You can use it for quick calculations or add the result directly to your notes.
+      </p>
+      <div class="splash-graphic">
+        <div class="preview-calc-grid" style="width: 80%; padding: 10px;">
+          <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+          <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+          <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+        </div>
+      </div>
+    </div>
+    <div class="splash-section">
+      <h2>How to Navigate</h2>
+      <p class="splash-text">
+        You can navigate between the different modes by <b>swiping left or right</b> on the main screen, or by using the <b>left and right arrows</b> in the header.
+      </p>
+      <div class="splash-graphic">
+        <div class="splash-graphic-swipe"></div>
+      </div>
+    </div>
+    <div class="splash-section">
+      <h2>Get Started!</h2>
+      <p class="splash-text">
+        Tap the <b>right arrow</b> on the top bar or swipe to get started.
+      </p>
+    </div>
+  </div>
+</div>
 
-<div class="panel">
-  <h1>Page 4</h1>
-  <p>This is the content for Page 4.</p>
+<div class="mode" id="mode-Calculator">
+  <div class="head">
+    <button class="nav-btn left-nav">&lt;</button>
+    <span class="title-text">Calculator</span>
+    <button class="nav-btn right-nav">&gt;</button>
+    <button class="exit-btn">X</button>
+  </div>
+  <div class="content calc-input-mode" id="calcInputMode">
+      <div class="calc-display" id="calcDisplay">0</div>
+      <div class="calc-grid">
+        <button class="calc-btn function">(</button>
+        <button class="calc-btn function">)</button>
+        <button class="calc-btn function">xʸ</button>
+        <button class="calc-btn clear">C</button>
+        <button class="calc-btn">7</button>
+        <button class="calc-btn">8</button>
+        <button class="calc-btn">9</button>
+        <button class="calc-btn operator">/</button>
+        <button class="calc-btn">4</button>
+        <button class="calc-btn">5</button>
+        <button class="calc-btn">6</button>
+        <button class="calc-btn operator">×</button>
+        <button class="calc-btn">1</button>
+        <button class="calc-btn">2</button>
+        <button class="calc-btn">3</button>
+        <button class="calc-btn operator">-</button>
+        <button class="calc-btn">0</button>
+        <button class="calc-btn">.</button>
+        <button class="calc-btn function">!</button>
+        <button class="calc-btn operator">+</button>
+        <button class="calc-btn wide">=</button>
+        <button class="calc-btn">DEL</button>
+      </div>
+      <div class="calc-actions" id="calcActions">
+        <button class="calc-action-btn add" id="addCalcAsLineBtn">Add as New Note</button>
+        <button class="calc-action-btn update" id="updateSelectedLineBtn">Update Calculation</button>
+      </div>
+    </div>
+</div>
+
+<div class="mode" id="mode-Notes">
+  <div class="head">
+    <button class="nav-btn left-nav">&lt;</button>
+    <span class="title-text">Notes</span>
+    <button class="nav-btn right-nav">&gt;</button>
+    <button class="exit-btn">X</button>
+  </div>
+  <div class="content">
+    <div class="notepad" id="notepad">
+      <div class="add-line" id="addLineBtn">+ Click to add a new calculation</div>
+    </div>
+  </div>
+</div>
+
+<div class="mode" id="mode-Syntax">
+  <div class="head">
+    <button class="nav-btn left-nav">&lt;</button>
+    <span class="title-text">Syntax Help</span>
+    <button class="nav-btn right-nav">&gt;</button>
+    <button class="exit-btn">X</button>
+  </div>
+  <div class="content syntax-panel" id="syntaxPanel">
+    <div class="syntax-title">Math.js Syntax Reference</div>
+    <div class="syntax-group">
+      <h4>Basic Operations</h4>
+      <div class="syntax-item">2 + 3 <span class="syntax-desc">Addition</span></div>
+      <div class="syntax-item">5 - 2 <span class="syntax-desc">Subtraction</span></div>
+      <div class="syntax-item">4 * 6 <span class="syntax-desc">Multiplication</span></div>
+      <div class="syntax-item">8 / 2 <span class="syntax-desc">Division</span></div>
+      <div class="syntax-item">2^3 <span class="syntax-desc">Power</span></div>
+      <div class="syntax-item">9 mod 4 <span class="syntax-desc">Modulo</span></div>
+    </div>
+    <div class="syntax-group">
+      <h4>Variables & Functions</h4>
+      <div class="syntax-item">x = 42 <span class="syntax-desc">Assign variable</span></div>
+      <div class="syntax-item">f(x) = x^2 + 1 <span class="syntax-desc">Define function</span></div>
+      <div class="syntax-item">f(5) <span class="syntax-desc">Call function</span></div>
+    </div>
+    <div class="syntax-group">
+      <h4>Advanced Math</h4>
+      <div class="syntax-item">sqrt(16) <span class="syntax-desc">Square root</span></div>
+      <div class="syntax-item">sin(pi/2) <span class="syntax-desc">Trigonometry</span></div>
+      <div class="syntax-item">log(100, 10) <span class="syntax-desc">Logarithm</span></div>
+      <div class="syntax-item">abs(-5) <span class="syntax-desc">Absolute value</span></div>
+      <div class="syntax-item">round(3.7) <span class="syntax-desc">Round number</span></div>
+      <div class="syntax-item">floor(3.7) <span class="syntax-desc">Floor number</span></div>
+      <div class="syntax-item">ceil(3.7) <span class="syntax-desc">Ceiling number</span></div>
+      <div class="syntax-item">min(2, 4, 1) <span class="syntax-desc">Minimum value</span></div>
+      <div class="syntax-item">max(2, 4, 1) <span class="syntax-desc">Maximum value</span></div>
+      <div class="syntax-item">mean(1, 2, 3) <span class="syntax-desc">Average</span></div>
+      <div class="syntax-item">std(1, 2, 3) <span class="syntax-desc">Standard deviation</span></div>
+      <div class="syntax-item">5! <span class="syntax-desc">Factorial</span></div>
+    </div>
+    <div class="syntax-group">
+      <h4>Complex Numbers</h4>
+      <div class="syntax-item">2 + 3i <span class="syntax-desc">Complex number</span></div>
+      <div class="syntax-item">complex(2, 3) <span class="syntax-desc">Create complex</span></div>
+      <div class="syntax-item">re(2 + 3i) <span class="syntax-desc">Real part</span></div>
+      <div class="syntax-item">im(2 + 3i) <span class="syntax-desc">Imaginary part</span></div>
+      <div class="syntax-item">conj(2 + 3i) <span class="syntax-desc">Conjugate</span></div>
+    </div>
+    <div class="syntax-group">
+      <h4>Matrices & Arrays</h4>
+      <div class="syntax-item">[1, 2, 3] <span class="syntax-desc">Array</span></div>
+      <div class="syntax-item">[[1, 2], [3, 4]] <span class="syntax-desc">Matrix</span></div>
+      <div class="syntax-item">det([[1, 2], [3, 4]]) <span class="syntax-desc">Determinant</span></div>
+      <div class="syntax-item">transpose([[1, 2], [3, 4]]) <span class="syntax-desc">Transpose</span></div>
+      <div class="syntax-item">inv([[1, 2], [3, 4]]) <span class="syntax-desc">Inverse</span></div>
+    </div>
+    <div class="syntax-group">
+      <h4>Units</h4>
+      <div class="syntax-item">5.4 m + 2 cm <span class="syntax-desc">Add units</span></div>
+      <div class="syntax-item">2 inch to cm <span class="syntax-desc">Convert units</span></div>
+      <div class="syntax-item">9 celsius to fahrenheit <span class="syntax-desc">Temperature</span></div>
+    </div>
+    <div class="syntax-group">
+      <h4>Constants</h4>
+      <div class="syntax-item">pi <span class="syntax-desc">π ≈ 3.14159</span></div>
+      <div class="syntax-item">e <span class="syntax-desc">≈ 2.71828</span></div>
+      <div class="syntax-item">i <span class="syntax-desc">√(-1)</span></div>
+      <div class="syntax-item">true <span class="syntax-desc">Boolean true</span></div>
+      <div class="syntax-item">false <span class="syntax-desc">Boolean false</span></div>
+    </div>
+  </div>
 </div>
 
 <script>
-  // Load shared nav
-  fetch('nav.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('nav-placeholder').innerHTML = data;
+// --- Card and Navigation Logic (Optimized) ---
+(() => {
+  const cardLabels = ["Tutorial", "Calculator", "Notes", "Syntax"];
+  const quickSwitchLabels = ["Calculator", "Notes", "Syntax"];
+  const stage = document.getElementById("stage");
+  const modes = document.querySelectorAll('.mode');
+  let currentIndex = 0;
+  let cardEl = null;
 
-      // Highlight active page
-      const links = document.querySelectorAll('#nav-placeholder nav a');
-      const current = window.location.pathname.split('/').pop();
-      links.forEach(link => {
-        if (link.getAttribute('href') === current) link.classList.add('active');
-      });
-    })
-    .catch(err => console.error('Failed to load nav:', err));
+  // Global gesture state variables
+  let isInsideNoteDrag = false;
+  let isSwipingCard = false;
+  let startX = 0;
+  let startY = 0;
+  let longPressTimeout = null;
+  let isSwipingMode = false;
+
+  /**
+   * Creates or updates the central card element on the stage.
+   */
+  function makeCard() {
+    if (!cardEl) {
+      cardEl = document.createElement("div");
+      cardEl.className = "card";
+      stage.appendChild(cardEl);
+      cardEl.addEventListener('click', () => openMode(cardLabels[currentIndex]));
+    }
+    updateCardContent();
+    cardEl.style.transform = '';
+    cardEl.style.opacity = 1;
+    stage.classList.remove('hidden');
+  }
+
+  /**
+   * Updates the content of the card to show the current tab's label.
+   */
+  function updateCardContent() {
+    cardEl.innerHTML = '';
+    const labelEl = document.createElement('div');
+    labelEl.className = 'card-label';
+    labelEl.textContent = cardLabels[currentIndex];
+    cardEl.appendChild(labelEl);
+
+    const previewEl = document.createElement('div');
+    previewEl.className = 'card-preview';
+    
+    // Add specific preview content based on the label
+    if (cardLabels[currentIndex] === 'Calculator') {
+        previewEl.innerHTML = `
+            <div class="preview-calc-display">123</div>
+            <div class="preview-calc-grid">
+                <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+                <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+                <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+                <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+                <div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div><div class="preview-calc-btn"></div>
+            </div>
+        `;
+    } else if (cardLabels[currentIndex] === 'Notes') {
+        previewEl.innerHTML = `
+            <div class="preview-notepad-line"></div>
+            <div class="preview-notepad-line"></div>
+            <div class="preview-notepad-line"></div>
+        `;
+    } else if (cardLabels[currentIndex] === 'Syntax') {
+        previewEl.innerHTML = `
+            <div class="preview-syntax-group"><h4></h4><div class="preview-syntax-item"></div><div class="preview-syntax-item"></div></div>
+            <div class="preview-syntax-group"><h4></h4><div class="preview-syntax-item"></div><div class="preview-syntax-item"></div></div>
+        `;
+    } else if (cardLabels[currentIndex] === 'Tutorial') {
+        previewEl.innerHTML = `
+            <div style="font-size: 1.2rem; color: #fff; margin-bottom: 5px;">How to Use</div>
+            <div style="background: #333; height: 10px; width: 90%; margin-bottom: 5px;"></div>
+            <div style="background: #333; height: 10px; width: 80%;"></div>
+            <div style="background: #333; height: 10px; width: 70%; margin-top: 10px;"></div>
+            <div style="background: #333; height: 10px; width: 85%;"></div>
+        `;
+    }
+
+    cardEl.appendChild(previewEl);
+  }
+
+  /**
+   * Opens a full-screen tab with a smooth transition.
+   * @param {string} label The label of the tab to open.
+   * @param {number} initialDirection The direction to animate from (-1 for left, 1 for right).
+   */
+  function openMode(label, initialDirection = 1) {
+    const mode = document.getElementById("mode-" + label);
+    const prevActiveMode = document.querySelector('.mode.active');
+    
+    stage.classList.add("hidden");
+    
+    if (prevActiveMode) {
+      prevActiveMode.classList.remove("active");
+      prevActiveMode.style.transform = `translateX(${-initialDirection * 100}%)`;
+    }
+
+    mode.classList.add("active");
+    mode.style.transform = `translateX(${initialDirection * 100}%)`;
+    
+    setTimeout(() => {
+        mode.style.transform = "translateX(0)";
+    }, 10);
+    
+    if (label === 'Notes') {
+      updateAllResults();
+    }
+    
+    // Hide calculator actions when not in Notes mode
+    if (label !== 'Notes' && selectedLine) {
+        selectedLine = null;
+        updateCalculatorActions();
+    }
+  }
+
+  /**
+   * Closes the full-screen tab and returns to the card view.
+   * @param {HTMLElement} el The tab element to close.
+   */
+  function closeMode(el) {
+    el.classList.remove("active");
+    el.style.transform = `translateX(100%)`;
+    stage.classList.remove("hidden");
+    makeCard();
+    // Hide calculator actions when leaving a mode
+    updateCalculatorActions();
+  }
+  
+  // Attach the exit button listeners to all modes
+  modes.forEach(mode => {
+    const exitBtn = mode.querySelector('.exit-btn');
+    if (exitBtn) {
+      exitBtn.addEventListener("click", () => closeMode(mode));
+    }
+  });
+
+  // Attach nav button listeners to quick-switch modes only
+  document.querySelectorAll('.mode').forEach(mode => {
+      const leftBtn = mode.querySelector('.left-nav');
+      const rightBtn = mode.querySelector('.right-nav');
+      const modeLabel = mode.id.replace('mode-', '');
+      
+      // Only attach to modes that are in the quickSwitchLabels
+      if (quickSwitchLabels.includes(modeLabel)) {
+          if (leftBtn) {
+              leftBtn.addEventListener('click', () => {
+                  const currentModeIndex = quickSwitchLabels.indexOf(modeLabel);
+                  const nextIndex = (currentModeIndex - 1 + quickSwitchLabels.length) % quickSwitchLabels.length;
+                  openMode(quickSwitchLabels[nextIndex], -1);
+              });
+          }
+          if (rightBtn) {
+              rightBtn.addEventListener('click', () => {
+                  const currentModeIndex = quickSwitchLabels.indexOf(modeLabel);
+                  const nextIndex = (currentModeIndex + 1) % quickSwitchLabels.length;
+                  openMode(quickSwitchLabels[nextIndex], 1);
+              });
+          }
+      } else {
+        // For modes not in quickSwitchLabels, hide the nav buttons
+        if(leftBtn) leftBtn.style.visibility = 'hidden';
+        if(rightBtn) rightBtn.style.visibility = 'hidden';
+      }
+      const head = mode.querySelector('.head');
+      head.addEventListener('pointerdown', startModeSwipe);
+  });
+
+  const syntaxItems = document.querySelectorAll('#syntaxPanel .syntax-item');
+  syntaxItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      const text = e.currentTarget.textContent.split(' ')[0];
+      insertSyntax(text);
+    });
+  });
+
+  // Start the application by creating the initial card
+  makeCard();
+
+// --- Global Gesture Handling (Re-enabled Card Swipe) ---
+document.body.addEventListener('pointerdown', handlePointerDown);
+document.body.addEventListener('pointermove', handlePointerMove);
+document.body.addEventListener('pointerup', handlePointerUp);
+document.body.addEventListener('pointercancel', handlePointerUp);
+
+function handlePointerDown(e) {
+  const activeMode = document.querySelector('.mode.active');
+  if (activeMode && !quickSwitchLabels.includes(activeMode.id.replace('mode-', ''))) {
+    // If we're in a full-screen mode that isn't part of the quick-switch, disable global swipe
+    return;
+  }
+  // Check if we are starting a drag for a note, if so, ignore the global swipe.
+  const isNoteHeader = e.target.closest('.line-header');
+  if (isNoteHeader) {
+      isInsideNoteDrag = true;
+      e.stopPropagation();
+      e.preventDefault();
+      startNoteDrag(e);
+      return;
+  }
+  
+  // Reset flags
+  isSwipingCard = false;
+
+  const isCard = e.target.closest('.card');
+  if (isCard) {
+    isSwipingCard = true;
+    startX = e.clientX;
+    e.preventDefault();
+  }
+}
+
+function handlePointerMove(e) {
+    if (isInsideNoteDrag) {
+      dragNote(e);
+      return;
+    }
+    if (isSwipingCard) {
+        const dx = e.clientX - startX;
+        cardEl.style.transition = "none";
+        cardEl.style.transform = `translateX(${dx}px) rotate(${dx * 0.05}deg)`;
+    }
+}
+
+function handlePointerUp(e) {
+    if (isInsideNoteDrag) {
+        endNoteDrag(e);
+        return;
+    }
+
+    if (isSwipingCard) {
+        const dx = e.clientX - startX;
+        cardEl.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+        if (Math.abs(dx) > window.innerWidth / 2) { // Increased swipe sensitivity threshold
+            const direction = Math.sign(dx);
+            currentIndex = (currentIndex - direction + cardLabels.length) % cardLabels.length;
+            cardEl.style.transform = `translateX(${direction * 400}px) rotate(${direction * 30}deg)`;
+            cardEl.style.opacity = 0;
+            setTimeout(makeCard, 300);
+        } else {
+            cardEl.style.transform = ""; // Reset to original position
+            // Tap to open a card, only if it wasn't a significant swipe
+            if (Math.abs(dx) < 10) {
+                openMode(cardLabels[currentIndex]);
+            }
+        }
+        isSwipingCard = false;
+    }
+}
+
+// --- Mode Title Bar Swiping ---
+function startModeSwipe(e) {
+  const head = this;
+  const mode = head.parentNode;
+  const modeLabel = mode.id.replace('mode-', '');
+  if (!quickSwitchLabels.includes(modeLabel)) {
+      return;
+  }
+  isSwipingMode = true;
+  startX = e.clientX;
+  mode.style.transition = "none";
+}
+
+function moveModeSwipe(e) {
+  if (!isSwipingMode) return;
+  const dx = e.clientX - startX;
+  const mode = e.currentTarget.parentNode;
+  mode.style.transform = `translateX(${dx}px)`;
+}
+
+function endModeSwipe(e) {
+  if (!isSwipingMode) return;
+  isSwipingMode = false;
+  const dx = e.clientX - startX;
+  const mode = e.currentTarget.parentNode;
+  const modeLabel = mode.id.replace('mode-', '');
+  const currentModeIndex = quickSwitchLabels.indexOf(modeLabel);
+
+  mode.style.transition = "transform 0.3s ease";
+  if (Math.abs(dx) > window.innerWidth * 0.4) {
+    const direction = Math.sign(dx);
+    const nextIndex = (currentModeIndex - direction + quickSwitchLabels.length) % quickSwitchLabels.length;
+    openMode(quickSwitchLabels[nextIndex], -direction);
+  } else {
+    mode.style.transform = 'translateX(0)';
+  }
+}
+
+document.querySelectorAll('.head').forEach(head => {
+  head.addEventListener('pointerdown', startModeSwipe);
+  head.addEventListener('pointermove', moveModeSwipe);
+  head.addEventListener('pointerup', endModeSwipe);
+  head.addEventListener('pointercancel', endModeSwipe);
+});
+
+
+// --- Math Notepad & Calculator Logic (Optimized) ---
+
+const scope = {};
+let currentFocus = null;
+let calcExpression = '';
+let selectedLine = null;
+let draggedItem = null;
+let noteDragStart = 0;
+let longPressTimeoutNote = null;
+
+
+const calcDisplay = document.getElementById('calcDisplay');
+const calcGrid = document.getElementById('calcInputMode').querySelector('.calc-grid');
+const calcActions = document.getElementById('calcActions');
+const addCalcAsLineBtn = document.getElementById('addCalcAsLineBtn');
+const updateSelectedLineBtn = document.getElementById('updateSelectedLineBtn');
+const notepad = document.getElementById('notepad');
+const addLineBtn = document.getElementById('addLineBtn');
+
+/**
+ * Dynamically adjusts the font size of the calculator display to prevent overflow.
+ */
+function adjustFontSize() {
+    const display = calcDisplay;
+    let fontSize = parseFloat(window.getComputedStyle(display).fontSize);
+    display.style.fontSize = ''; // Reset to default CSS size
+
+    // Create a temporary span to measure the text width
+    const tempSpan = document.createElement('span');
+    tempSpan.style.whiteSpace = 'nowrap';
+    tempSpan.style.visibility = 'hidden';
+    tempSpan.style.fontFamily = 'system-ui, sans-serif'; // Match the display font
+    tempSpan.style.fontSize = '4rem'; // Start with default size
+    tempSpan.textContent = display.textContent;
+    document.body.appendChild(tempSpan);
+
+    const containerWidth = display.offsetWidth - 20; // Allow for some padding
+    let textWidth = tempSpan.offsetWidth;
+
+    // Shrink the font size until the text fits
+    while (textWidth > containerWidth && fontSize > 16) {
+        fontSize -= 1;
+        display.style.fontSize = `${fontSize}px`;
+        tempSpan.style.fontSize = `${fontSize}px`;
+        textWidth = tempSpan.offsetWidth;
+    }
+    document.body.removeChild(tempSpan);
+}
+
+
+function selectLine(line) {
+  if (selectedLine) {
+    selectedLine.classList.remove('selected');
+  }
+  selectedLine = line;
+  line.classList.add('selected');
+  const textarea = line.querySelector('.input-area');
+  if (textarea) {
+    calcExpression = textarea.value;
+    updateCalcDisplay();
+  }
+  updateCalculatorActions();
+}
+
+function updateCalculatorActions() {
+    if (selectedLine) {
+        calcActions.classList.add('visible');
+    } else {
+        calcActions.classList.remove('visible');
+    }
+}
+
+function updateSelectedLine() {
+  if (selectedLine && calcExpression && calcExpression !== 'Error') {
+    const textarea = selectedLine.querySelector('.input-area');
+    if (textarea) {
+      textarea.value = calcExpression;
+      updateResult(selectedLine);
+      updateLineTitle(selectedLine, calcExpression);
+      updateAllResults();
+    }
+  }
+}
+
+function updateCalcDisplay() {
+  calcDisplay.textContent = calcExpression || '0';
+  adjustFontSize(); // Call the function to adjust font size
+}
+
+function clearCalc() {
+  calcExpression = '';
+  updateCalcDisplay();
+}
+
+function evaluateCalc() {
+  if (!calcExpression) return;
+  try {
+    const result = math.evaluate(calcExpression, scope);
+    const displayResult = typeof result === 'object' && result.toString ? result.toString() : String(result);
+    calcExpression = displayResult;
+    updateCalcDisplay();
+  } catch (err) {
+    calcExpression = 'Error';
+    updateCalcDisplay();
+  }
+}
+
+function insertSyntax(text) {
+  if (selectedLine) {
+    const textarea = selectedLine.querySelector('.input-area');
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const value = textarea.value;
+      textarea.value = value.substring(0, start) + text + value.substring(end);
+      textarea.focus();
+      textarea.setSelectionRange(start + text.length, start + text.length);
+      updateAllResults();
+      updateLineTitle(selectedLine, textarea.value);
+    }
+  } else {
+    addNewLine(text);
+  }
+}
+
+function updateLineTitle(line, input) {
+  const lineTitle = line.querySelector('.line-title');
+  const titleText = input.trim().split('\n')[0].substring(0, 50) || 'New Note';
+  lineTitle.textContent = titleText;
+}
+
+function removeLine(line) {
+  if (selectedLine === line) {
+    selectedLine = null;
+  }
+  line.remove();
+  updateAllResults();
+}
+
+function addNewLine(initialText = '') {
+  const line = document.createElement('div');
+  line.className = 'line';
+  
+  line.innerHTML = `
+    <div class="line-header">
+      <span class="toggle-btn">▼</span>
+      <span class="line-title">New Note</span>
+      <button class="remove-btn">×</button>
+    </div>
+    <div class="line-content">
+      <textarea class="input-area" placeholder="Type your calculation here..."></textarea>
+      <div class="result"></div>
+    </div>
+  `;
+  
+  const textarea = line.querySelector('.input-area');
+  textarea.value = initialText;
+
+  notepad.insertBefore(line, addLineBtn);
+  initLine(line);
+  selectLine(line);
+  textarea.focus();
+  if (initialText) {
+    textarea.setSelectionRange(initialText.length, initialText.length);
+    updateResult(line);
+    updateLineTitle(line, initialText);
+  }
+}
+
+function initLine(line) {
+  const textarea = line.querySelector('.input-area');
+  const lineHeader = line.querySelector('.line-header');
+  const removeBtn = line.querySelector('.remove-btn');
+
+  lineHeader.addEventListener('click', (e) => {
+    if (e.target !== removeBtn && !isInsideNoteDrag) {
+      line.classList.toggle('collapsed');
+    }
+  });
+
+  line.addEventListener('click', () => {
+    selectLine(line);
+  });
+  
+  removeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeLine(line);
+  });
+  
+  lineHeader.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      e.preventDefault();
+  });
+  
+  lineHeader.addEventListener('mousedown', startNoteDrag);
+  lineHeader.addEventListener('touchstart', startNoteDrag);
+  
+  textarea.addEventListener('input', () => {
+    autoResize(textarea);
+    updateResult(line);
+    updateLineTitle(line, textarea.value);
+  });
+  
+  textarea.addEventListener('focus', () => {
+    currentFocus = textarea;
+    selectLine(line);
+  });
+
+  textarea.addEventListener('blur', () => {
+    // Deselect the line when the textarea loses focus, unless it's a drag operation.
+    if (!isInsideNoteDrag) {
+        selectedLine.classList.remove('selected');
+        selectedLine = null;
+        updateCalculatorActions();
+    }
+  });
+
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      textarea.value = textarea.value.substring(0, start) + '\n' + textarea.value.substring(end);
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
+    }
+  });
+  
+  autoResize(textarea);
+}
+
+function updateResult(line) {
+  const textarea = line.querySelector('.input-area');
+  const result = line.querySelector('.result');
+  const input = textarea.value.trim();
+  
+  if (!input) {
+    result.textContent = '';
+    result.className = 'result';
+    return;
+  }
+  
+  try {
+    const value = math.evaluate(input, scope);
+    const displayValue = typeof value === 'object' && value.toString ? value.toString() : String(value);
+    result.textContent = `= ${displayValue}`;
+    result.className = 'result';
+  } catch (err) {
+    result.textContent = `❌ ${err.message}`;
+    result.className = 'result error';
+    console.error(err);
+  }
+}
+
+function updateAllResults() {
+    const lines = document.querySelectorAll('.line');
+    const tempScope = {};
+    lines.forEach(line => {
+        const input = line.querySelector('.input-area').value;
+        const result = line.querySelector('.result');
+        if (input) {
+            try {
+                const value = math.evaluate(input, tempScope);
+                Object.assign(scope, tempScope);
+                const displayValue = typeof value === 'object' && value.toString ? value.toString() : String(value);
+                result.textContent = `= ${displayValue}`;
+                result.className = 'result';
+            } catch (err) {
+                result.textContent = `❌ ${err.message}`;
+                result.className = 'result error';
+                console.error(err);
+            }
+        } else {
+            result.textContent = '';
+            result.className = 'result';
+        }
+    });
+}
+
+function startNoteDrag(e) {
+  isInsideNoteDrag = false; // Initial flag is false until long press
+  const line = this.parentNode;
+  draggedItem = line;
+  noteDragStart = e.touches ? e.touches[0].clientY : e.clientY;
+  const initialOffset = draggedItem.offsetTop;
+
+  longPressTimeoutNote = setTimeout(() => {
+    isInsideNoteDrag = true;
+    draggedItem.classList.add('dragging');
+    draggedItem.style.position = 'absolute';
+    draggedItem.style.width = 'calc(100% - 32px)';
+    draggedItem.style.top = (initialOffset) + 'px';
+  }, 300);
+
+  document.addEventListener('mousemove', dragNote);
+  document.addEventListener('mouseup', endNoteDrag);
+  document.addEventListener('touchmove', dragNote);
+  document.addEventListener('touchend', endNoteDrag);
+}
+
+function dragNote(e) {
+    if (!isInsideNoteDrag) {
+      if (Math.abs((e.touches ? e.touches[0].clientY : e.clientY) - noteDragStart) > 10) {
+        clearTimeout(longPressTimeoutNote);
+      }
+      return;
+    }
+    
+    e.preventDefault();
+    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const dy = currentY - noteDragStart;
+    draggedItem.style.top = (draggedItem.offsetTop + dy) + 'px'; // Use offsetTop to make the movement relative to the last position
+    noteDragStart = currentY; // Update startY for the next move event
+
+    const lines = Array.from(document.querySelectorAll('.notepad .line:not(.dragging)'));
+    let target = null;
+    for (const otherLine of lines) {
+        const rect = otherLine.getBoundingClientRect();
+        if (currentY > rect.top && currentY < rect.bottom) {
+            target = otherLine;
+            break;
+        }
+    }
+    if (target) {
+        const targetRect = target.getBoundingClientRect();
+        const midPoint = targetRect.top + targetRect.height / 2;
+        if (currentY > midPoint) {
+            target.parentNode.insertBefore(draggedItem, target.nextSibling);
+        } else {
+            target.parentNode.insertBefore(draggedItem, target);
+        }
+    }
+  }
+
+function endNoteDrag() {
+    isInsideNoteDrag = false;
+    clearTimeout(longPressTimeoutNote);
+    if (draggedItem) {
+        draggedItem.classList.remove('dragging');
+        draggedItem.style.position = '';
+        draggedItem.style.width = '';
+        draggedItem.style.top = '';
+        updateAllResults();
+    }
+    draggedItem = null;
+
+    document.removeEventListener('mousemove', dragNote);
+    document.removeEventListener('mouseup', endNoteDrag);
+    document.removeEventListener('touchmove', dragNote);
+    document.removeEventListener('touchend', endNoteDrag);
+  }
+
+// Global Event Listeners (Optimized)
+document.addEventListener('DOMContentLoaded', () => {
+  // Calculator grid event delegation
+  calcGrid.addEventListener('click', (e) => {
+    const text = e.target.textContent;
+    const opMap = {'×': '*', 'xʸ': '^', 'DEL': 'del'};
+    const op = opMap[text] || text;
+    
+    if (e.target.classList.contains('clear')) {
+        clearCalc();
+    } else if (op === '=') {
+        evaluateCalc();
+    } else if (op === 'del') {
+        delCalc();
+    } else {
+        insertCalcOp(op);
+    }
+  });
+
+  // Note actions
+  addLineBtn.addEventListener('click', () => addNewLine());
+  addCalcAsLineBtn.addEventListener('click', () => {
+    if (calcExpression && calcExpression !== 'Error' && calcExpression !== '0') {
+      addNewLine(calcExpression);
+      clearCalc();
+    }
+  });
+  updateSelectedLineBtn.addEventListener('click', updateSelectedLine);
+});
+
+// Calculator specific functions
+function insertCalcDigit(digit) {
+  if (calcExpression === '0' || calcExpression === 'Error') {
+    calcExpression = digit;
+  } else {
+    calcExpression += digit;
+  }
+  updateCalcDisplay();
+}
+
+function insertCalcOp(op) {
+  if (calcExpression === 'Error') return;
+  const endsWithOperator = ['+', '-', '*', '/', '^', '.'].includes(calcExpression.slice(-1));
+  const opIsOperator = ['+', '-', '*', '/', '^', '.'].includes(op);
+  if (op === '(' || op === 'sqrt(') {
+      calcExpression += op;
+  } else if (op === '!') {
+      if (calcExpression.length > 0) {
+          calcExpression += op;
+      }
+  } else if (opIsOperator && endsWithOperator) {
+      calcExpression = calcExpression.slice(0, -1) + op;
+  } else {
+      calcExpression += op;
+  }
+  updateCalcDisplay();
+}
+
+function delCalc() {
+    if (calcExpression.length > 0) {
+        calcExpression = calcExpression.slice(0, -1);
+    }
+    updateCalcDisplay();
+}
+
+function autoResize(textarea) {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+}
+})();
 </script>
-
 </body>
 </html>
