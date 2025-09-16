@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reaction Speed Leaderboard</title>
+<style>
+  body, html {margin:0; padding:0; font-family:system-ui, sans-serif; height:100%; overflow:hidden;}
+  body{display:flex;flex-direction:column;height:100vh;}
+  .leaderboard-overlay{
+    position:absolute; top:0; left:0; right:0; height:200px; background:rgba(255,255,255,0.95);
+    border-bottom:1px solid #ddd; overflow-y:auto; transition:max-height 0.3s ease; box-shadow:0 4px 12px rgba(0,0,0,0.15); z-index:10;
+  }
+  .leaderboard-overlay.collapsed{max-height:40px;}
+  .leaderboard-overlay.expanded{max-height:300px;}
+  .leaderboard-header{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#eee;cursor:pointer}
+  .leaderboard-header h2{margin:0;font-size:1.2rem;}
+  .leaderboard-list{list-style:none;margin:0;padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;}
+  .leaderboard-list li{padding:6px 8px;border:1px solid #ddd;border-radius:6px;background:#fff;display:flex;justify-content:space-between;font-size:1rem;}
+  .screen{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    user-select:none; touch-action:none; cursor:pointer;
+    transition:background 120ms linear; color:#111; padding:20px; box-sizing:border-box; position:relative;
+  }
+  .msg{font-size:1.8rem; text-align:center; margin-bottom:12px;}
+  .big{font-size:4rem; font-weight:700;}
+  .sub{font-size:1rem; color:rgba(0,0,0,0.7); margin-top:10px; text-align:center;}
+  #playerSelect{margin-top:12px; font-size:1.3rem; padding:12px; border-radius:10px; border:1px solid #555; width:100%; max-width:320px; -webkit-appearance: menulist;}
+  #addPlayerBtn{margin-top:10px; padding:12px 16px; font-size:1.3rem; border-radius:10px; border:none; background:#555; color:#fff; width:100%; max-width:320px;}
+  #currentPlayer{margin-top:6px; font-size:1.2rem; color:#333;}
+  .leaderboard-overlay::-webkit-scrollbar{width:8px;}
+  .leaderboard-overlay::-webkit-scrollbar-thumb{background:#999; border-radius:4px;}
+  .leaderboard-overlay::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);}
+  @media (min-width:640px){ .big{font-size:5rem} .msg{font-size:2rem} }
+</style>
+</head>
+<body>
+<div class="leaderboard-overlay collapsed" id="leaderboardOverlay">
+  <div class="leaderboard-header" id="leaderboardHeader"><h2>Leaderboard</h2></div>
+  <ul class="leaderboard-list" id="leaderboardList"></ul>
+</div>
+
+<div id="screen" class="screen" aria-live="polite" role="button" tabindex="0">
+  <div class="msg" id="status">Tap to start</div>
+  <div class="big" id="main">—</div>
+  <div class="result" id="result"></div>
+  <div class="sub">Wait until it turns <strong>green</strong>, then tap anywhere.</div>
+  <select id="playerSelect"></select>
+  <button id="addPlayerBtn">Add New Player</button>
+  <div id="currentPlayer"></div>
+</div>
+
+<script>
+(() => {
+  const screen=document.getElementById('screen');
+  const status=document.getElementById('status');
+  const main=document.getElementById('main');
+  const result=document.getElementById('result');
+  const leaderboardList=document.getElementById('leaderboardList');
+  const leaderboardOverlay=document.getElementById('leaderboardOverlay');
+  const leaderboardHeader=document.getElementById('leaderboardHeader');
+  const playerSelect=document.getElementById('playerSelect');
+  const addPlayerBtn=document.getElementById('addPlayerBtn');
+  const currentPlayerDiv=document.getElementById('currentPlayer');
+
+  let state='idle', timeoutId=null, startTs=0, collapsed=true, userScrolled=false;
+  let currentPlayer="Player";
+
+  const loadLeaderboard=()=>JSON.parse(localStorage.getItem('reactionLeaderboard')||'[]');
+  const saveLeaderboard=(arr)=>localStorage.setItem('reactionLeaderboard',JSON.stringify(arr));
+  const loadPlayers=()=>JSON.parse(localStorage.getItem('playerList')||'[]');
+  const savePlayers=(arr)=>localStorage.setItem('playerList',JSON.stringify(arr));
+
+  const updateCurrentPlayer=()=>currentPlayerDiv.textContent=`Current Player: ${currentPlayer}`;
+
+  const renderLeaderboard=()=>{
+    leaderboardList.innerHTML='';
+    loadLeaderboard().forEach(h=>{
+      const li=document.createElement('li');
+      li.textContent=`${h.name} → ${h.speed} ms`;
+      leaderboardList.appendChild(li);
+    });
+  };
+
+  const addLeaderboardItem=(name,ms)=>{
+    const arr=loadLeaderboard();
+    arr.push({name,speed:ms});
+    arr.sort((a,b)=>a.speed-b.speed);
+    if(arr.length>3) arr.length=3;
+    saveLeaderboard(arr);
+    renderLeaderboard();
+    if(!userScrolled) leaderboardOverlay.scrollTop=0;
+  };
+
+  const updatePlayerSelect=()=>{
+    const arr=loadPlayers();
+    playerSelect.innerHTML='';
+    arr.forEach(p=>{const opt=document.createElement('option'); opt.value=p; opt.textContent=p; playerSelect.appendChild(opt)});
+    playerSelect.value=currentPlayer;
+  };
+
+  playerSelect.addEventListener('change',()=>{
+    currentPlayer=playerSelect.value;
+    updateCurrentPlayer();
+  });
+
+  addPlayerBtn.addEventListener('click',()=>{
+    const name=prompt("Enter new player name:",currentPlayer);
+    if(name){
+      let arr=loadPlayers();
+      if(!arr.includes(name)) arr.push(name);
+      savePlayers(arr);
+      currentPlayer=name;
+      updatePlayerSelect();
+      updateCurrentPlayer();
+    }
+  });
+
+  leaderboardHeader.addEventListener('click', ()=>{
+    collapsed=!collapsed;
+    leaderboardOverlay.className='leaderboard-overlay '+(collapsed?'collapsed':'expanded');
+  });
+
+  leaderboardOverlay.addEventListener('scroll',()=>{userScrolled=leaderboardOverlay.scrollTop>0;});
+
+  const randDelay=()=>1000+Math.floor(Math.random()*2000);
+  const setNeutral=()=>{
+    screen.style.background='#f3f4f6';screen.style.color='#111';
+    main.textContent='—';status.textContent='Tap to start';
+    result.textContent='';
+  };
+  const startWaiting=()=>{
+    state='waiting';status.textContent='Get ready...';main.textContent='Wait';
+    screen.style.background='#f3f4f6';result.textContent='';
+    timeoutId=setTimeout(()=>{
+      state='go';startTs=performance.now();
+      screen.style.background='#1ddf6f';screen.style.color='#022';
+      status.textContent='TAP!';main.textContent='GO';
+    },randDelay());
+  };
+  const tooSoon=()=>{
+    if(timeoutId) clearTimeout(timeoutId);
+    state='idle';screen.style.background='#ff6b6b';screen.style.color='#fff';
+    status.textContent='Too soon!';main.textContent='X';result.textContent='Wait for green.';
+  };
+  const showResult=(ms)=>{
+    state='done';screen.style.background='#e6ffef';screen.style.color='#022';
+    status.textContent='Reaction time';main.textContent=ms+' ms';
+    result.textContent=`From green → tap: ${ms} ms`;
+    addLeaderboardItem(currentPlayer,ms);
+  };
+
+  const onPointerDown=(ev)=>{
+    ev.preventDefault();
+    if(state==='idle'){startWaiting();return;}
+    if(state==='waiting'){tooSoon();return;}
+    if(state==='go'){showResult(Math.round(performance.now()-startTs));return;}
+    if(state==='done'){setNeutral();startWaiting();}
+  };
+  const onKey=(e)=>{if(e.code==='Space'||e.code==='Enter') onPointerDown(e);};
+
+  // initialize
+  let arrPlayers=loadPlayers();
+  if(arrPlayers.length===0){const name=prompt("Enter player name:","Player"); if(name) arrPlayers.push(name); savePlayers(arrPlayers);}
+  currentPlayer=arrPlayers[0];
+  updatePlayerSelect();
+  updateCurrentPlayer();
+  setNeutral();
+  renderLeaderboard();
+
+  screen.addEventListener('pointerdown',onPointerDown,{passive:false});
+  window.addEventListener('keydown',onKey);
+})();
+</script>
+</body>
+</html>
