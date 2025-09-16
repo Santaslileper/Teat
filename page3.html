@@ -1,46 +1,678 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Dynamic Nav</title>
-  <style>
-    nav { display: flex; gap: 1rem; background:#222; padding:1rem; }
-    nav a { color:white; text-decoration:none; }
-    nav a.active { text-decoration:underline; }
-  </style>
+<meta charset="utf-8">
+<title>Grapple Ascent - Merged</title>
+<style>
+html,body{margin:0;height:100%;background:#0a0c1a;overflow:hidden;touch-action:none;}
+canvas{display:block;margin:auto;background:#0f1225;}
+.ui-text{font-family: 'Segoe UI', Arial, sans-serif; position:absolute; color:#fff; text-align:center;}
+#title{font-size: 4em; font-weight: bold; top: 35%; left: 50%; transform: translate(-50%, -50%); text-shadow: 0 0 10px #70f, 0 0 20px #70f;}
+#info{font-size: 1.2em; top: 55%; left: 50%; transform: translate(-50%, -50%); white-space: pre-line;}
+#score-display{
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 5px #000;
+}
+#coins-display {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2em;
+    color: #ffcc00;
+    text-shadow: 0 0 5px #000;
+}
+#controls{font-size: 1em; bottom: 20px; left: 50%; transform: translateX(-50%); color: #888;}
+</style>
 </head>
 <body>
-  <nav id="nav"></nav>
-  <main id="content"></main>
+<canvas id="c"></canvas>
+<div id="ui" class="ui-text">
+    <div id="title">Grapple Swing</div>
+    <div id="info">Click/Tap to start\n\nDesktop: WASD to move, click to grapple\nMobile: Left joystick for movement\nRight joystick to aim and grapple to pegs</div>
+    <div id="score-display" style="display:none;"></div>
+    <div id="coins-display" style="display:none;"></div>
+    <div id="controls" style="display:none;"></div>
+</div>
 
-  <script>
-    const pages = {
-      home: "<h1>Home</h1><p>Welcome.</p>",
-      about: "<h1>About</h1><p>About page.</p>",
-      contact: "<h1>Contact</h1><p>Email us.</p>"
-    };
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
 
-    const nav = document.getElementById("nav");
-    const content = document.getElementById("content");
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-    Object.keys(pages).forEach(p => {
-      const link = document.createElement("a");
-      link.href = "#" + p;
-      link.textContent = p[0].toUpperCase() + p.slice(1);
-      nav.appendChild(link);
-    });
+const W = () => canvas.width;
+const H = () => canvas.height;
 
-    function render() {
-      const page = location.hash.substring(1) || "home";
-      content.innerHTML = pages[page] || "<h1>404</h1>";
-      [...nav.querySelectorAll("a")].forEach(a =>
-        a.classList.toggle("active", a.getAttribute("href") === "#" + page)
-      );
+const ui = document.getElementById('ui');
+const titleEl = document.getElementById('title');
+const infoEl = document.getElementById('info');
+const scoreEl = document.getElementById('score-display');
+const coinsEl = document.getElementById('coins-display');
+
+let player = {x: 0, y: 0, vx: 0, vy: 0, r: 16};
+let rope = null;
+let cam = {x: 0, y: 0};
+let currentHeight = 0;
+let highScore = 0;
+let coinsCollected = 0;
+let gameState = 'menu';
+let startingPlatform = null;
+
+// Hook state from the first game
+let hook = { active: false, attached: false, x: 0, y: 0, dx: 0, dy: 0, targetX: 0, targetY: 0 };
+const HOOK_SPEED = 20; // How fast the hook travels
+const HOOK_PULL = 0.02; // Pull force when attached
+
+// Input handling
+let keys = {};
+let leftJoy = {x: 0, y: 0, active: false, startX: 0, startY: 0};
+let rightJoy = {x: 0, y: 0, active: false, startX: 0, startY: 0, angle: 0};
+let touches = {};
+let isMobile = 'ontouchstart' in window;
+
+// Static world
+let anchors = [];
+let platforms = [];
+
+function generateStaticWorld() {
+    anchors = [];
+    platforms = [];
+    
+    // Create starting platform
+    startingPlatform = {x: -100, y: -20, width: 200, height: 20, isStart: true};
+    platforms.push(startingPlatform);
+    
+    // Generate fixed platforms at various heights with coins
+    for (let level = 1; level < 100; level++) {
+        if (Math.random() < 0.4) { // 40% chance for each level
+            let x = (Math.random() - 0.5) * W() * 0.8;
+            let y = -100 - (level * 150);
+            let width = 80 + Math.random() * 120;
+            platforms.push({x, y, width, height: 20, coin: true});
+        }
     }
 
-    window.addEventListener("hashchange", render);
-    render();
-  </script>
+    // Generate a large, fixed set of anchors going upward
+    for (let level = 0; level < 200; level++) {
+        let baseY = -100 - (level * 100);
+        let numAnchorsThisLevel = 3 + Math.floor(Math.random() * 4);
+        
+        for (let i = 0; i < numAnchorsThisLevel; i++) {
+            let x = (Math.random() - 0.5) * W() * 1.5;
+            let y = baseY + (Math.random() - 0.5) * 80;
+            let isTooClose = false;
+            
+            // Check for platforms to avoid spawning pegs on them
+            platforms.forEach(p => {
+                const dx = Math.abs(x - (p.x + p.width / 2));
+                const dy = Math.abs(y - (p.y + p.height / 2));
+                // Define a "safe" distance buffer
+                if (dx < p.width / 2 + 50 && dy < p.height / 2 + 50) {
+                    isTooClose = true;
+                }
+            });
+
+            if (!isTooClose) {
+                anchors.push({x, y});
+            }
+        }
+    }
+}
+
+// Use the shootHook logic from the first game
+function shootHook(dx, dy) {
+    hook.active = true;
+    hook.attached = false;
+    hook.x = player.x;
+    hook.y = player.y;
+
+    // Use the provided direction vector (dx, dy)
+    const angle = Math.atan2(dy, dx);
+    hook.dx = Math.cos(angle) * HOOK_SPEED;
+    hook.dy = Math.sin(angle) * HOOK_SPEED;
+}
+
+// Keyboard controls
+window.addEventListener('keydown', e => {
+    keys[e.key.toLowerCase()] = true;
+    if (gameState !== 'playing' && (e.key === ' ' || e.key === 'enter')) {
+        startGame();
+    }
+});
+
+window.addEventListener('keyup', e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+// Mouse controls
+canvas.addEventListener('mousedown', e => {
+    if (gameState !== 'playing') {
+        startGame();
+        return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const targetX = e.clientX - rect.left + cam.x - W() / 2;
+    const targetY = e.clientY - rect.top + cam.y - H() / 2;
+    shootHook(targetX - player.x, targetY - player.y);
+});
+
+canvas.addEventListener('mouseup', () => {
+    if (hook.attached) {
+        hook.active = false;
+        hook.attached = false;
+        rope = null;
+    }
+});
+
+// Touch controls
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (gameState !== 'playing') {
+        startGame();
+        return;
+    }
+    for (let t of e.changedTouches) {
+        const rect = canvas.getBoundingClientRect();
+        const x = t.clientX - rect.left;
+        const y = t.clientY - rect.top;
+        
+        if (x < W() * 0.3) {
+            // Left joystick for movement
+            leftJoy.active = true;
+            leftJoy.startX = x;
+            leftJoy.startY = y;
+            leftJoy.x = 0;
+            leftJoy.y = 0;
+            touches[t.identifier] = {x, y, isLeftJoy: true};
+        } else if (x > W() * 0.7) {
+            // Right joystick for grappling
+            rightJoy.active = true;
+            rightJoy.startX = x;
+            rightJoy.startY = y;
+            rightJoy.x = 0;
+            rightJoy.y = 0;
+            touches[t.identifier] = {x, y, isRightJoy: true};
+        }
+    }
+});
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (gameState !== 'playing') return;
+    
+    for (let t of e.changedTouches) {
+        const touch = touches[t.identifier];
+        if (!touch) continue;
+        
+        const rect = canvas.getBoundingClientRect();
+        const x = t.clientX - rect.left;
+        const y = t.clientY - rect.top;
+        
+        if (touch.isLeftJoy) {
+            leftJoy.x = x - leftJoy.startX;
+            leftJoy.y = y - leftJoy.startY;
+            
+            const dist = Math.hypot(leftJoy.x, leftJoy.y);
+            if (dist > 60) {
+                leftJoy.x = (leftJoy.x / dist) * 60;
+                leftJoy.y = (leftJoy.y / dist) * 60;
+            }
+        } else if (touch.isRightJoy) {
+            rightJoy.x = x - rightJoy.startX;
+            rightJoy.y = y - rightJoy.startY;
+            
+            const dist = Math.hypot(rightJoy.x, rightJoy.y);
+            if (dist > 60) {
+                rightJoy.x = (rightJoy.x / dist) * 60;
+                rightJoy.y = (rightJoy.y / dist) * 60;
+            }
+        }
+    }
+});
+
+canvas.addEventListener('touchend', e => {
+    e.preventDefault();
+    for (let t of e.changedTouches) {
+        const touch = touches[t.identifier];
+        if (!touch) continue;
+        
+        if (touch.isLeftJoy) {
+            leftJoy.active = false;
+            leftJoy.x = 0;
+            leftJoy.y = 0;
+        } else if (touch.isRightJoy) {
+            if (Math.hypot(rightJoy.x, rightJoy.y) > 10) {
+                // Fire grapple on right joystick release if there was a significant drag
+                shootHook(rightJoy.x, rightJoy.y);
+            } else {
+                // Otherwise, if no drag, detach grapple if attached
+                if (hook.attached) {
+                    hook.active = false;
+                    hook.attached = false;
+                    rope = null;
+                }
+            }
+
+            rightJoy.active = false;
+            rightJoy.x = 0;
+            rightJoy.y = 0;
+        }
+        delete touches[t.identifier];
+    }
+});
+
+function startGame() {
+    gameState = 'playing';
+    currentHeight = 0;
+    highScore = 0;
+    coinsCollected = 0;
+    // Corrected Player Starting Position
+    player.x = startingPlatform.x + startingPlatform.width / 2;
+    player.y = startingPlatform.y - player.r;
+    player.vx = 0;
+    player.vy = 0;
+    rope = null;
+    hook.active = false;
+    hook.attached = false;
+    
+    cam.x = 0;
+    cam.y = -100;
+    
+    generateStaticWorld();
+    
+    titleEl.style.display = 'none';
+    infoEl.style.display = 'none';
+    scoreEl.style.display = 'block';
+    coinsEl.style.display = 'block';
+}
+
+// Slower paced physics constants
+const gravity = 0.3;
+const ropeTension = 0.15;
+const swingDamping = 0.99;
+const moveForce = 0.1;  
+const friction = 0.9;  
+const bounce = 0.98;
+const ropeAdjustSpeed = 2; // How fast the rope lengthens/shortens
+const swingForce = 0.2; // Force applied when swinging
+
+// updateHook logic adapted for this game
+function updateHook() {
+    if (!hook.active) return;
+    
+    if (!hook.attached) {
+        hook.x += hook.dx;
+        hook.y += hook.dy;
+        
+        // Check collision with anchors
+        for (let i = 0; i < anchors.length; i++) {
+            const a = anchors[i];
+            const dist = Math.hypot(hook.x - a.x, hook.y - a.y);
+            if (dist < 15) { // Hook radius
+                hook.attached = true;
+                hook.dx = 0;
+                hook.dy = 0;
+                hook.targetX = a.x;
+                hook.targetY = a.y;
+                
+                // Create the rope object from the attached hook
+                rope = {
+                    i: i,
+                    len: Math.hypot(player.x - hook.targetX, player.y - hook.targetY)
+                };
+                break;
+            }
+        }
+    }
+    
+    // When the hook is attached, apply the pull force
+    if (hook.attached) {
+        const dx = hook.targetX - player.x;
+        const dy = hook.targetY - player.y;
+        const dist = Math.hypot(dx, dy);
+
+        // Apply a direct pull force towards the anchor
+        player.vx += dx * HOOK_PULL;
+        player.vy += dy * HOOK_PULL;
+    }
+    
+    // Check if hook is too far away without attaching
+    const dist = Math.hypot(hook.x - player.x, hook.y - player.y);
+    if (dist > 500 && !hook.attached) {
+        hook.active = false;
+        hook.attached = false;
+    }
+}
+
+function step() {
+    if (gameState !== 'playing') return;
+
+    // Handle input
+    let inputX = 0;
+    let inputY = 0;
+    if (isMobile && leftJoy.active) {
+        inputX = Math.max(-1, Math.min(1, leftJoy.x / 60));
+        inputY = Math.max(-1, Math.min(1, leftJoy.y / 60));
+    } else {
+        if (keys['a'] || keys['arrowleft']) inputX -= 1;
+        if (keys['d'] || keys['arrowright']) inputX += 1;
+    }
+    
+    // Regular movement logic
+    if (!hook.attached) {
+        player.vx += inputX * moveForce;
+    }
+    
+    player.vy += gravity;
+    
+    // Platform and Coin collision detection
+    let onPlatform = false;
+    platforms.forEach(platform => {
+        if (player.x + player.r > platform.x && 
+            player.x - player.r < platform.x + platform.width &&
+            player.y + player.r > platform.y && 
+            player.y + player.r < platform.y + platform.height + 10 &&
+            player.vy > 0) {
+            
+            player.y = platform.y - player.r;
+            player.vy = 0;
+            onPlatform = true;
+            
+            player.vx *= 0.9;
+
+            // Check for and collect coin
+            if (platform.coin) {
+                coinsCollected++;
+                platform.coin = false; // Remove the coin
+            }
+        }
+    });
+    
+    // Call the updated hook logic
+    updateHook();
+
+    // Rope physics only if hook is attached
+    if (hook.attached) {
+        const anchor = anchors[rope.i];
+        if (anchor) {
+            const dx = anchor.x - player.x;
+            const dy = anchor.y - player.y;
+            const dist = Math.hypot(dx, dy);
+
+            // Handle swinging and rope length with left stick
+            if (isMobile && leftJoy.active) {
+                // Rope length adjustment with Up/Down
+                rope.len -= inputY * ropeAdjustSpeed;
+                if (rope.len < 10) rope.len = 10;
+                
+                // Swing with Left/Right
+                const angle = Math.atan2(dy, dx);
+                const perpAngle = angle + Math.PI / 2;
+                player.vx += Math.cos(perpAngle) * inputX * swingForce;
+                player.vy += Math.sin(perpAngle) * inputX * swingForce;
+            }
+
+            // Apply constraint force (swinging physics)
+            if (dist > rope.len) {
+                const diff = dist - rope.len;
+                const forceX = (dx / dist) * diff * ropeTension;
+                const forceY = (dy / dist) * diff * ropeTension;
+                
+                player.vx += forceX;
+                player.vy += forceY;
+                
+                player.vx *= swingDamping;
+                player.vy *= swingDamping;
+            }
+            
+            // Release rope if too far (more lenient)
+            if (dist > rope.len * 3) {
+                hook.attached = false;
+                hook.active = false;
+                rope = null;
+            }
+        } else {
+            hook.attached = false;
+            hook.active = false;
+            rope = null;
+        }
+    }
+    
+    // Apply air resistance and friction
+    player.vx *= friction;
+    player.vy *= bounce;
+    
+    // Update position
+    player.x += player.vx;
+    player.y += player.vy;
+    
+    // Camera follows player with better smoothing that adapts to player speed
+    const targetCamX = player.x;
+    const targetCamY = player.y - H() * 0.3;
+    
+    const playerSpeed = Math.hypot(player.vx, player.vy);
+    const cameraSpeed = Math.min(0.15, 0.08 + playerSpeed * 0.01);
+    
+    cam.x += (targetCamX - cam.x) * cameraSpeed;
+    cam.y += (targetCamY - cam.y) * cameraSpeed;
+    
+    // Update current height and high score
+    currentHeight = -player.y;
+    if (currentHeight > highScore) {
+        highScore = currentHeight;
+    }
+
+    // Respawn logic
+    if (player.y > startingPlatform.y + 1000) {
+        player.x = startingPlatform.x + startingPlatform.width / 2;
+        player.y = startingPlatform.y - player.r;
+        player.vx = 0;
+        player.vy = 0;
+        hook.active = false;
+        hook.attached = false;
+        rope = null;
+        cam.x = 0;
+        cam.y = 0;
+    }
+}
+
+function draw() {
+    // Clear the canvas and draw a gradient background
+    ctx.clearRect(0, 0, W(), H());
+    const gradient = ctx.createLinearGradient(0, cam.y - H(), 0, cam.y + H());
+    gradient.addColorStop(0, '#001122');
+    gradient.addColorStop(1, '#000511');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W(), H());
+    
+    // Only draw game elements if the game is in the 'playing' state
+    if (gameState === 'playing') {
+        ctx.save();
+        ctx.translate(W() / 2 - cam.x, H() / 2 - cam.y);
+        
+        // Draw platforms
+        platforms.forEach(platform => {
+            ctx.fillStyle = platform.isStart ? '#00aa44' : '#444444';
+            ctx.shadowColor = platform.isStart ? '#00ff66' : '#666666';
+            ctx.shadowBlur = platform.isStart ? 10 : 5;
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = platform.isStart ? '#00ff66' : '#666666';
+            ctx.fillRect(platform.x, platform.y, platform.width, 3);
+
+            // Draw coin on the platform if it exists
+            if (platform.coin) {
+                const coinX = platform.x + platform.width / 2;
+                const coinY = platform.y - 15;
+                ctx.beginPath();
+                ctx.arc(coinX, coinY, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffcc00';
+                ctx.shadowColor = '#ffcc00';
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+        });
+        
+        // Draw anchors
+        anchors.forEach((a, i) => {
+            const isAttached = hook.attached && hook.targetX === a.x && hook.targetY === a.y;
+            const dist = Math.hypot(a.x - player.x, a.y - player.y);
+            const inRange = dist < 500;
+            
+            ctx.beginPath();
+            ctx.arc(a.x, a.y, isAttached ? 12 : 8, 0, Math.PI * 2);
+            
+            if (isAttached) {
+                ctx.fillStyle = '#ff0099';
+                ctx.shadowColor = '#ff0099';
+                ctx.shadowBlur = 20;
+            } else if (inRange) {
+                ctx.fillStyle = '#00ffff';
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 5;
+            } else {
+                ctx.fillStyle = '#006666';
+                ctx.shadowBlur = 0;
+            }
+            
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        });
+        
+        // Draw rope
+        if (hook.active && hook.attached) {
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y);
+            ctx.lineTo(hook.targetX, hook.targetY);
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#00ffff';
+            ctx.shadowBlur = 15;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        
+        // Draw the traveling hook head
+        if (hook.active && !hook.attached) {
+            ctx.fillStyle = '#f00';
+            ctx.beginPath();
+            ctx.arc(hook.x, hook.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Draw the aiming line when the right joystick is active
+        if (isMobile && rightJoy.active) {
+            const aimDist = Math.hypot(rightJoy.x, rightJoy.y);
+            if (aimDist > 10) {
+                const angle = Math.atan2(rightJoy.y, rightJoy.x);
+                const lineEndX = player.x + Math.cos(angle) * 300;  
+                const lineEndY = player.y + Math.sin(angle) * 300;
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y);
+                ctx.lineTo(lineEndX, lineEndY);
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+        
+        // Draw player
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Draw velocity indicator
+        if (Math.hypot(player.vx, player.vy) > 1) {
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y);
+            ctx.lineTo(player.x + player.vx * 5, player.y + player.vy * 5);
+            ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        ctx.restore();
+
+        // Draw mobile joysticks
+        if (isMobile) {
+            // Left joystick (movement)
+            if (leftJoy.active) {
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.4)';
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.1)';
+                ctx.lineWidth = 3;
+                
+                // Outer circle
+                ctx.beginPath();
+                ctx.arc(leftJoy.startX, leftJoy.startY, 60, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Inner circle
+                ctx.beginPath();
+                ctx.arc(leftJoy.startX + leftJoy.x, leftJoy.startY + leftJoy.y, 25, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+                ctx.fill();
+                ctx.stroke();
+            }
+            
+            // Right joystick (grapple)
+            if (rightJoy.active) {
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.4)';
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.1)';
+                ctx.lineWidth = 3;
+                
+                // Outer circle
+                ctx.beginPath();
+                ctx.arc(rightJoy.startX, rightJoy.startY, 60, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Inner circle
+                ctx.beginPath();
+                ctx.arc(rightJoy.startX + rightJoy.x, rightJoy.startY + rightJoy.y, 25, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        
+        // Draw score text in the foreground
+        scoreEl.innerHTML = `
+            <div>High Score: ${Math.floor(highScore / 10)}</div>
+            <div>Current Height: ${Math.floor(currentHeight / 10)}</div>
+        `;
+        coinsEl.innerHTML = `Coins: ${coinsCollected}`;
+    }
+}
+
+// Game loop
+function gameLoop() {
+    step();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Start the game loop immediately on page load to draw the menu
+generateStaticWorld();
+gameLoop();
+</script>
 </body>
 </html>
