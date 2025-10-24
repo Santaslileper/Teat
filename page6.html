@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Block Blast</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+```
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #000000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    .container {
+        background: #0a0a0a;
+        border-radius: 0;
+        padding: 24px;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.03);
+        max-width: 600px;
+        width: 100%;
+    }
+
+    h1 {
+        text-align: center;
+        background: linear-gradient(135deg, #ffffff, #888888);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+        font-size: 2em;
+        font-weight: 700;
+        letter-spacing: -1px;
+    }
+
+    .score-board {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .score-item {
+        flex: 1;
+        padding: 16px;
+        background: #000000;
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0;
+        color: rgba(255,255,255,0.4);
+        font-size: 0.85em;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .score-value {
+        display: block;
+        color: #fff;
+        font-size: 1.8em;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 2px;
+        background: #000000;
+        padding: 12px;
+        border-radius: 0;
+        margin-bottom: 24px;
+        touch-action: none;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .cell {
+        aspect-ratio: 1;
+        background: #0a0a0a;
+        border-radius: 0;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    .cell.filled {
+        background: #ffffff;
+        box-shadow: none;
+    }
+
+    .cell.hint {
+        background: rgba(255, 255, 255, 0.15);
+        animation: pulse 1s ease-in-out infinite;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .cell.hint::after {
+        content: '★';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #ffffff;
+        font-size: 1.2em;
+        animation: sparkle 1s ease-in-out infinite;
+    }
+
+    .cell.placing {
+        background: rgba(255, 255, 255, 0.5);
+        transform: scale(1.1);
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    @keyframes sparkle {
+        0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        50% { transform: translate(-50%, -50%) scale(1.3) rotate(180deg); }
+    }
+
+    .pieces-container {
+        display: flex;
+        justify-content: space-around;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .piece-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        background: #000000;
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0;
+        touch-action: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 80px;
+    }
+
+    .piece-wrapper.active {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .piece-wrapper.used {
+        opacity: 0.2;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+        50% { box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+    }
+
+    .piece {
+        display: grid;
+        gap: 2px;
+        padding: 8px;
+        pointer-events: none;
+    }
+
+    .piece-cell {
+        width: 18px;
+        height: 18px;
+        background: #ffffff;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .status-text {
+        text-align: center;
+        color: rgba(255,255,255,0.3);
+        font-size: 0.9em;
+        margin-bottom: 10px;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+    }
+
+    .game-over {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.9);
+        backdrop-filter: blur(10px);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .game-over-content {
+        background: #0a0a0a;
+        padding: 48px;
+        border-radius: 0;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: none;
+    }
+
+    .game-over-content h2 {
+        background: linear-gradient(135deg, #ffffff, #888888);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 2.5em;
+        font-weight: 700;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
+    }
+
+    .game-over-content p {
+        font-size: 1.2em;
+        margin-bottom: 30px;
+        color: rgba(255,255,255,0.4);
+        font-weight: 300;
+    }
+
+    .game-over-content .final-score {
+        display: block;
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #ffffff;
+        margin-top: 8px;
+    }
+
+    @media (max-width: 600px) {
+        .container {
+            padding: 16px;
+        }
+        h1 {
+            font-size: 1.6em;
+        }
+        .piece-cell {
+            width: 15px;
+            height: 15px;
+        }
+        .score-item {
+            padding: 12px;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <h1>BLOCK BLAST AUTO</h1>
+
+```
+    <div class="score-board">
+        <div class="score-item">
+            Score
+            <span class="score-value" id="score">0</span>
+        </div>
+        <div class="score-item">
+            Best
+            <span class="score-value" id="best">0</span>
+        </div>
+    </div>
+
+    <div class="status-text" id="statusText">AI is playing...</div>
+
+    <div class="game-board" id="gameBoard"></div>
+
+    <div class="pieces-container" id="piecesContainer"></div>
+</div>
+
+<div class="game-over" id="gameOver">
+    <div class="game-over-content">
+        <h2>GAME OVER</h2>
+        <p>
+            Final Score
+            <span class="final-score" id="finalScore">0</span>
+        </p>
+    </div>
+</div>
+
+<script>
+    const BOARD_SIZE = 8;
+    let board = [];
+    let score = 0;
+    let bestScore = localStorage.getItem('blockBlastBest') || 0;
+    let currentPieces = [];
+    let autoPlayInterval = null;
+    let gameLog = [];
+    let moveCounter = 0;
+
+    const pieceShapes = [
+        [[1]], 
+        [[1,1]], 
+        [[1],[1]], 
+        [[1,1,1]], 
+        [[1],[1],[1]], 
+        [[1,1],[1,1]], 
+        [[1,1,1],[1,0,0]], 
+        [[1,1,1],[0,0,1]], 
+        [[1,0],[1,1]], 
+        [[0,1],[1,1]], 
+        [[1,1,1,1]], 
+        [[1],[1],[1],[1]], 
+    ];
+
+    function init() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+        createBoard();
+        generateNewPieces();
+        updateScore();
+        document.getElementById('best').textContent = bestScore;
+        gameLog = [];
+        moveCounter = 0;
+        startAutoPlay();
+    }
+
+    function createBoard() {
+        const boardEl = document.getElementById('gameBoard');
+        boardEl.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            boardEl.appendChild(cell);
+        }
+    }
+
+    function generateNewPieces() {
+        currentPieces = [];
+        for (let i = 0; i < 3; i++) {
+            const shape = pieceShapes[Math.floor(Math.random() * pieceShapes.length)];
+            currentPieces.push({ shape: shape, used: false });
+        }
+        renderPieces();
+    }
+
+    function renderPieces() {
+        const container = document.getElementById('piecesContainer');
+        container.innerHTML = '';
+        
+        currentPieces.forEach((piece, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'piece-wrapper';
+            if (piece.used) wrapper.classList.add('used');
+            wrapper.dataset.pieceIndex = index;
+
+            const pieceEl = document.createElement('div');
+            pieceEl.className = 'piece';
+            pieceEl.style.gridTemplateColumns = `repeat(${piece.shape[0].length}, 18px)`;
+            
+            piece.shape.forEach(row => {
+                row.forEach(cell => {
+                    const cellEl = document.createElement('div');
+                    if (cell) cellEl.className = 'piece-cell';
+                    else cellEl.style.width = '18px';
+                    pieceEl.appendChild(cellEl);
+                });
+            });
+
+            wrapper.appendChild(pieceEl);
+            container.appendChild(wrapper);
+        });
+    }
+
+    function tryPlacePiece(pieceIndex, row, col) {
+        const piece = currentPieces[pieceIndex];
+        if (piece.used) return false;
+
+        if (canPlacePiece(piece.shape, row, col)) {
+            // Log the move
+            const moveData = {
+                moveNumber: moveCounter++,
+                boardStateBefore: board.map(r => [...r]),
+                piece: piece.shape,
+                position: { row, col },
+                score: score
+            };
+
+            // Animate placement
+            piece.shape.forEach((r, i) => {
+                r.forEach((cell, j) => {
+                    if (cell) {
+                        const cellIndex = (row + i) * BOARD_SIZE + (col + j);
+                        const cellEl = document.querySelector(`[data-index="${cellIndex}"]`);
+                        cellEl.classList.add('placing');
+                        setTimeout(() => cellEl.classList.remove('placing'), 10);
+                        board[row + i][col + j] = 1;
+                    }
+                });
+            });
+
+            piece.used = true;
+            score += piece.shape.flat().filter(c => c).length;
+            
+            setTimeout(() => {
+                const linesCleared = clearLines();
+                moveData.linesCleared = linesCleared;
+                moveData.boardStateAfter = board.map(r => [...r]);
+                moveData.scoreAfter = score;
+                
+                gameLog.push(moveData);
+                
+                updateBoard();
+                renderPieces();
+                clearHints();
+
+                if (currentPieces.every(p => p.used)) {
+                    setTimeout(() => generateNewPieces(), 10);
+                }
+            }, 10);
+
+            return true;
+        }
+        return false;
+    }
+
+    function canPlacePiece(shape, startRow, startCol) {
+        for (let i = 0; i < shape.length; i++) {
+            for (let j = 0; j < shape[i].length; j++) {
+                if (shape[i][j]) {
+                    const row = startRow + i;
+                    const col = startCol + j;
+                    if (row >= BOARD_SIZE || col >= BOARD_SIZE || board[row][col]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    function clearLines() {
+        let linesCleared = 0;
+        const clearedRows = [];
+        const clearedCols = [];
+        
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            if (board[i].every(cell => cell === 1)) {
+                board[i].fill(0);
+                linesCleared++;
+                clearedRows.push(i);
+            }
+        }
+
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            if (board.every(row => row[j] === 1)) {
+                board.forEach(row => row[j] = 0);
+                linesCleared++;
+                clearedCols.push(j);
+            }
+        }
+
+        if (linesCleared > 0) {
+            score += linesCleared * 10;
+            updateScore();
+        }
+
+        return { count: linesCleared, rows: clearedRows, cols: clearedCols };
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, index) => {
+            const row = Math.floor(index / BOARD_SIZE);
+            const col = index % BOARD_SIZE;
+            cell.className = 'cell';
+            if (board[row][col]) {
+                cell.classList.add('filled');
+            }
+        });
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = score;
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('blockBlastBest', bestScore);
+            document.getElementById('best').textContent = bestScore;
+        }
+    }
+
+    function evaluatePosition(shape, startRow, startCol) {
+        let score = 0;
+        
+        let tempBoard = board.map(row => [...row]);
+        shape.forEach((r, i) => {
+            r.forEach((cell, j) => {
+                if (cell) tempBoard[startRow + i][startCol + j] = 1;
+            });
+        });
+
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            if (tempBoard[i].every(cell => cell === 1)) score += 100;
+        }
+
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            if (tempBoard.every(row => row[j] === 1)) score += 100;
+        }
+
+        score += 10 - startRow - startCol;
+
+        return score;
+    }
+
+    function highlightHint(shape, startRow, startCol) {
+        const cells = document.querySelectorAll('.cell');
+        shape.forEach((r, i) => {
+            r.forEach((cell, j) => {
+                if (cell) {
+                    const cellIndex = (startRow + i) * BOARD_SIZE + (startCol + j);
+                    cells[cellIndex].classList.add('hint');
+                }
+            });
+        });
+    }
+
+    function clearHints() {
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.classList.remove('hint');
+        });
+        document.querySelectorAll('.piece-wrapper').forEach(w => {
+            w.classList.remove('active');
+        });
+    }
+
+    function isGameOver() {
+        return currentPieces.filter(p => !p.used).every(piece => {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (canPlacePiece(piece.shape, row, col)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    }
+
+    function endGame() {
+        stopAutoPlay();
+        document.getElementById('statusText').textContent = 'Game Over - Downloading data...';
+        document.getElementById('finalScore').textContent = score;
+        
+        // Prepare training data
+        const trainingData = {
+            gameId: Date.now(),
+            finalScore: score,
+            totalMoves: moveCounter,
+            moves: gameLog,
+            metadata: {
+                boardSize: BOARD_SIZE,
+                timestamp: new Date().toISOString()
+            }
+        };
+        
+        // Download JSON
+        downloadJSON(trainingData, `blockblast_game_${trainingData.gameId}.json`);
+        
+        setTimeout(() => {
+            score = 0;
+            init();
+        }, 1000);
+    }
+
+    function downloadJSON(data, filename) {
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function startAutoPlay() {
+        if (autoPlayInterval) return;
+        
+        autoPlayInterval = setInterval(() => {
+            const availablePieces = currentPieces.map((p, i) => ({ piece: p, index: i }))
+                .filter(p => !p.piece.used);
+            
+                if (availablePieces.length === 0) {
+                setTimeout(() => {
+                    if (currentPieces.every(p => p.used)) {
+                        generateNewPieces();
+                    }
+                }, 10);
+                return;
+            }
+
+            let bestScore = -1;
+            let bestPos = null;
+            let bestPieceIndex = null;
+
+            availablePieces.forEach(({ piece, index }) => {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        if (canPlacePiece(piece.shape, row, col)) {
+                            const posScore = evaluatePosition(piece.shape, row, col);
+                            if (posScore > bestScore) {
+                                bestScore = posScore;
+                                bestPos = { row, col };
+                                bestPieceIndex = index;
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (bestPos) {
+                const piece = currentPieces[bestPieceIndex];
+                
+                // Highlight active piece
+                const wrapper = document.querySelector(`[data-piece-index="${bestPieceIndex}"]`);
+                if (wrapper) wrapper.classList.add('active');
+                
+                // Show hint
+                highlightHint(piece.shape, bestPos.row, bestPos.col);
+                
+                // Place after delay
+                setTimeout(() => {
+                    tryPlacePiece(bestPieceIndex, bestPos.row, bestPos.col);
+                }, 10);
+            } else {
+                if (isGameOver()) {
+                    endGame();
+                }
+            }
+        }, 50);
+    }
+
+    function stopAutoPlay() {
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+        }
+    }
+
+    init();
+</script>
+
+
+</body>
+</html>
