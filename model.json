@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Block Blast AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+```
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #000000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    .container {
+        background: #0a0a0a;
+        border-radius: 0;
+        padding: 24px;
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.03);
+        max-width: 600px;
+        width: 100%;
+    }
+
+    h1 {
+        text-align: center;
+        background: linear-gradient(135deg, #ffffff, #888888);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+        font-size: 2em;
+        font-weight: 700;
+        letter-spacing: -1px;
+    }
+
+    .controls-top {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+
+    .btn-small {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: #000000;
+        color: rgba(255,255,255,0.6);
+        font-size: 0.8em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-small:hover {
+        background: rgba(255,255,255,0.05);
+        color: #ffffff;
+    }
+
+    .btn-small:active {
+        transform: scale(0.98);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: #0a0a0a;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 24px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow: auto;
+        position: relative;
+    }
+
+    .modal-title {
+        color: #fff;
+        font-size: 1.2em;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .json-viewer {
+        background: #000;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 15px;
+        color: rgba(255,255,255,0.8);
+        font-family: 'Courier New', monospace;
+        font-size: 0.75em;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 400px;
+        overflow: auto;
+    }
+
+    .close-modal {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 10px 20px;
+        cursor: pointer;
+        margin-top: 15px;
+        width: 100%;
+        font-family: 'Inter';
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .close-modal:hover {
+        background: rgba(255,255,255,0.15);
+    }
+
+    .close-modal:active {
+        transform: scale(0.98);
+    }
+
+    .score-board {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .score-item {
+        flex: 1;
+        padding: 12px;
+        background: #000000;
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0;
+        color: rgba(255,255,255,0.4);
+        font-size: 0.75em;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        text-align: center;
+    }
+
+    .score-value {
+        display: block;
+        color: #fff;
+        font-size: 1.5em;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 2px;
+        background: #000000;
+        padding: 12px;
+        border-radius: 0;
+        margin-bottom: 20px;
+        touch-action: none;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .cell {
+        aspect-ratio: 1;
+        background: #0a0a0a;
+        border-radius: 0;
+        transition: all 0.1s;
+        position: relative;
+    }
+
+    .cell.filled {
+        background: #ffffff;
+        box-shadow: none;
+    }
+
+    .cell.hint {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .cell.placing {
+        background: rgba(255, 255, 255, 0.5);
+    }
+
+    .pieces-container {
+        display: flex;
+        justify-content: space-around;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .piece-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        background: #000000;
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 0;
+        min-height: 70px;
+    }
+
+    .piece-wrapper.active {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .piece-wrapper.used {
+        opacity: 0.2;
+    }
+
+    .piece {
+        display: grid;
+        gap: 2px;
+        padding: 6px;
+        pointer-events: none;
+    }
+
+    .piece-cell {
+        width: 16px;
+        height: 16px;
+        background: #ffffff;
+        border-radius: 0;
+    }
+
+    .status-text {
+        text-align: center;
+        color: rgba(255,255,255,0.3);
+        font-size: 0.8em;
+        margin-bottom: 10px;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+    }
+
+    .learning-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 15px;
+        padding: 15px;
+        background: #000000;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .stat {
+        text-align: center;
+        color: rgba(255,255,255,0.4);
+        font-size: 0.75em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-value {
+        display: block;
+        color: #ffffff;
+        font-size: 1.4em;
+        font-weight: 600;
+        margin-top: 4px;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    @media (max-width: 600px) {
+        .container {
+            padding: 16px;
+        }
+        h1 {
+            font-size: 1.6em;
+        }
+        .piece-cell {
+            width: 14px;
+            height: 14px;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <h1>AI LEARNING</h1>
+
+```
+    <div class="controls-top">
+        <button class="btn-small" onclick="downloadModel()">⬇ DOWNLOAD</button>
+        <button class="btn-small" onclick="copyModelJSON()">📋 COPY JSON</button>
+        <button class="btn-small" onclick="showGitHubSync()">🔄 GITHUB</button>
+        <button class="btn-small" onclick="clearModel()">🗑 CLEAR</button>
+    </div>
+    <input type="file" id="fileInput" accept=".json" onchange="loadModel(event)">
+
+    <div id="githubPanel" style="display: none; margin-bottom: 15px; padding: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="color: rgba(255,255,255,0.6); font-size: 0.8em; margin-bottom: 10px; text-align: center;">GITHUB AUTO-SYNC</div>
+        <input type="text" id="githubToken" placeholder="Personal Access Token" style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter'; font-size: 0.8em; margin-bottom: 8px;">
+        <input type="text" id="githubRepo" placeholder="username/repo" style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter'; font-size: 0.8em; margin-bottom: 8px;">
+        <input type="text" id="githubFile" placeholder="model.json" value="model.json" style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter'; font-size: 0.8em; margin-bottom: 8px;">
+        <button class="btn-small" onclick="syncToGitHub()" style="width: 100%;">COMMIT TO GITHUB</button>
+    </div>
+
+    <div class="score-board">
+        <div class="score-item">
+            Score
+            <span class="score-value" id="score">0</span>
+        </div>
+        <div class="score-item">
+            Best
+            <span class="score-value" id="best">0</span>
+        </div>
+        <div class="score-item">
+            Games
+            <span class="score-value" id="gamesPlayed">0</span>
+        </div>
+    </div>
+
+    <div class="status-text" id="statusText">AI learning in progress...</div>
+
+    <div class="game-board" id="gameBoard"></div>
+
+    <div class="pieces-container" id="piecesContainer"></div>
+
+    <div class="learning-stats">
+        <div class="stat">
+            Patterns
+            <span class="stat-value" id="patternsLearned">0</span>
+        </div>
+        <div class="stat">
+            Avg Score
+            <span class="stat-value" id="avgScore">0</span>
+        </div>
+        <div class="stat">
+            Win Rate
+            <span class="stat-value" id="winRate">0%</span>
+        </div>
+        <div class="stat">
+            Model Size
+            <span class="stat-value" id="modelSize">0 KB</span>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="jsonModal">
+    <div class="modal-content">
+        <div class="modal-title">MODEL JSON - COPY & PASTE TO GITHUB</div>
+        <button class="close-modal" onclick="copyFromViewer()" style="margin-top: 0; margin-bottom: 15px;">📋 COPY TO CLIPBOARD</button>
+        <div class="json-viewer" id="jsonViewer"></div>
+        <button class="close-modal" onclick="closeModal()">✕ CLOSE</button>
+    </div>
+</div>
+
+<script>
+    const BOARD_SIZE = 8;
+    let board = [];
+    let score = 0;
+    let bestScore = 0;
+    let currentPieces = [];
+    let autoPlayInterval = null;
+    let gamesPlayed = 0;
+    let totalScore = 0;
+
+    // AI Learning Model - stores position evaluations
+    let learningModel = {
+        patterns: {},
+        gameHistory: [],
+        stats: {
+            gamesPlayed: 0,
+            totalScore: 0,
+            bestScore: 0,
+            avgMovesPerGame: 0
+        }
+    };
+
+    const pieceShapes = [
+        [[1]], 
+        [[1,1]], 
+        [[1],[1]], 
+        [[1,1,1]], 
+        [[1],[1],[1]], 
+        [[1,1],[1,1]], 
+        [[1,1,1],[1,0,0]], 
+        [[1,1,1],[0,0,1]], 
+        [[1,0],[1,1]], 
+        [[0,1],[1,1]], 
+        [[1,1,1,1]], 
+        [[1],[1],[1],[1]], 
+    ];
+
+    function init() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+        createBoard();
+        generateNewPieces();
+        updateScore();
+        loadModelFromURL();
+        startAutoPlay();
+    }
+
+    function createBoard() {
+        const boardEl = document.getElementById('gameBoard');
+        boardEl.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            boardEl.appendChild(cell);
+        }
+    }
+
+    function generateNewPieces() {
+        currentPieces = [];
+        for (let i = 0; i < 3; i++) {
+            const shape = pieceShapes[Math.floor(Math.random() * pieceShapes.length)];
+            currentPieces.push({ shape: shape, used: false });
+        }
+        renderPieces();
+    }
+
+    function renderPieces() {
+        const container = document.getElementById('piecesContainer');
+        container.innerHTML = '';
+        
+        currentPieces.forEach((piece, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'piece-wrapper';
+            if (piece.used) wrapper.classList.add('used');
+            wrapper.dataset.pieceIndex = index;
+
+            const pieceEl = document.createElement('div');
+            pieceEl.className = 'piece';
+            pieceEl.style.gridTemplateColumns = `repeat(${piece.shape[0].length}, 16px)`;
+            
+            piece.shape.forEach(row => {
+                row.forEach(cell => {
+                    const cellEl = document.createElement('div');
+                    if (cell) cellEl.className = 'piece-cell';
+                    else cellEl.style.width = '16px';
+                    pieceEl.appendChild(cellEl);
+                });
+            });
+
+            wrapper.appendChild(pieceEl);
+            container.appendChild(wrapper);
+        });
+    }
+
+    function tryPlacePiece(pieceIndex, row, col) {
+        const piece = currentPieces[pieceIndex];
+        if (piece.used) return false;
+
+        if (canPlacePiece(piece.shape, row, col)) {
+            const boardKey = getBoardKey();
+            const oldScore = score;
+
+            piece.shape.forEach((r, i) => {
+                r.forEach((cell, j) => {
+                    if (cell) {
+                        board[row + i][col + j] = 1;
+                    }
+                });
+            });
+
+            piece.used = true;
+            score += piece.shape.flat().filter(c => c).length;
+            
+            setTimeout(() => {
+                const linesCleared = clearLines();
+                const reward = score - oldScore;
+                
+                // Learn from this move
+                learnFromMove(boardKey, pieceIndex, row, col, reward);
+                
+                updateBoard();
+                renderPieces();
+
+                if (currentPieces.every(p => p.used)) {
+                    setTimeout(() => generateNewPieces(), 10);
+                }
+            }, 10);
+
+            return true;
+        }
+        return false;
+    }
+
+    function canPlacePiece(shape, startRow, startCol) {
+        for (let i = 0; i < shape.length; i++) {
+            for (let j = 0; j < shape[i].length; j++) {
+                if (shape[i][j]) {
+                    const row = startRow + i;
+                    const col = startCol + j;
+                    if (row >= BOARD_SIZE || col >= BOARD_SIZE || board[row][col]) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    function clearLines() {
+        let linesCleared = 0;
+        
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            if (board[i].every(cell => cell === 1)) {
+                board[i].fill(0);
+                linesCleared++;
+            }
+        }
+
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            if (board.every(row => row[j] === 1)) {
+                board.forEach(row => row[j] = 0);
+                linesCleared++;
+            }
+        }
+
+        if (linesCleared > 0) {
+            score += linesCleared * 10;
+            updateScore();
+        }
+
+        return linesCleared;
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, index) => {
+            const row = Math.floor(index / BOARD_SIZE);
+            const col = index % BOARD_SIZE;
+            cell.className = 'cell';
+            if (board[row][col]) {
+                cell.classList.add('filled');
+            }
+        });
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = score;
+        if (score > bestScore) {
+            bestScore = score;
+            learningModel.stats.bestScore = bestScore;
+        }
+        document.getElementById('best').textContent = bestScore;
+    }
+
+    function getBoardKey() {
+        return board.map(row => row.join('')).join('|');
+    }
+
+    function learnFromMove(boardKey, pieceIndex, row, col, reward) {
+        const moveKey = `${boardKey}_${pieceIndex}_${row}_${col}`;
+        
+        if (!learningModel.patterns[moveKey]) {
+            learningModel.patterns[moveKey] = {
+                count: 0,
+                totalReward: 0,
+                avgReward: 0
+            };
+        }
+        
+        const pattern = learningModel.patterns[moveKey];
+        pattern.count++;
+        pattern.totalReward += reward;
+        pattern.avgReward = pattern.totalReward / pattern.count;
+        
+        updateLearningStats();
+        saveModelToMemory();
+    }
+
+    function evaluatePosition(shape, startRow, startCol) {
+        let baseScore = 0;
+        
+        let tempBoard = board.map(row => [...row]);
+        shape.forEach((r, i) => {
+            r.forEach((cell, j) => {
+                if (cell) tempBoard[startRow + i][startCol + j] = 1;
+            });
+        });
+
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            if (tempBoard[i].every(cell => cell === 1)) baseScore += 100;
+        }
+
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            if (tempBoard.every(row => row[j] === 1)) baseScore += 100;
+        }
+
+        baseScore += 10 - startRow - startCol;
+
+        // Apply learned patterns
+        const boardKey = getBoardKey();
+        const moveKey = `${boardKey}_${currentPieces.findIndex(p => p.shape === shape)}_${startRow}_${startCol}`;
+        
+        if (learningModel.patterns[moveKey]) {
+            const learnedValue = learningModel.patterns[moveKey].avgReward;
+            baseScore += learnedValue * 2; // Weight learned patterns
+        }
+
+        return baseScore;
+    }
+
+    function highlightHint(shape, startRow, startCol) {
+        const cells = document.querySelectorAll('.cell');
+        shape.forEach((r, i) => {
+            r.forEach((cell, j) => {
+                if (cell) {
+                    const cellIndex = (startRow + i) * BOARD_SIZE + (startCol + j);
+                    cells[cellIndex].classList.add('hint');
+                }
+            });
+        });
+    }
+
+    function clearHints() {
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.classList.remove('hint');
+        });
+        document.querySelectorAll('.piece-wrapper').forEach(w => {
+            w.classList.remove('active');
+        });
+    }
+
+    function isGameOver() {
+        return currentPieces.filter(p => !p.used).every(piece => {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (canPlacePiece(piece.shape, row, col)) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
+    }
+
+    function endGame() {
+        stopAutoPlay();
+        
+        gamesPlayed++;
+        totalScore += score;
+        learningModel.stats.gamesPlayed = gamesPlayed;
+        learningModel.stats.totalScore = totalScore;
+        
+        learningModel.gameHistory.push({
+            gameNumber: gamesPlayed,
+            score: score,
+            timestamp: Date.now()
+        });
+
+        // Keep only last 100 games
+        if (learningModel.gameHistory.length > 100) {
+            learningModel.gameHistory.shift();
+        }
+
+        document.getElementById('gamesPlayed').textContent = gamesPlayed;
+        updateLearningStats();
+        saveModelToMemory();
+        
+        setTimeout(() => {
+            score = 0;
+            init();
+        }, 100);
+    }
+
+    function startAutoPlay() {
+        if (autoPlayInterval) return;
+        
+        autoPlayInterval = setInterval(() => {
+            const availablePieces = currentPieces.map((p, i) => ({ piece: p, index: i }))
+                .filter(p => !p.piece.used);
+            
+            if (availablePieces.length === 0) {
+                setTimeout(() => {
+                    if (currentPieces.every(p => p.used)) {
+                        generateNewPieces();
+                    }
+                }, 10);
+                return;
+            }
+
+            let bestScore = -Infinity;
+            let bestPos = null;
+            let bestPieceIndex = null;
+
+            availablePieces.forEach(({ piece, index }) => {
+                for (let row = 0; row < BOARD_SIZE; row++) {
+                    for (let col = 0; col < BOARD_SIZE; col++) {
+                        if (canPlacePiece(piece.shape, row, col)) {
+                            const posScore = evaluatePosition(piece.shape, row, col);
+                            if (posScore > bestScore) {
+                                bestScore = posScore;
+                                bestPos = { row, col };
+                                bestPieceIndex = index;
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (bestPos) {
+                const piece = currentPieces[bestPieceIndex];
+                const wrapper = document.querySelector(`[data-piece-index="${bestPieceIndex}"]`);
+                if (wrapper) wrapper.classList.add('active');
+                
+                highlightHint(piece.shape, bestPos.row, bestPos.col);
+                
+                setTimeout(() => {
+                    tryPlacePiece(bestPieceIndex, bestPos.row, bestPos.col);
+                    clearHints();
+                }, 10);
+            } else {
+                if (isGameOver()) {
+                    endGame();
+                }
+            }
+        }, 50);
+    }
+
+    function stopAutoPlay() {
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+        }
+    }
+
+    function updateLearningStats() {
+        document.getElementById('patternsLearned').textContent = Object.keys(learningModel.patterns).length;
+        
+        const avgScore = gamesPlayed > 0 ? Math.round(totalScore / gamesPlayed) : 0;
+        document.getElementById('avgScore').textContent = avgScore;
+        
+        const winRate = gamesPlayed > 0 ? Math.round((bestScore / avgScore) * 100) || 0 : 0;
+        document.getElementById('winRate').textContent = winRate + '%';
+        
+        const modelSize = new Blob([JSON.stringify(learningModel)]).size / 1024;
+        document.getElementById('modelSize').textContent = modelSize.toFixed(1) + ' KB';
+    }
+
+    function saveModelToMemory() {
+        try {
+            const modelData = JSON.stringify(learningModel);
+            const chunks = [];
+            const chunkSize = 100000; // 100KB chunks
+            
+            for (let i = 0; i < modelData.length; i += chunkSize) {
+                chunks.push(modelData.slice(i, i + chunkSize));
+            }
+            
+            const chunkData = {
+                totalChunks: chunks.length,
+                chunks: chunks
+            };
+            
+            // Store in memory only (not using localStorage as per requirements)
+            window.blockBlastModel = chunkData;
+        } catch (e) {
+            console.error('Model save error:', e);
+        }
+    }
+
+    function loadModelFromMemory() {
+        try {
+            if (window.blockBlastModel) {
+                const chunkData = window.blockBlastModel;
+                const modelData = chunkData.chunks.join('');
+                learningModel = JSON.parse(modelData);
+                
+                gamesPlayed = learningModel.stats.gamesPlayed || 0;
+                totalScore = learningModel.stats.totalScore || 0;
+                bestScore = learningModel.stats.bestScore || 0;
+                
+                document.getElementById('gamesPlayed').textContent = gamesPlayed;
+                updateLearningStats();
+            }
+        } catch (e) {
+            console.error('Model load error:', e);
+        }
+    }
+
+    async function loadModelFromURL() {
+        // Try to load model.json from same directory
+        try {
+            const response = await fetch('model.json');
+            if (response.ok) {
+                const data = await response.json();
+                learningModel = data.model || data;
+                
+                gamesPlayed = learningModel.stats.gamesPlayed || 0;
+                totalScore = learningModel.stats.totalScore || 0;
+                bestScore = learningModel.stats.bestScore || 0;
+                
+                document.getElementById('gamesPlayed').textContent = gamesPlayed;
+                updateLearningStats();
+                saveModelToMemory();
+                
+                document.getElementById('statusText').textContent = 'Model loaded from GitHub!';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = 'AI learning in progress...';
+                }, 2000);
+            }
+        } catch (e) {
+            // No model.json found, start fresh
+            loadModelFromMemory();
+        }
+    }
+
+    function downloadModel() {
+        const data = {
+            model: learningModel,
+            metadata: {
+                version: '1.0',
+                exported: new Date().toISOString(),
+                gamesPlayed: gamesPlayed,
+                bestScore: bestScore
+            }
+        };
+        
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `blockblast_model_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        document.getElementById('statusText').textContent = 'Model exported!';
+        setTimeout(() => {
+            document.getElementById('statusText').textContent = 'AI learning in progress...';
+        }, 2000);
+    }
+
+    function loadModel(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                learningModel = data.model;
+                
+                gamesPlayed = learningModel.stats.gamesPlayed || 0;
+                totalScore = learningModel.stats.totalScore || 0;
+                bestScore = learningModel.stats.bestScore || 0;
+                
+                document.getElementById('gamesPlayed').textContent = gamesPlayed;
+                updateLearningStats();
+                saveModelToMemory();
+                
+                document.getElementById('statusText').textContent = 'Model imported!';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = 'AI learning in progress...';
+                }, 2000);
+            } catch (err) {
+                document.getElementById('statusText').textContent = 'Import failed!';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = 'AI learning in progress...';
+                }, 2000);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function clearModel() {
+        if (confirm('Clear all learned patterns? This cannot be undone.')) {
+            learningModel = {
+                patterns: {},
+                gameHistory: [],
+                stats: {
+                    gamesPlayed: 0,
+                    totalScore: 0,
+                    bestScore: 0
+                }
+            };
+            gamesPlayed = 0;
+            totalScore = 0;
+            bestScore = 0;
+            
+            window.blockBlastModel = null;
+            
+            document.getElementById('gamesPlayed').textContent = '0';
+            updateLearningStats();
+            
+            document.getElementById('statusText').textContent = 'Model cleared!';
+            setTimeout(() => {
+                document.getElementById('statusText').textContent = 'AI learning in progress...';
+            }, 2000);
+        }
+    }
+
+    function copyModelJSON() {
+        const data = {
+            model: learningModel,
+            metadata: {
+                version: '1.0',
+                exported: new Date().toISOString(),
+                gamesPlayed: gamesPlayed,
+                bestScore: bestScore
+            }
+        };
+        
+        const jsonStr = JSON.stringify(data, null, 2);
+        
+        // Show modal with JSON
+        document.getElementById('jsonViewer').textContent = jsonStr;
+        document.getElementById('jsonModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('jsonModal').style.display = 'none';
+    }
+
+    function copyFromViewer() {
+        const jsonText = document.getElementById('jsonViewer').textContent;
+        navigator.clipboard.writeText(jsonText).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ COPIED!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 1500);
+        }).catch(err => {
+            alert('Failed to copy: ' + err);
+        });
+    }
+
+    // Close modal on background click
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('jsonModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    function showGitHubSync() {
+        const panel = document.getElementById('githubPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function syncToGitHub() {
+        const token = document.getElementById('githubToken').value;
+        const repo = document.getElementById('githubRepo').value;
+        const filepath = document.getElementById('githubFile').value;
+        
+        if (!token || !repo) {
+            alert('Please enter GitHub token and repo!');
+            return;
+        }
+        
+        const data = {
+            model: learningModel,
+            metadata: {
+                version: '1.0',
+                exported: new Date().toISOString(),
+                gamesPlayed: gamesPlayed,
+                bestScore: bestScore
+            }
+        };
+        
+        const content = btoa(JSON.stringify(data, null, 2));
+        
+        try {
+            // Get current file SHA if it exists
+            let sha = null;
+            try {
+                const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filepath}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                }
+            } catch (e) {
+                // File doesn't exist, that's ok
+            }
+            
+            // Create or update file
+            const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filepath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Update model - ${gamesPlayed} games, best: ${bestScore}`,
+                    content: content,
+                    sha: sha
+                })
+            });
+            
+            if (response.ok) {
+                document.getElementById('statusText').textContent = 'Synced to GitHub!';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = 'AI learning in progress...';
+                }, 2000);
+            } else {
+                const error = await response.json();
+                alert('GitHub sync failed: ' + error.message);
+            }
+        } catch (e) {
+            alert('GitHub sync error: ' + e.message);
+        }
+    }
+
+    init();
+</script>
+```
+
+</body>
+</html>
