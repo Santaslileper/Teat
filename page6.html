@@ -15,7 +15,8 @@
             -webkit-user-select: none;
             user-select: none;
         }
-        
+
+```
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background: #000000;
@@ -71,6 +72,77 @@
     .btn-small:hover {
         background: rgba(255,255,255,0.05);
         color: #ffffff;
+    }
+
+    .btn-small:active {
+        transform: scale(0.98);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.95);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .modal-content {
+        background: #0a0a0a;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 24px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow: auto;
+        position: relative;
+    }
+
+    .modal-title {
+        color: #fff;
+        font-size: 1.2em;
+        font-weight: 600;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .json-viewer {
+        background: #000;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 15px;
+        color: rgba(255,255,255,0.8);
+        font-family: 'Courier New', monospace;
+        font-size: 0.75em;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 400px;
+        overflow: auto;
+    }
+
+    .close-modal {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 10px 20px;
+        cursor: pointer;
+        margin-top: 15px;
+        width: 100%;
+        font-family: 'Inter';
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .close-modal:hover {
+        background: rgba(255,255,255,0.15);
+    }
+
+    .close-modal:active {
+        transform: scale(0.98);
     }
 
     .score-board {
@@ -231,20 +303,29 @@
         }
     }
 </style>
-
+```
 
 </head>
 <body>
     <div class="container">
         <h1>AI LEARNING</h1>
 
-
+```
     <div class="controls-top">
-        <button class="btn-small" onclick="downloadModel()">⬇ EXPORT</button>
-        <button class="btn-small" onclick="document.getElementById('fileInput').click()">⬆ IMPORT</button>
+        <button class="btn-small" onclick="downloadModel()">⬇ DOWNLOAD</button>
+        <button class="btn-small" onclick="copyModelJSON()">📋 COPY JSON</button>
+        <button class="btn-small" onclick="showGitHubSync()">🔄 GITHUB</button>
         <button class="btn-small" onclick="clearModel()">🗑 CLEAR</button>
     </div>
     <input type="file" id="fileInput" accept=".json" onchange="loadModel(event)">
+
+    <div id="githubPanel" style="display: none; margin-bottom: 15px; padding: 15px; background: #000; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="color: rgba(255,255,255,0.6); font-size: 0.8em; margin-bottom: 10px; text-align: center;">GITHUB AUTO-SYNC</div>
+        <input type="text" id="githubToken" placeholder="Personal Access Token" style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter'; font-size: 0.8em; margin-bottom: 8px;">
+        <input type="text" id="githubRepo" placeholder="username/repo" style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter'; font-size: 0.8em; margin-bottom: 8px;">
+        <input type="text" id="githubFile" placeholder="model.json" value="model.json" style="width: 100%; padding: 8px; background: #0a0a0a; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-family: 'Inter'; font-size: 0.8em; margin-bottom: 8px;">
+        <button class="btn-small" onclick="syncToGitHub()" style="width: 100%;">COMMIT TO GITHUB</button>
+    </div>
 
     <div class="score-board">
         <div class="score-item">
@@ -284,6 +365,15 @@
             Model Size
             <span class="stat-value" id="modelSize">0 KB</span>
         </div>
+    </div>
+</div>
+
+<div class="modal" id="jsonModal">
+    <div class="modal-content">
+        <div class="modal-title">MODEL JSON - COPY & PASTE TO GITHUB</div>
+        <button class="close-modal" onclick="copyFromViewer()" style="margin-top: 0; margin-bottom: 15px;">📋 COPY TO CLIPBOARD</button>
+        <div class="json-viewer" id="jsonViewer"></div>
+        <button class="close-modal" onclick="closeModal()">✕ CLOSE</button>
     </div>
 </div>
 
@@ -329,7 +419,7 @@
         createBoard();
         generateNewPieces();
         updateScore();
-        loadModelFromMemory();
+        loadModelFromURL();
         startAutoPlay();
     }
 
@@ -715,6 +805,33 @@
         }
     }
 
+    async function loadModelFromURL() {
+        // Try to load model.json from same directory
+        try {
+            const response = await fetch('model.json');
+            if (response.ok) {
+                const data = await response.json();
+                learningModel = data.model || data;
+                
+                gamesPlayed = learningModel.stats.gamesPlayed || 0;
+                totalScore = learningModel.stats.totalScore || 0;
+                bestScore = learningModel.stats.bestScore || 0;
+                
+                document.getElementById('gamesPlayed').textContent = gamesPlayed;
+                updateLearningStats();
+                saveModelToMemory();
+                
+                document.getElementById('statusText').textContent = 'Model loaded from GitHub!';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = 'AI learning in progress...';
+                }, 2000);
+            }
+        } catch (e) {
+            // No model.json found, start fresh
+            loadModelFromMemory();
+        }
+    }
+
     function downloadModel() {
         const data = {
             model: learningModel,
@@ -802,9 +919,126 @@
         }
     }
 
+    function copyModelJSON() {
+        const data = {
+            model: learningModel,
+            metadata: {
+                version: '1.0',
+                exported: new Date().toISOString(),
+                gamesPlayed: gamesPlayed,
+                bestScore: bestScore
+            }
+        };
+        
+        const jsonStr = JSON.stringify(data, null, 2);
+        
+        // Show modal with JSON
+        document.getElementById('jsonViewer').textContent = jsonStr;
+        document.getElementById('jsonModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('jsonModal').style.display = 'none';
+    }
+
+    function copyFromViewer() {
+        const jsonText = document.getElementById('jsonViewer').textContent;
+        navigator.clipboard.writeText(jsonText).then(() => {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ COPIED!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 1500);
+        }).catch(err => {
+            alert('Failed to copy: ' + err);
+        });
+    }
+
+    // Close modal on background click
+    document.addEventListener('click', (e) => {
+        const modal = document.getElementById('jsonModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    function showGitHubSync() {
+        const panel = document.getElementById('githubPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function syncToGitHub() {
+        const token = document.getElementById('githubToken').value;
+        const repo = document.getElementById('githubRepo').value;
+        const filepath = document.getElementById('githubFile').value;
+        
+        if (!token || !repo) {
+            alert('Please enter GitHub token and repo!');
+            return;
+        }
+        
+        const data = {
+            model: learningModel,
+            metadata: {
+                version: '1.0',
+                exported: new Date().toISOString(),
+                gamesPlayed: gamesPlayed,
+                bestScore: bestScore
+            }
+        };
+        
+        const content = btoa(JSON.stringify(data, null, 2));
+        
+        try {
+            // Get current file SHA if it exists
+            let sha = null;
+            try {
+                const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filepath}`, {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                if (getResponse.ok) {
+                    const fileData = await getResponse.json();
+                    sha = fileData.sha;
+                }
+            } catch (e) {
+                // File doesn't exist, that's ok
+            }
+            
+            // Create or update file
+            const response = await fetch(`https://api.github.com/repos/${repo}/contents/${filepath}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Update model - ${gamesPlayed} games, best: ${bestScore}`,
+                    content: content,
+                    sha: sha
+                })
+            });
+            
+            if (response.ok) {
+                document.getElementById('statusText').textContent = 'Synced to GitHub!';
+                setTimeout(() => {
+                    document.getElementById('statusText').textContent = 'AI learning in progress...';
+                }, 2000);
+            } else {
+                const error = await response.json();
+                alert('GitHub sync failed: ' + error.message);
+            }
+        } catch (e) {
+            alert('GitHub sync error: ' + e.message);
+        }
+    }
+
     init();
 </script>
-
 
 </body>
 </html>
