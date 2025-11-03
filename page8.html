@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Sliding Map Key Navigator</title>
+<title>Offline-Ready Map Cache Navigator</title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -13,33 +13,34 @@
   /* Base styles */
   body { font-family: 'Inter', sans-serif; }
   
-  /* --- SIMPLIFIED PIN STYLE (EASY TO RENDER) --- */
+  /* --- CUSTOM PIN STYLE (DYNAMICALLY COLORED) --- */
   .custom-pin {
-    width: 14px;
-    height: 14px;
-    background-color: #f87171; /* Red-400 */
-    border: 2px solid #b91c1c; /* Red-700 */
-    border-radius: 50%; /* Simple circle */
+    width: 16px;
+    height: 16px;
+    background-color: var(--pin-color, #9ca3af); /* Default to gray if color not set */
+    border: 2px solid #ffffff; /* White border for high contrast */
+    border-radius: 50%;
     position: relative;
-    box-shadow: 0 0 5px rgba(220, 38, 38, 0.7);
+    box-shadow: 0 0 6px var(--pin-color, #9ca3af);
     cursor: pointer;
     transition: all 0.2s ease-in-out;
   }
   .custom-pin.active {
-    background-color: #3b82f6; /* Blue-500 */
-    border-color: #1d4ed8; /* Blue-700 */
-    box-shadow: 0 0 10px rgba(59, 130, 246, 1);
-    transform: scale(1.5); /* Simple scale up on activation */
+    /* Fixed highlight color for consistency */
+    background-color: #3b82f6 !important; 
+    border-color: #1d4ed8 !important; 
+    box-shadow: 0 0 12px rgba(59, 130, 246, 1);
+    transform: scale(1.6);
     z-index: 1000;
   }
 
   /* Key Panel transition and size on mobile */
   #key-panel {
     transition: transform 0.3s ease-in-out;
-    transform: translateX(100%); /* Start hidden off-screen */
+    transform: translateX(100%); 
   }
   #key-panel.open {
-    transform: translateX(0); /* Slide fully into view */
+    transform: translateX(0);
   }
 
   /* Custom slider and scrollbar styles for dark theme */
@@ -49,27 +50,40 @@
   #places-list::-webkit-scrollbar { width: 6px; }
   #places-list::-webkit-scrollbar-track { background: #1f2937; }
   #places-list::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+  
+  /* Loading Indicator Styles */
+  .loader {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+    display: inline-block;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen overflow-hidden flex flex-col">
 
   <!-- Header and Controls Section -->
   <header class="p-4 bg-gray-800 shadow-xl z-20">
-    <h1 class="text-2xl font-extrabold text-center text-blue-400 mb-4 tracking-wider">Interactive Map Key</h1>
+    <h1 class="text-2xl font-extrabold text-center text-blue-400 mb-4 tracking-wider">Offline-Ready Map Navigator</h1>
     <div id="controls" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
 
-      <!-- Locate Button -->
+      <!-- Locate/Search Button -->
       <button id="btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 transition duration-150 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
         </svg>
-        Find My Location
+        Load My Location & Data
       </button>
 
       <!-- Radius Slider -->
       <div class="flex flex-col w-full sm:w-48 p-2">
         <label class="text-sm font-semibold mb-2 flex justify-between">
-          Search Radius: <span id="rangeVal" class="text-blue-400 font-bold">1000 m</span>
+          Search Radius (Live Search Only): <span id="rangeVal" class="text-blue-400 font-bold">1000 m</span>
         </label>
         <input id="radius" type="range" min="200" max="2000" step="100" value="1000" class="w-full appearance-none h-2 bg-gray-700 rounded-lg cursor-pointer">
       </div>
@@ -84,7 +98,7 @@
     </div>
   </header>
 
-  <!-- Map and Key Container (Full Screen height minus header) -->
+  <!-- Map and Key Container -->
   <div class="flex-grow relative w-full overflow-hidden">
     <!-- Map Container -->
     <div id="map" class="w-full h-full z-10"></div>
@@ -100,12 +114,20 @@
           </svg>
         </button>
       </div>
+      
+      <!-- Storage Controls and Status -->
+      <div class="mb-4 p-3 bg-gray-700 rounded-xl shadow-inner text-xs flex justify-between items-center">
+          <span id="storage-status" class="font-medium text-gray-300">Cache: Empty</span>
+          <button id="clear-cache-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 rounded-lg transition disabled:opacity-50">
+              Clear Local Data
+          </button>
+      </div>
 
       <!-- Marker Visibility Filters -->
       <div id="marker-filters" class="mb-4 p-3 bg-gray-800 rounded-xl shadow-inner">
         <p class="font-semibold mb-2 text-gray-300 border-b border-gray-700 pb-1">Toggle Marker Visibility:</p>
         <div class="flex flex-wrap gap-x-4 gap-y-2">
-            <!-- Filter checkboxes will be populated here -->
+            <p class="text-xs text-gray-500">Press 'Load' to view filters.</p>
         </div>
       </div>
       
@@ -123,7 +145,9 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// Global state variables
+// --- CONFIG & STATE ---
+const MAP_DATA_CACHE = 'mapDataCache';
+
 const map = L.map('map');
 const keyPanel = document.getElementById('key-panel');
 const toggleKeyBtn = document.getElementById('toggle-key-btn');
@@ -131,19 +155,20 @@ const closeKeyBtn = document.getElementById('close-key-btn');
 
 let userMarker = null;
 let routeLine = null;
-let highlightGroup = []; // Current route and map feature highlights
-let markerGroup = L.layerGroup().addTo(map); // Layer group for all POI markers
-let categorizedPlaces = {}; // Stores all fetched, processed data, grouped by category
-let markerMap = new Map(); // Maps unique ID to Leaflet Marker object
+let highlightGroup = []; 
+let markerGroup = L.layerGroup().addTo(map); 
+let categorizedPlaces = {}; 
+let markerMap = new Map(); 
 let userLocation = null;
-let currentActiveId = null; // ID of the currently selected place
+let currentActiveId = null; 
 
-// Define the categories and their friendly names
 const CATEGORY_MAP = {
-    highway: { label: 'Roads/Transit', icon: '🛣️' },
-    amenity: { label: 'Amenities', icon: '📍' },
-    shop: { label: 'Shops', icon: '🛍️' },
-    leisure: { label: 'Parks/Leisure', icon: '🏞️' },
+    tourism: { label: 'Landmarks', icon: '🏰', color: '#facc15' }, // Amber
+    amenity: { label: 'Facilities', icon: '📍', color: '#ff5733' }, // Orange-Red
+    shop: { label: 'Commerce', icon: '🛍️', color: '#34d399' },     // Emerald Green
+    leisure: { label: 'Attractions', icon: '🏞️', color: '#3b82f6' }, // Blue
+    public_transport: { label: 'Transit Stops', icon: '🚌', color: '#ec4899' }, // Pink
+    highway: { label: 'Roads/Transit', icon: '🛣️', color: '#6366f1' }, // Indigo
 };
 
 // --- INITIALIZATION ---
@@ -157,9 +182,76 @@ document.getElementById('radius').oninput = e => {
   document.getElementById('rangeVal').textContent = e.target.value + ' m';
 };
 
-// Toggle Key Panel Logic
 toggleKeyBtn.onclick = () => keyPanel.classList.toggle('open');
 closeKeyBtn.onclick = () => keyPanel.classList.remove('open');
+document.getElementById('btn').onclick = locate;
+document.getElementById('clear-cache-btn').onclick = clearLocalData;
+
+// Check cache status on load
+updateStorageStatus();
+map.setView([20, 0], 2);
+
+
+// --- STORAGE MANAGEMENT ---
+
+function saveLocalData(data) {
+    try {
+        localStorage.setItem(MAP_DATA_CACHE, JSON.stringify(data));
+        updateStorageStatus(true);
+    } catch (e) {
+        console.error("Error saving to local storage:", e);
+    }
+}
+
+function loadLocalData() {
+    try {
+        const data = localStorage.getItem(MAP_DATA_CACHE);
+        if (data) {
+            updateStorageStatus(true);
+            // Must parse the full object, including the userLocation
+            const parsed = JSON.parse(data);
+            if(parsed.places && parsed.userLocation) {
+                return { 
+                    places: parsed.places, 
+                    userLocation: parsed.userLocation 
+                };
+            }
+        }
+        updateStorageStatus(false);
+        return null;
+    } catch (e) {
+        console.error("Error loading or parsing local storage:", e);
+        clearLocalData(); // Clear corrupted data
+        return null;
+    }
+}
+
+function clearLocalData() {
+    localStorage.removeItem(MAP_DATA_CACHE);
+    categorizedPlaces = {};
+    markerGroup.clearLayers();
+    markerMap.clear();
+    clearRoute();
+    updateStorageStatus(false);
+    document.getElementById('places-list').innerHTML = '<p class="text-gray-400 text-center p-4">Local cache cleared. Search for new data!</p>';
+    document.querySelector('#marker-filters .flex').innerHTML = '<p class="text-xs text-gray-500">Press \'Load\' to view filters.</p>';
+    document.getElementById('category-tabs').innerHTML = '';
+    toggleKeyBtn.classList.add('hidden');
+    toggleKeyBtn.disabled = true;
+}
+
+function updateStorageStatus(isCached) {
+    const statusEl = document.getElementById('storage-status');
+    const clearBtn = document.getElementById('clear-cache-btn');
+    if (isCached) {
+        statusEl.innerHTML = 'Cache: <span class="text-green-400">Data Loaded</span>';
+        clearBtn.disabled = false;
+    } else {
+        statusEl.innerHTML = 'Cache: <span class="text-red-400">Empty</span>';
+        clearBtn.disabled = true;
+    }
+}
+
 
 // --- UTILITY FUNCTIONS ---
 
@@ -168,11 +260,12 @@ function getDistance(lat1, lon1, lat2, lon2) {
 }
 
 async function getRoute(lat1, lon1, lat2, lon2) {
+  // Routing relies on a live connection to OSRM (or another service)
   const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
   const r = await fetch(url);
   const d = await r.json();
-  if (!d.routes || !d.routes[0]) throw new Error("No driving route found.");
-  return d.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
+  if (!d.routes || !d.routes[0]) throw new Error("No driving route found. Check connection.");
+  return d.routes[0]; 
 }
 
 function clearRoute() {
@@ -182,7 +275,7 @@ function clearRoute() {
 }
 
 /**
- * Generates unique IDs, calculates distance, and assigns category for each element.
+ * Generates unique IDs, calculates distance, and assigns category/color for each element.
  */
 function processElements(userLat, userLon, els) {
     const results = {};
@@ -191,14 +284,16 @@ function processElements(userLat, userLon, els) {
     let idCounter = 0;
     els.forEach(e => {
         const id = 'poi-' + idCounter++;
+        // Determine coordinates from various OSM data structures (node, way center, geometry)
         const lat = e.lat || (e.center && e.center.lat) || (e.geometry && e.geometry[0] && e.geometry[0].lat);
         const lon = e.lon || (e.center && e.center.lon) || (e.geometry && e.geometry[0] && e.geometry[0].lon);
 
         if (!lat || !lon) return;
+        if (!e.tags || !e.tags.name) return;
 
         let primaryCat = null;
         for (const cat in CATEGORY_MAP) {
-            if (e.tags[cat]) { primaryCat = cat; break; }
+            if (e.tags[cat]) { primaryCat = cat; break; } 
         }
         
         if (primaryCat) {
@@ -207,9 +302,10 @@ function processElements(userLat, userLon, els) {
                 name: e.tags.name,
                 distance: getDistance(userLat, userLon, lat, lon),
                 category: primaryCat,
+                color: CATEGORY_MAP[primaryCat].color,
                 destLat: lat,
                 destLon: lon,
-                element: e,
+                element: e, 
             };
             results[primaryCat].push(placeData);
         }
@@ -219,22 +315,18 @@ function processElements(userLat, userLon, els) {
     return results;
 }
 
-// --- MAP & UI RENDERING ---
+// --- RENDERING ---
 
-/**
- * Renders custom markers for all places and stores them.
- */
 function renderMarkers(allPlaces) {
     markerGroup.clearLayers();
     markerMap.clear();
 
     allPlaces.forEach(place => {
-        // Use the simplified, easy-to-render circular icon
         const markerIcon = L.divIcon({
-            className: 'custom-pin',
-            html: '',
-            iconSize: [18, 18], // Adjusted size for the new circle
-            iconAnchor: [9, 9], // Center anchor point
+            className: 'custom-pin-container',
+            html: `<div class="custom-pin" style="--pin-color: ${place.color};"></div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8],
             popupAnchor: [0, -10]
         });
 
@@ -242,21 +334,18 @@ function renderMarkers(allPlaces) {
             icon: markerIcon, 
             category: place.category 
         })
-            .bindPopup(`<b>${place.name}</b><br>${CATEGORY_MAP[place.category].label}`)
+            .bindPopup(`<b>${place.name}</b><br>${CATEGORY_MAP[place.category].label} (${place.element.tags[place.category]})`)
             .addTo(markerGroup);
 
         marker.on('click', () => {
             handlePlaceSelection(place.id, place);
-            keyPanel.classList.add('open'); // Open key when marker is clicked
+            keyPanel.classList.add('open'); 
         });
         
         markerMap.set(place.id, marker);
     });
 }
 
-/**
- * Toggles the visibility of markers based on the checked filters in the key panel.
- */
 function toggleMarkers() {
     const checkedCategories = new Set();
     document.querySelectorAll('#marker-filters input[type="checkbox"]:checked').forEach(input => {
@@ -265,21 +354,16 @@ function toggleMarkers() {
 
     markerGroup.clearLayers(); 
     
-    // Add markers back if their category is checked
     markerMap.forEach(marker => {
         if (checkedCategories.has(marker.options.category)) {
             marker.addTo(markerGroup);
         }
     });
     
-    // Re-render the list based on the new visible categories
     const activeTab = document.querySelector('.tab-btn.bg-blue-500')?.dataset.category || 'all';
     renderList(activeTab);
 }
 
-/**
- * Renders the filter checkboxes in the key panel.
- */
 function renderFilterCheckboxes(results) {
     const filtersContainer = document.querySelector('#marker-filters .flex');
     filtersContainer.innerHTML = '';
@@ -287,10 +371,11 @@ function renderFilterCheckboxes(results) {
     for (const key in CATEGORY_MAP) {
         if (Object.values(results).flat().some(p => p.category === key)) {
             const label = document.createElement('label');
-            label.className = 'flex items-center space-x-1 text-sm cursor-pointer hover:text-blue-300 transition';
+            label.className = 'flex items-center space-x-1 text-sm cursor-pointer hover:text-white transition';
             label.innerHTML = `
-                <input type="checkbox" class="marker-filter h-4 w-4 text-red-500 rounded border-gray-600 bg-gray-900 checked:bg-red-500" value="${key}" checked>
-                <span>${CATEGORY_MAP[key].icon} ${CATEGORY_MAP[key].label}</span>
+                <input type="checkbox" class="marker-filter h-4 w-4 rounded border-gray-600 bg-gray-900 checked:bg-current" style="color:${CATEGORY_MAP[key].color};" value="${key}" checked>
+                <span style="color:${CATEGORY_MAP[key].color};">${CATEGORY_MAP[key].icon}</span>
+                <span>${CATEGORY_MAP[key].label}</span>
             `;
             filtersContainer.appendChild(label);
             
@@ -299,9 +384,6 @@ function renderFilterCheckboxes(results) {
     }
 }
 
-/**
- * Renders the category tabs for list filtering and attaches handlers.
- */
 function renderTabs(results) {
     const tabsContainer = document.getElementById('category-tabs');
     tabsContainer.innerHTML = '';
@@ -312,7 +394,7 @@ function renderTabs(results) {
     for (const key in results) {
         const count = results[key].length;
         if (count > 0) {
-            categories.push({ key: key, label: `${CATEGORY_MAP[key].label} (${count})`, icon: CATEGORY_MAP[key].icon });
+            categories.push({ key: key, label: `${CATEGORY_MAP[key].label} (${count})`, icon: CATEGORY_MAP[key].icon, color: CATEGORY_MAP[key].color });
         }
     }
     
@@ -320,15 +402,20 @@ function renderTabs(results) {
         const tabButton = document.createElement('button');
         tabButton.textContent = `${cat.icon} ${cat.label}`;
         tabButton.dataset.category = cat.key;
-        tabButton.className = 'tab-btn px-3 py-1.5 text-sm font-semibold rounded-lg transition duration-150 whitespace-nowrap';
-        tabButton.classList.add('bg-gray-700', 'text-gray-300', 'hover:bg-blue-600', 'hover:text-white');
+        tabButton.className = 'tab-btn px-3 py-1.5 text-sm font-semibold rounded-lg transition duration-150 whitespace-nowrap border-b-2 border-transparent';
+        tabButton.classList.add('bg-gray-700', 'text-gray-300', 'hover:bg-gray-600');
         
+        if (cat.color) {
+            tabButton.style.borderBottomColor = cat.color;
+            tabButton.dataset.color = cat.color;
+        }
+
         tabButton.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.remove('bg-blue-500', 'text-white', 'scale-105');
                 btn.classList.add('bg-gray-700', 'text-gray-300');
             });
-            tabButton.classList.add('bg-blue-500', 'text-white');
+            tabButton.classList.add('bg-blue-500', 'text-white', 'scale-105');
             tabButton.classList.remove('bg-gray-700', 'text-gray-300');
 
             renderList(cat.key);
@@ -337,13 +424,11 @@ function renderTabs(results) {
     });
 
     if (categories.length > 0) {
-        tabsContainer.querySelector('[data-category="all"]').click();
+        const allBtn = tabsContainer.querySelector('[data-category="all"]');
+        if(allBtn) allBtn.click();
     }
 }
 
-/**
- * Renders the results list for the currently selected category, respecting marker visibility.
- */
 function renderList(categoryKey) {
     const listContainer = document.getElementById('places-list');
     listContainer.innerHTML = ''; 
@@ -356,7 +441,6 @@ function renderList(categoryKey) {
         listItems = categorizedPlaces[categoryKey] || [];
     }
     
-    // Filter list items based on current marker visibility (checkbox state)
     const checkedCategories = new Set(
         [...document.querySelectorAll('#marker-filters input[type="checkbox"]:checked')].map(input => input.value)
     );
@@ -369,7 +453,8 @@ function renderList(categoryKey) {
     }
     
     visibleItems.forEach(item => {
-        const distanceKm = (item.distance / 1000).toFixed(2);
+        const distanceM = item.distance.toFixed(0);
+        const specificTag = item.element.tags[item.category] || 'General POI';
         
         const div = document.createElement('div');
         div.className = 'result-item bg-gray-800 p-3 rounded-xl shadow-md border-2 border-transparent hover:border-blue-500 transition cursor-pointer';
@@ -381,11 +466,14 @@ function renderList(categoryKey) {
         }
 
         div.innerHTML = `
-            <div class="flex justify-between items-start">
-                <span class="font-bold text-white">${item.name}</span>
-                <span class="text-sm font-semibold text-blue-400 bg-gray-700 px-2 py-0.5 rounded-full">${distanceKm} km</span>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="w-2 h-2 rounded-full mr-2" style="background-color: ${item.color};"></span>
+                    <span class="font-bold text-white">${item.name}</span>
+                </div>
+                <span class="text-sm font-semibold text-blue-400 bg-gray-700 px-2 py-0.5 rounded-full">${distanceM} m</span>
             </div>
-            <p class="text-xs text-gray-400 mt-1">Type: ${item.element.tags[item.category] || 'General POI'}</p>
+            <p class="text-xs text-gray-400 mt-1 truncate">${specificTag}</p>
         `;
         
         div.onclick = () => handlePlaceSelection(item.id, item);
@@ -393,9 +481,6 @@ function renderList(categoryKey) {
     });
 }
 
-/**
- * Handles the selection of a place, updating map, list, and drawing route.
- */
 async function handlePlaceSelection(id, itemData) {
     if (!userLocation) return;
 
@@ -409,8 +494,7 @@ async function handlePlaceSelection(id, itemData) {
         }
         if (markerId === id && iconElement) {
             iconElement.classList.add('active');
-            marker.openPopup();
-            map.panTo(marker.getLatLng()); // Center map on marker
+            map.panTo(marker.getLatLng()); 
         }
     });
     
@@ -426,49 +510,58 @@ async function handlePlaceSelection(id, itemData) {
         }
     });
 
-    // 3. Draw Route and Feature Highlight
+    // 3. Draw Feature Highlight
     clearRoute();
     const e = itemData.element;
 
     if (e.geometry && e.geometry.length && e.geometry[0].lat) { 
         const coords = e.geometry.map(p => [p.lat, p.lon]);
-        const l = L.polyline(coords, { color: '#00ccff', weight: 6, opacity: 0.8 }).addTo(map);
+        const l = L.polyline(coords, { color: itemData.color, weight: 8, opacity: 0.9 }).addTo(map);
         highlightGroup.push(l);
     }
 
+    // 4. Calculate and Draw Route with Metrics (Requires Network)
     try {
-        const line = await getRoute(userLocation.lat, userLocation.lon, itemData.destLat, itemData.destLon);
+        const routeData = await getRoute(userLocation.lat, userLocation.lon, itemData.destLat, itemData.destLon);
+        const line = routeData.geometry.coordinates.map(([lo, la]) => [la, lo]);
+        
+        const distanceKm = (routeData.distance / 1000).toFixed(1);
+        const durationMin = Math.round(routeData.duration / 60);
+
         routeLine = L.polyline(line, { color: '#2ecc71', weight: 5, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
+        
+        routeLine.bindPopup(`
+            <b class="text-green-600">ROUTE TO ${itemData.name}</b><br>
+            Distance: ${distanceKm} km<br>
+            Est. Time (Car): ${durationMin} minutes
+        `).openPopup();
         
         const bounds = routeLine.getBounds();
         bounds.extend(userMarker.getLatLng());
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
     } catch (error) {
         console.error("Routing error:", error.message);
-        markerMap.get(id).setPopupContent(`<b>${itemData.name}</b><br>🚫 Route Error: ${error.message}`).openPopup();
+        const marker = markerMap.get(id);
+        if(marker) {
+             marker.setPopupContent(`<b>${itemData.name}</b><br>⚠️ Route Error: ${error.message} (Requires Network)`).openPopup();
+        }
+       
     }
 }
 
 
-/**
- * Main function to get user location and search for nearby places.
- */
-async function locate() {
-  document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🛰️ Getting your location...</p>';
-  document.getElementById('category-tabs').innerHTML = '';
-  document.querySelector('#marker-filters .flex').innerHTML = ''; 
-  toggleKeyBtn.disabled = true;
+// --- MAIN LOCATION & SEARCH LOGIC ---
 
-  clearRoute(); 
-  markerGroup.clearLayers();
-  currentActiveId = null;
+async function locate() {
+  document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 p-4 flex items-center justify-center">Attempting to locate... <div class="loader ml-3"></div></p>';
+  toggleKeyBtn.disabled = true;
 
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude: lat, longitude: lon } = pos.coords;
     userLocation = { lat, lon };
     map.setView([lat, lon], 15);
 
-    // Update user marker (SIMPLIFIED)
+    // Update user marker
     if (userMarker) map.removeLayer(userMarker);
     const userIcon = L.divIcon({
         className: 'user-marker-icon',
@@ -478,21 +571,22 @@ async function locate() {
     });
     userMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map).bindPopup("Your Current Location").openPopup();
 
-    const cats = ['highway', 'amenity', 'shop', 'leisure']; 
-    const dist = document.getElementById('radius').value;
-    
-    document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🔍 Searching for map pins...</p>';
+    // 1. TRY LOADING FROM CACHE
+    const cachedData = loadLocalData();
 
-    const els = await fetch("https://overpass-api.de/api/interpreter?data="+encodeURIComponent(`[out:json][timeout:25];(${cats.map(c=>`node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('')}node["name"](around:${dist},${lat},${lon});way["name"](around:${dist},${lat},${lon}););out tags center geom;`)).then(r => r.json()).then(d => d.elements.filter(e => e.tags && e.tags.name)).catch(err => {
-        document.getElementById('places-list').innerHTML = `<p class="text-red-400 text-center p-4">Network Error: ${err.message}</p>`;
-        return [];
-    });
+    if (cachedData && cachedData.userLocation.lat === lat && cachedData.userLocation.lon === lon) {
+        document.getElementById('places-list').innerHTML = '<p class="text-center text-green-400 p-4">✅ Data loaded from local cache!</p>';
+        categorizedPlaces = cachedData.places;
+    } else {
+        // 2. FETCH LIVE DATA IF NO CACHE OR LOCATION CHANGED SIGNIFICANTLY
+        await fetchLivePoiData(lat, lon);
+    }
     
-    categorizedPlaces = processElements(lat, lon, els);
+    // 3. RENDER ALL DATA
     const allUniquePlaces = Object.values(categorizedPlaces).flat();
 
     if (allUniquePlaces.length === 0) {
-        document.getElementById('places-list').innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No places found. Try increasing the search radius.</p>`;
+        document.getElementById('places-list').innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No places found.</p>`;
         toggleKeyBtn.disabled = true;
     } else {
         renderMarkers(allUniquePlaces);
@@ -511,9 +605,39 @@ async function locate() {
   }, { enableHighAccuracy: true });
 }
 
-// Initial Map Load
-map.setView([20, 0], 2);
-document.getElementById('btn').onclick = locate;
+async function fetchLivePoiData(lat, lon) {
+    document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 p-4 flex items-center justify-center">🌐 Searching Overpass for new data... <div class="loader ml-3"></div></p>';
+
+    const cats = Object.keys(CATEGORY_MAP); 
+    const dist = document.getElementById('radius').value;
+    
+    const overpassQuery = `
+        [out:json][timeout:25];
+        (
+            ${cats.map(c=>`node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('')}
+        );
+        (
+            ._;
+            node(around:${dist},${lat},${lon})["name"];
+        );
+        out tags center geom;
+    `;
+
+    try {
+        const els = await fetch("https://overpass-api.de/api/interpreter?data="+encodeURIComponent(overpassQuery))
+            .then(r => r.json())
+            .then(d => d.elements.filter(e => e.tags && e.tags.name));
+            
+        categorizedPlaces = processElements(lat, lon, els);
+        
+        // Save the new data to local storage
+        saveLocalData({ places: categorizedPlaces, userLocation: {lat, lon} });
+        
+    } catch (err) {
+        document.getElementById('places-list').innerHTML = `<p class="text-red-400 text-center p-4">Network Error fetching data: ${err.message}. Showing map only.</p>`;
+        categorizedPlaces = {};
+    }
+}
 </script>
 </body>
 </html>
