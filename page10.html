@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LG webOS Remote</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+```
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+    
+    .container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 24px;
+    }
+    
+    .status {
+        text-align: center;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    
+    .status.disconnected {
+        background: #fee;
+        color: #c33;
+    }
+    
+    .status.connected {
+        background: #efe;
+        color: #3c3;
+    }
+    
+    .connection-section {
+        margin-bottom: 20px;
+    }
+    
+    input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 10px;
+        font-size: 16px;
+        margin-bottom: 10px;
+    }
+    
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .connect-btn {
+        background: #667eea;
+        color: white;
+        margin-bottom: 10px;
+    }
+    
+    .connect-btn:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+    }
+    
+    .remote-section {
+        display: none;
+    }
+    
+    .remote-section.active {
+        display: block;
+    }
+    
+    .dpad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 20px 0;
+    }
+    
+    .dpad button {
+        aspect-ratio: 1;
+        background: #667eea;
+        color: white;
+        font-size: 24px;
+    }
+    
+    .dpad button:hover {
+        background: #5568d3;
+    }
+    
+    .dpad .up { grid-column: 2; }
+    .dpad .left { grid-column: 1; grid-row: 2; }
+    .dpad .ok { grid-column: 2; grid-row: 2; background: #764ba2; }
+    .dpad .right { grid-column: 3; grid-row: 2; }
+    .dpad .down { grid-column: 2; grid-row: 3; }
+    
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .controls button {
+        background: #764ba2;
+        color: white;
+    }
+    
+    .controls button:hover {
+        background: #653a8a;
+    }
+    
+    .volume-controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .info {
+        margin-top: 20px;
+        padding: 10px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        font-size: 12px;
+        color: #666;
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <h1>🖥️ LG webOS Remote</h1>
+
+```
+    <div class="status disconnected" id="status">Disconnected</div>
+    
+    <div class="connection-section" id="connectionSection">
+        <input type="text" id="tvIp" placeholder="TV IP Address (e.g., 192.168.1.100)" />
+        <button class="connect-btn" onclick="connect()">Connect to TV</button>
+        <div class="info">
+            Find your TV's IP in: Settings → Network → Wi-Fi Connection → Advanced Wi-Fi Settings
+        </div>
+    </div>
+    
+    <div class="remote-section" id="remoteSection">
+        <div class="dpad">
+            <button class="up" onclick="sendKey('UP')">▲</button>
+            <button class="left" onclick="sendKey('LEFT')">◄</button>
+            <button class="ok" onclick="sendKey('ENTER')">OK</button>
+            <button class="right" onclick="sendKey('RIGHT')">►</button>
+            <button class="down" onclick="sendKey('DOWN')">▼</button>
+        </div>
+        
+        <div class="controls">
+            <button onclick="sendKey('BACK')">← Back</button>
+            <button onclick="sendKey('HOME')">🏠 Home</button>
+        </div>
+        
+        <div class="volume-controls">
+            <button onclick="sendKey('VOLUMEUP')">Vol +</button>
+            <button onclick="sendKey('MUTE')">🔇 Mute</button>
+            <button onclick="sendKey('VOLUMEDOWN')">Vol -</button>
+        </div>
+        
+        <button class="connect-btn" onclick="disconnect()" style="margin-top: 20px; background: #c33;">Disconnect</button>
+    </div>
+</div>
+
+<script>
+    let ws = null;
+    let clientKey = null;
+
+    function connect() {
+        const ip = document.getElementById('tvIp').value.trim();
+        if (!ip) {
+            alert('Please enter TV IP address');
+            return;
+        }
+
+        // Save IP for next time
+        localStorage.setItem('webos_tv_ip', ip);
+
+        // Try to get saved client key
+        clientKey = localStorage.getItem('webos_client_key');
+
+        const wsUrl = `ws://${ip}:3000`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log('WebSocket connected');
+            register();
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('Received:', data);
+            
+            if (data.type === 'registered') {
+                if (data.payload && data.payload['client-key']) {
+                    clientKey = data.payload['client-key'];
+                    localStorage.setItem('webos_client_key', clientKey);
+                }
+                updateStatus(true);
+            }
+            
+            if (data.type === 'response' && data.payload && data.payload.returnValue === false) {
+                console.error('Command failed:', data.payload);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            alert('Connection failed. Make sure:\n1. TV is on\n2. IP address is correct\n3. You\'re on the same network');
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket closed');
+            updateStatus(false);
+        };
+    }
+
+    function register() {
+        const registerPayload = {
+            type: 'register',
+            id: 'register_0',
+            payload: {
+                'forcePairing': false,
+                'pairingType': 'PROMPT',
+                'manifest': {
+                    'manifestVersion': 1,
+                    'appVersion': '1.0.0',
+                    'signed': {
+                        'created': '20140509',
+                        'appId': 'com.lge.test',
+                        'vendorId': 'com.lge',
+                        'localizedAppNames': {
+                            '': 'Web Remote',
+                            'en-US': 'Web Remote'
+                        },
+                        'localizedVendorNames': {
+                            '': 'LG Electronics'
+                        },
+                        'permissions': [
+                            'TEST_SECURE',
+                            'CONTROL_INPUT_TV',
+                            'CONTROL_POWER',
+                            'READ_INSTALLED_APPS',
+                            'CONTROL_DISPLAY',
+                            'CONTROL_INPUT_JOYSTICK',
+                            'CONTROL_INPUT_MEDIA_RECORDING',
+                            'CONTROL_INPUT_MEDIA_PLAYBACK',
+                            'READ_INPUT_DEVICE_LIST',
+                            'READ_NETWORK_STATE',
+                            'READ_RUNNING_APPS',
+                            'READ_UPDATE_INFO',
+                            'WRITE_SETTINGS',
+                            'WRITE_NOTIFICATION_TOAST'
+                        ],
+                        'serial': '2f930e2d2cfe083771f68e4fe7bb07'
+                    },
+                    'permissions': [
+                        'LAUNCH',
+                        'LAUNCH_WEBAPP',
+                        'APP_TO_APP',
+                        'CLOSE',
+                        'TEST_OPEN',
+                        'TEST_PROTECTED',
+                        'CONTROL_AUDIO',
+                        'CONTROL_DISPLAY',
+                        'CONTROL_INPUT_JOYSTICK',
+                        'CONTROL_INPUT_MEDIA_RECORDING',
+                        'CONTROL_INPUT_MEDIA_PLAYBACK',
+                        'CONTROL_INPUT_TV',
+                        'CONTROL_POWER',
+                        'READ_APP_STATUS',
+                        'READ_CURRENT_CHANNEL',
+                        'READ_INPUT_DEVICE_LIST',
+                        'READ_NETWORK_STATE',
+                        'READ_RUNNING_APPS',
+                        'READ_UPDATE_INFO',
+                        'WRITE_NOTIFICATION_ALERT',
+                        'WRITE_NOTIFICATION_TOAST',
+                        'WRITE_SETTINGS'
+                    ]
+                }
+            }
+        };
+
+        if (clientKey) {
+            registerPayload.payload['client-key'] = clientKey;
+        }
+
+        ws.send(JSON.stringify(registerPayload));
+    }
+
+    function sendKey(key) {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            alert('Not connected to TV');
+            return;
+        }
+
+        const payload = {
+            type: 'request',
+            id: 'button_' + Date.now(),
+            uri: 'ssap://com.webos.service.ime/sendEnterKey'
+        };
+
+        // Map keys to webOS commands
+        const keyMap = {
+            'UP': 'UP',
+            'DOWN': 'DOWN',
+            'LEFT': 'LEFT',
+            'RIGHT': 'RIGHT',
+            'ENTER': 'ENTER',
+            'BACK': 'BACK',
+            'HOME': 'HOME',
+            'VOLUMEUP': 'VOLUMEUP',
+            'VOLUMEDOWN': 'VOLUMEDOWN',
+            'MUTE': 'MUTE'
+        };
+
+        if (key === 'HOME') {
+            payload.uri = 'ssap://system.launcher/open';
+            payload.payload = { id: 'com.webos.app.home' };
+        } else if (key === 'VOLUMEUP' || key === 'VOLUMEDOWN') {
+            payload.uri = 'ssap://audio/volumeUp';
+            if (key === 'VOLUMEDOWN') {
+                payload.uri = 'ssap://audio/volumeDown';
+            }
+        } else if (key === 'MUTE') {
+            payload.uri = 'ssap://audio/setMute';
+            payload.payload = { mute: true };
+        } else {
+            payload.uri = 'ssap://com.webos.service.ime/sendEnterKey';
+        }
+
+        ws.send(JSON.stringify(payload));
+    }
+
+    function updateStatus(connected) {
+        const status = document.getElementById('status');
+        const connectionSection = document.getElementById('connectionSection');
+        const remoteSection = document.getElementById('remoteSection');
+
+        if (connected) {
+            status.textContent = 'Connected ✓';
+            status.className = 'status connected';
+            connectionSection.style.display = 'none';
+            remoteSection.classList.add('active');
+        } else {
+            status.textContent = 'Disconnected';
+            status.className = 'status disconnected';
+            connectionSection.style.display = 'block';
+            remoteSection.classList.remove('active');
+        }
+    }
+
+    function disconnect() {
+        if (ws) {
+            ws.close();
+            ws = null;
+        }
+        updateStatus(false);
+    }
+
+    // Load saved IP on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedIp = localStorage.getItem('webos_tv_ip');
+        if (savedIp) {
+            document.getElementById('tvIp').value = savedIp;
+        }
+    });
+</script>
+```
+
+</body>
+</html>
