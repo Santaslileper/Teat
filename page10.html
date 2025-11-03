@@ -101,7 +101,17 @@
         background: #5568d3;
     }
     
-    .connect-btn:disabled {
+    .test-btn {
+        background: #28a745;
+        color: white;
+        margin-bottom: 10px;
+    }
+    
+    .test-btn:hover {
+        background: #218838;
+    }
+    
+    .connect-btn:disabled, .test-btn:disabled {
         background: #ccc;
         cursor: not-allowed;
     }
@@ -170,6 +180,15 @@
         color: #666;
         line-height: 1.5;
     }
+
+    .warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
     
     .log {
         margin-top: 10px;
@@ -178,7 +197,7 @@
         border-radius: 10px;
         font-size: 11px;
         color: #666;
-        max-height: 100px;
+        max-height: 150px;
         overflow-y: auto;
         font-family: monospace;
     }
@@ -195,11 +214,20 @@
     
     <div class="connection-section" id="connectionSection">
         <input type="text" id="tvIp" placeholder="TV IP (e.g., 192.168.1.100)" />
+        <button class="test-btn" onclick="testConnection()" id="testBtn">🔍 Test Connection</button>
         <button class="connect-btn" onclick="connectToTV()" id="connectBtn">Connect to TV</button>
+        
+        <div class="warning">
+            <strong>⚠️ Common Issues:</strong><br>
+            • TV must be ON (not standby)<br>
+            • Must be on same WiFi network<br>
+            • Some TVs need "LG Connect Apps" enabled in Settings → Network<br>
+            • Try port 3000 and 3001
+        </div>
+
         <div class="info">
-            <strong>How to find your TV's IP:</strong><br>
-            Settings → Network → Wi-Fi Connection → Advanced<br><br>
-            Make sure your TV and this device are on the same WiFi network.
+            <strong>Find TV IP:</strong><br>
+            Settings → Network → Wi-Fi Connection → Advanced Settings
         </div>
         <div class="log" id="log"></div>
     </div>
@@ -233,6 +261,7 @@
     let isConnected = false;
     let clientKey = null;
     let messageId = 0;
+    let currentPort = 3000;
 
     function log(msg) {
         const logEl = document.getElementById('log');
@@ -252,10 +281,86 @@
         document.getElementById('remoteSection').classList.toggle('active', show);
     }
 
+    async function testConnection() {
+        const ip = document.getElementById('tvIp').value.trim();
+        if (!ip) {
+            alert('Please enter TV IP address');
+            return;
+        }
+
+        const testBtn = document.getElementById('testBtn');
+        testBtn.disabled = true;
+        testBtn.textContent = 'Testing...';
+
+        log('Testing connection to ' + ip);
+
+        // Test ping via image load
+        const img = new Image();
+        const timeout = setTimeout(() => {
+            log('❌ Timeout - TV not responding');
+            log('Make sure TV is ON and on same network');
+            testBtn.disabled = false;
+            testBtn.textContent = '🔍 Test Connection';
+        }, 5000);
+
+        img.onload = img.onerror = function() {
+            clearTimeout(timeout);
+            log('✅ TV is reachable at ' + ip);
+            log('Checking WebSocket ports...');
+            
+            // Try WebSocket on port 3000
+            tryWebSocket(ip, 3000, function(success) {
+                if (success) {
+                    log('✅ Port 3000 is open - Ready to connect!');
+                    currentPort = 3000;
+                } else {
+                    log('❌ Port 3000 failed, trying 3001...');
+                    tryWebSocket(ip, 3001, function(success2) {
+                        if (success2) {
+                            log('✅ Port 3001 is open - Ready to connect!');
+                            currentPort = 3001;
+                        } else {
+                            log('❌ WebSocket ports blocked');
+                            log('Check TV Settings → Network → LG Connect Apps');
+                        }
+                        testBtn.disabled = false;
+                        testBtn.textContent = '🔍 Test Connection';
+                    });
+                }
+            });
+        };
+
+        img.src = 'http://' + ip + ':3000/favicon.ico?' + Date.now();
+    }
+
+    function tryWebSocket(ip, port, callback) {
+        try {
+            const testSocket = new WebSocket('ws://' + ip + ':' + port);
+            
+            const timeout = setTimeout(() => {
+                testSocket.close();
+                callback(false);
+            }, 3000);
+
+            testSocket.onopen = function() {
+                clearTimeout(timeout);
+                testSocket.close();
+                callback(true);
+            };
+
+            testSocket.onerror = function() {
+                clearTimeout(timeout);
+                callback(false);
+            };
+        } catch(e) {
+            callback(false);
+        }
+    }
+
     function connectToTV() {
         const ip = document.getElementById('tvIp').value.trim();
         if (!ip) {
-            alert('Please enter your TV IP address');
+            alert('Please enter TV IP address');
             return;
         }
 
@@ -267,44 +372,57 @@
         clientKey = localStorage.getItem('webos_client_key');
 
         updateStatus('connecting', 'Connecting to TV...');
-        log('Attempting connection to ' + ip);
+        log('Connecting to ' + ip + ':' + currentPort);
 
         try {
-            socket = new WebSocket('ws://' + ip + ':3000');
+            socket = new WebSocket('ws://' + ip + ':' + currentPort);
             
+            const connectionTimeout = setTimeout(() => {
+                if (!isConnected) {
+                    log('❌ Connection timeout');
+                    socket.close();
+                    btn.disabled = false;
+                    btn.textContent = 'Connect to TV';
+                    updateStatus('disconnected', 'Connection timeout');
+                }
+            }, 10000);
+
             socket.onopen = function() {
-                log('WebSocket opened, sending registration...');
+                log('✅ WebSocket opened');
                 sendRegistration();
             };
 
             socket.onmessage = function(event) {
                 try {
                     const msg = JSON.parse(event.data);
-                    log('Received: ' + msg.type);
+                    log('← Received: ' + msg.type);
                     handleMessage(msg);
+                    clearTimeout(connectionTimeout);
                 } catch(e) {
-                    log('Error parsing message: ' + e.message);
+                    log('Parse error: ' + e.message);
                 }
             };
 
             socket.onerror = function(error) {
-                log('WebSocket error occurred');
+                log('❌ WebSocket error');
+                clearTimeout(connectionTimeout);
                 updateStatus('disconnected', 'Connection failed');
                 btn.disabled = false;
                 btn.textContent = 'Connect to TV';
             };
 
             socket.onclose = function() {
-                log('WebSocket closed');
+                log('Connection closed');
+                clearTimeout(connectionTimeout);
                 isConnected = false;
-                updateStatus('disconnected', 'Connection closed');
+                updateStatus('disconnected', 'Disconnected');
                 showRemote(false);
                 btn.disabled = false;
                 btn.textContent = 'Connect to TV';
             };
         } catch(e) {
-            log('Connection error: ' + e.message);
-            updateStatus('disconnected', 'Failed to connect');
+            log('Error: ' + e.message);
+            updateStatus('disconnected', 'Failed');
             btn.disabled = false;
             btn.textContent = 'Connect to TV';
         }
@@ -377,15 +495,16 @@
 
         if (clientKey) {
             handshake.payload["client-key"] = clientKey;
-            log('Using saved client key');
+            log('Using saved key');
         }
 
+        log('→ Sending registration...');
         socket.send(JSON.stringify(handshake));
     }
 
     function handleMessage(msg) {
         if (msg.type === "registered") {
-            log('Registration successful!');
+            log('✅ Registration successful!');
             isConnected = true;
             
             if (msg.payload && msg.payload["client-key"]) {
@@ -394,24 +513,24 @@
                 log('Client key saved');
             }
             
-            updateStatus('connected', 'Connected! Check TV for pairing prompt if needed');
+            updateStatus('connected', '✅ Connected! Accept pairing on TV');
             showRemote(true);
         } else if (msg.type === "response") {
             if (msg.payload && msg.payload.returnValue === false) {
-                log('Command failed: ' + JSON.stringify(msg.payload));
+                log('Command failed');
             }
         } else if (msg.type === "error") {
-            log('Error: ' + msg.error);
+            log('Error: ' + (msg.error || 'unknown'));
         }
     }
 
     function pressButton(button) {
         if (!socket || socket.readyState !== WebSocket.OPEN) {
-            alert('Not connected to TV');
+            alert('Not connected');
             return;
         }
 
-        log('Pressing: ' + button);
+        log('→ ' + button);
 
         let request = {
             type: "request",
@@ -419,7 +538,6 @@
             uri: "ssap://com.webos.service.ime/sendEnterKey"
         };
 
-        // Different commands for different buttons
         switch(button) {
             case 'HOME':
                 request.uri = "ssap://system.launcher/open";
@@ -435,9 +553,6 @@
                 request.uri = "ssap://audio/setMute";
                 request.payload = { mute: true };
                 break;
-            default:
-                // For directional and other keys
-                request.uri = "ssap://com.webos.service.ime/sendEnterKey";
         }
 
         socket.send(JSON.stringify(request));
@@ -453,7 +568,6 @@
         showRemote(false);
     }
 
-    // Load saved IP on startup
     window.addEventListener('DOMContentLoaded', function() {
         const savedIp = localStorage.getItem('webos_tv_ip');
         if (savedIp) {
