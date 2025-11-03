@@ -6,56 +6,63 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-body { margin:0; font-family:system-ui,sans-serif; background:#0d1117; color:#e6edf3;}
-#map { height:55vh; }
-#controls{padding:.5rem 1rem;background:#161b22;display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;}
+body{margin:0;font-family:system-ui,sans-serif;background:#0d1117;color:#e6edf3;}
+#map{height:55vh;}
+#controls{padding:.6rem 1rem;background:#161b22;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;}
 #places{padding:1rem;max-height:40vh;overflow:auto;}
 h2{text-align:center;margin:.7em 0;}
 button{padding:.8em 1.4em;border:none;border-radius:10px;background:#238636;color:#fff;font-size:1rem;}
 label{font-size:.9rem;}
 li{margin:.4em 0;cursor:pointer;}
 li:hover{color:#58a6ff;}
+#rangeVal{min-width:3em;display:inline-block;text-align:right;}
 </style>
 </head>
 <body>
 <h2>Nearby Places + Directions</h2>
 <div id="controls">
-  <button id="btn">Locate Me</button>
+  <button id="btn">Locate</button>
   <label><input type="checkbox" class="cat" value="highway" checked> Roads</label>
   <label><input type="checkbox" class="cat" value="amenity" checked> Amenities</label>
   <label><input type="checkbox" class="cat" value="shop" checked> Shops</label>
   <label><input type="checkbox" class="cat" value="leisure" checked> Parks</label>
+  <label>Distance: <input id="radius" type="range" min="200" max="2000" step="100" value="1000">
+    <span id="rangeVal">1000 m</span></label>
 </div>
 <div id="map"></div>
 <div id="places"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const map = L.map('map');
-let userMarker, routeLine;
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom:19, attribution:'© OpenStreetMap contributors'
+const map=L.map('map');
+let userMarker,routeLine,highlightGroup=[];
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,attribution:'© OpenStreetMap contributors'
 }).addTo(map);
 
-async function getNearby(lat, lon, cats){
-  const filters = cats.map(c=>`node["${c}"](around:1000,${lat},${lon});way["${c}"](around:1000,${lat},${lon});`).join('');
-  const query = `[out:json][timeout:25];(${filters}node["name"](around:1000,${lat},${lon});way["name"](around:1000,${lat},${lon}););out tags center geom;`;
-  const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.elements.filter(e=>e.tags && e.tags.name);
+document.getElementById('radius').oninput=e=>{
+  document.getElementById('rangeVal').textContent=e.target.value+' m';
+};
+
+async function getNearby(lat,lon,cats,dist){
+  const filters=cats.map(c=>`node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('');
+  const query=`[out:json][timeout:25];(${filters}node["name"](around:${dist},${lat},${lon});way["name"](around:${dist},${lat},${lon}););out tags center geom;`;
+  const res=await fetch("https://overpass-api.de/api/interpreter?data="+encodeURIComponent(query));
+  const data=await res.json();
+  return data.elements.filter(e=>e.tags&&e.tags.name);
 }
 
-async function getRoute(fromLat,fromLon,toLat,toLon){
-  const url=`https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
-  const res=await fetch(url);
-  const data=await res.json();
-  if(!data.routes||!data.routes[0]) throw new Error("No route found");
-  return data.routes[0].geometry.coordinates.map(([lon,lat])=>[lat,lon]);
+async function getRoute(lat1,lon1,lat2,lon2){
+  const url=`https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+  const r=await fetch(url);const d=await r.json();
+  if(!d.routes||!d.routes[0])throw new Error("No route found");
+  return d.routes[0].geometry.coordinates.map(([lo,la])=>[la,lo]);
 }
 
 function clearRoute(){
-  if(routeLine){ map.removeLayer(routeLine); routeLine=null; }
+  if(routeLine){map.removeLayer(routeLine);routeLine=null;}
+  highlightGroup.forEach(l=>map.removeLayer(l));
+  highlightGroup=[];
 }
 
 async function locate(){
@@ -63,23 +70,47 @@ async function locate(){
   navigator.geolocation.getCurrentPosition(async pos=>{
     const {latitude:lat,longitude:lon}=pos.coords;
     map.setView([lat,lon],15);
-    if(userMarker) map.removeLayer(userMarker);
+    if(userMarker)map.removeLayer(userMarker);
     userMarker=L.marker([lat,lon]).addTo(map).bindPopup("You are here").openPopup();
 
     const cats=[...document.querySelectorAll('.cat:checked')].map(c=>c.value);
-    const els=await getNearby(lat,lon,cats);
-    document.getElementById('places').innerHTML=`<b>${els.length}</b> items found:<ul>`+
-      els.map((e,i)=>`<li data-i="${i}">${e.tags.name}</li>`).join('')+'</ul>';
+    const dist=document.getElementById('radius').value;
+    const els=await getNearby(lat,lon,cats,dist);
+
+    // Group by name
+    const grouped={};
+    for(const e of els){
+      const name=e.tags.name;
+      if(!grouped[name])grouped[name]=[];
+      grouped[name].push(e);
+    }
+
+    const names=Object.keys(grouped);
+    document.getElementById('places').innerHTML=`<b>${names.length}</b> unique names within ${dist} m:<ul>`+
+      names.map((n,i)=>`<li data-name="${encodeURIComponent(n)}">${n}</li>`).join('')+'</ul>';
 
     document.querySelectorAll('#places li').forEach(li=>{
       li.onclick=async()=>{
-        const e=els[li.dataset.i];
+        const name=decodeURIComponent(li.dataset.name);
+        const group=grouped[name];
         clearRoute();
-        let destLat=e.lat|| (e.center&&e.center.lat) || (e.geometry&&e.geometry[0].lat);
-        let destLon=e.lon|| (e.center&&e.center.lon) || (e.geometry&&e.geometry[0].lon);
-        if(!destLat||!destLon) return alert("No location data");
-        const line=await getRoute(lat,lon,destLat,destLon);
-        routeLine=L.polyline(line,{color:'yellow',weight:4}).addTo(map);
+
+        // Highlight all segments with same name
+        group.forEach(e=>{
+          if(e.type==="way"&&e.geometry){
+            const coords=e.geometry.map(p=>[p.lat,p.lon]);
+            const l=L.polyline(coords,{color:'yellow',weight:5,opacity:0.7}).addTo(map);
+            highlightGroup.push(l);
+          }
+        });
+
+        // Route from user to center of first one
+        const e=group[0];
+        const dLat=e.lat||(e.center&&e.center.lat)||(e.geometry&&e.geometry[0].lat);
+        const dLon=e.lon||(e.center&&e.center.lon)||(e.geometry&&e.geometry[0].lon);
+        if(!dLat||!dLon)return;
+        const line=await getRoute(lat,lon,dLat,dLon);
+        routeLine=L.polyline(line,{color:'lime',weight:4}).addTo(map);
         map.fitBounds(routeLine.getBounds(),{maxZoom:17});
       };
     });
