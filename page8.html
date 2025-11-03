@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Interactive Game Map Navigator</title>
+<title>Sliding Map Key Navigator</title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <!-- Tailwind CSS CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -10,55 +10,48 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
-  /* Custom styles for the dark theme and responsive map/slider track */
-  body {
-    font-family: 'Inter', sans-serif;
-  }
-  /* Custom marker icon styles for a game vibe */
+  /* Base styles */
+  body { font-family: 'Inter', sans-serif; }
+  /* Custom pin icon for the game map vibe */
   .custom-pin {
-    width: 24px;
-    height: 24px;
-    background-color: #fca5a5; /* Red-300 */
+    width: 24px; height: 24px; background-color: #fca5a5; /* Red-300 */
     border: 3px solid #dc2626; /* Red-600 */
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    position: relative;
-    box-shadow: 0 0 5px rgba(220, 38, 38, 0.7);
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
+    border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    position: relative; box-shadow: 0 0 5px rgba(220, 38, 38, 0.7);
+    cursor: pointer; transition: all 0.2s ease-in-out;
   }
   .custom-pin.active {
-    background-color: #3b82f6; /* Blue-500 */
-    border-color: #1d4ed8; /* Blue-700 */
+    background-color: #3b82f6; border-color: #1d4ed8;
     box-shadow: 0 0 10px rgba(59, 130, 246, 1);
-    transform: scale(1.3) rotate(-45deg); /* Pop on activation */
-    z-index: 1000;
+    transform: scale(1.3) rotate(-45deg); z-index: 1000;
   }
   .custom-pin::after {
-    content: '';
-    width: 6px;
-    height: 6px;
-    margin: 9px 0 0 9px;
-    background-color: white;
-    position: absolute;
-    border-radius: 50%;
+    content: ''; width: 6px; height: 6px; margin: 9px 0 0 9px;
+    background-color: white; position: absolute; border-radius: 50%;
   }
 
-  /* Slider track and thumb styling */
+  /* Key Panel transition and size on mobile */
+  #key-panel {
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(100%); /* Start hidden off-screen */
+  }
+  #key-panel.open {
+    transform: translateX(0); /* Slide fully into view */
+  }
+
+  /* Custom slider and scrollbar styles for dark theme */
   input[type=range]::-webkit-slider-runnable-track { background: #4b5563; border-radius: 8px; height: 8px; }
   input[type=range]::-moz-range-track { background: #4b5563; border-radius: 8px; height: 8px; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -6px; box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); transition: background 0.15s ease-in-out; }
-  input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); transition: background 0.15s ease-in-out; }
-  /* Custom scrollbar for results */
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; margin-top: -6px; box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
   #places-list::-webkit-scrollbar { width: 6px; }
   #places-list::-webkit-scrollbar-track { background: #1f2937; }
   #places-list::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
 </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+<body class="bg-gray-900 text-gray-100 h-screen overflow-hidden flex flex-col">
 
-  <!-- Header and Controls Section (Fixed/Sticky for Mobile Access) -->
-  <header class="p-4 bg-gray-800 shadow-xl z-10 sticky top-0">
+  <!-- Header and Controls Section -->
+  <header class="p-4 bg-gray-800 shadow-xl z-20">
     <h1 class="text-2xl font-extrabold text-center text-blue-400 mb-4 tracking-wider">Interactive Map Key</h1>
     <div id="controls" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
 
@@ -67,7 +60,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
         </svg>
-        Find & Load Map Pins
+        Find My Location
       </button>
 
       <!-- Radius Slider -->
@@ -77,45 +70,51 @@
         </label>
         <input id="radius" type="range" min="200" max="2000" step="100" value="1000" class="w-full appearance-none h-2 bg-gray-700 rounded-lg cursor-pointer">
       </div>
-    </div>
-    
-    <!-- Category Checkboxes (Search Filters) -->
-    <div class="flex flex-wrap justify-center gap-3 p-2 bg-gray-700/50 rounded-lg mt-3 text-sm">
-        <span class="text-gray-400 font-medium">Search Filters:</span>
-        <label class="flex items-center space-x-1 cursor-pointer hover:text-blue-300 transition">
-          <input type="checkbox" class="cat h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="highway" checked>
-          <span>Roads/Transit</span>
-        </label>
-        <label class="flex items-center space-x-1 cursor-pointer hover:text-blue-300 transition">
-          <input type="checkbox" class="cat h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="amenity" checked>
-          <span>Amenities</span>
-        </label>
-        <label class="flex items-center space-x-1 cursor-pointer hover:text-blue-300 transition">
-          <input type="checkbox" class="cat h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="shop" checked>
-          <span>Shops</span>
-        </label>
-        <label class="flex items-center space-x-1 cursor-pointer hover:text-blue-300 transition">
-          <input type="checkbox" class="cat h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="leisure" checked>
-          <span>Parks/Leisure</span>
-        </label>
+      
+      <!-- Toggle Key Button -->
+      <button id="toggle-key-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transition duration-150 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 hidden disabled:opacity-50" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+        </svg>
+        Open Map Key
+      </button>
     </div>
   </header>
 
-  <!-- Map Container (Main Focus) -->
-  <div id="map" class="w-full h-[50vh] sm:h-[60vh] z-0 shadow-inner"></div>
+  <!-- Map and Key Container (Full Screen height minus header) -->
+  <div class="flex-grow relative w-full overflow-hidden">
+    <!-- Map Container -->
+    <div id="map" class="w-full h-full z-10"></div>
 
-  <!-- Results Section -->
-  <div id="places-container" class="p-4 bg-gray-900 flex-grow overflow-hidden">
-    <h2 class="text-xl font-bold mb-3 border-b border-gray-700 pb-1 text-yellow-500">Map Key (Filter by Category)</h2>
-    
-    <!-- Category Tabs -->
-    <div id="category-tabs" class="flex flex-wrap gap-2 mb-4">
-      <!-- Tabs will be injected here by JS -->
-    </div>
+    <!-- Sliding Key Panel (Sidebar) -->
+    <div id="key-panel" class="absolute top-0 right-0 h-full w-full max-w-sm bg-gray-900/95 backdrop-blur-sm shadow-2xl z-20 flex flex-col p-4 overflow-hidden">
+      
+      <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-700">
+        <h2 class="text-xl font-bold text-yellow-500">Map Key & Filters</h2>
+        <button id="close-key-btn" class="text-gray-400 hover:text-white transition p-1 rounded-full bg-gray-800 hover:bg-gray-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-    <!-- Results List -->
-    <div id="places-list" class="max-h-full overflow-y-auto space-y-2 pb-4">
-        <p class="text-gray-400 text-center p-4">Tap **Find & Load Map Pins** to begin.</p>
+      <!-- Marker Visibility Filters -->
+      <div id="marker-filters" class="mb-4 p-3 bg-gray-800 rounded-xl shadow-inner">
+        <p class="font-semibold mb-2 text-gray-300 border-b border-gray-700 pb-1">Toggle Marker Visibility:</p>
+        <div class="flex flex-wrap gap-x-4 gap-y-2">
+            <!-- Filter checkboxes will be populated here -->
+        </div>
+      </div>
+      
+      <!-- Category Tabs (For List Filtering) -->
+      <div id="category-tabs" class="flex flex-wrap gap-2 mb-4 overflow-x-auto whitespace-nowrap hide-scroll">
+        <!-- Tabs will be injected here by JS -->
+      </div>
+      
+      <!-- Results List (Scrollable area) -->
+      <div id="places-list" class="flex-grow overflow-y-auto space-y-2 pb-4">
+        <p class="text-gray-400 text-center p-4">Select filters and locations will appear here.</p>
+      </div>
     </div>
   </div>
 
@@ -123,9 +122,13 @@
 <script>
 // Global state variables
 const map = L.map('map');
+const keyPanel = document.getElementById('key-panel');
+const toggleKeyBtn = document.getElementById('toggle-key-btn');
+const closeKeyBtn = document.getElementById('close-key-btn');
+
 let userMarker = null;
 let routeLine = null;
-let highlightGroup = []; // Stores the current route and map feature highlights
+let highlightGroup = []; // Current route and map feature highlights
 let markerGroup = L.layerGroup().addTo(map); // Layer group for all POI markers
 let categorizedPlaces = {}; // Stores all fetched, processed data, grouped by category
 let markerMap = new Map(); // Maps unique ID to Leaflet Marker object
@@ -140,52 +143,49 @@ const CATEGORY_MAP = {
     leisure: { label: 'Parks/Leisure', icon: '🏞️' },
 };
 
-// Initialize Map
+// --- INITIALIZATION ---
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
   attribution: '© OpenStreetMap contributors',
 }).addTo(map);
 
-// Event listener for radius slider display update
 document.getElementById('radius').oninput = e => {
   document.getElementById('rangeVal').textContent = e.target.value + ' m';
 };
 
-// Utility function to calculate distance (in meters)
+// Toggle Key Panel Logic
+toggleKeyBtn.onclick = () => keyPanel.classList.toggle('open');
+closeKeyBtn.onclick = () => keyPanel.classList.remove('open');
+
+// --- UTILITY FUNCTIONS ---
+
 function getDistance(lat1, lon1, lat2, lon2) {
     return L.latLng(lat1, lon1).distanceTo([lat2, lon2]);
 }
 
-/**
- * Executes an Overpass API query to find nearby points of interest.
- */
-async function getNearby(lat, lon, cats, dist) {
-  const filters = cats.map(c => `node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('');
-  const query = `[out:json][timeout:25];(${filters}node["name"](around:${dist},${lat},${lon});way["name"](around:${dist},${lat},${lon}););out tags center geom;`;
-  try {
-    const res = await fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query));
-    if (!res.ok) throw new Error("Overpass API request failed.");
-    const data = await res.json();
-    return data.elements.filter(e => e.tags && e.tags.name);
-  } catch(error) {
-    console.error("Error fetching nearby places:", error);
-    document.getElementById('places-list').innerHTML = `<p class="text-red-400 text-center p-4">Could not load places: ${error.message}</p>`;
-    return [];
-  }
+async function getRoute(lat1, lon1, lat2, lon2) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!d.routes || !d.routes[0]) throw new Error("No driving route found.");
+  return d.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
+}
+
+function clearRoute() {
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  highlightGroup.forEach(l => map.removeLayer(l));
+  highlightGroup = [];
 }
 
 /**
- * Processes raw OSM elements: assigns unique ID, calculates distance, coordinates, and primary category.
+ * Generates unique IDs, calculates distance, and assigns category for each element.
  */
 function processElements(userLat, userLon, els) {
     const results = {};
-    for (const key in CATEGORY_MAP) {
-        results[key] = [];
-    }
+    for (const key in CATEGORY_MAP) { results[key] = []; }
 
     let idCounter = 0;
-
-    // Process and categorize
     els.forEach(e => {
         const id = 'poi-' + idCounter++;
         const lat = e.lat || (e.center && e.center.lat) || (e.geometry && e.geometry[0] && e.geometry[0].lat);
@@ -193,13 +193,9 @@ function processElements(userLat, userLon, els) {
 
         if (!lat || !lon) return;
 
-        // Assign a primary category based on the first match in CATEGORY_MAP order
         let primaryCat = null;
         for (const cat in CATEGORY_MAP) {
-            if (e.tags[cat]) {
-                primaryCat = cat;
-                break;
-            }
+            if (e.tags[cat]) { primaryCat = cat; break; }
         }
         
         if (primaryCat) {
@@ -216,16 +212,14 @@ function processElements(userLat, userLon, els) {
         }
     });
 
-    // Sort each category by distance
-    for (const cat in results) {
-        results[cat].sort((a, b) => a.distance - b.distance);
-    }
-    
+    for (const cat in results) { results[cat].sort((a, b) => a.distance - b.distance); }
     return results;
 }
 
+// --- MAP & UI RENDERING ---
+
 /**
- * Renders custom markers for all places and stores them in markerMap.
+ * Renders custom markers for all places and stores them.
  */
 function renderMarkers(allPlaces) {
     markerGroup.clearLayers();
@@ -240,13 +234,17 @@ function renderMarkers(allPlaces) {
             popupAnchor: [0, -20]
         });
 
-        const marker = L.marker([place.destLat, place.destLon], { icon: markerIcon })
+        // Store the category on the marker itself for filtering
+        const marker = L.marker([place.destLat, place.destLon], { 
+            icon: markerIcon, 
+            category: place.category 
+        })
             .bindPopup(`<b>${place.name}</b><br>${CATEGORY_MAP[place.category].label}`)
             .addTo(markerGroup);
 
-        // Attach click handler to the marker
         marker.on('click', () => {
             handlePlaceSelection(place.id, place);
+            keyPanel.classList.add('open'); // Open key when marker is clicked
         });
         
         markerMap.set(place.id, marker);
@@ -254,19 +252,60 @@ function renderMarkers(allPlaces) {
 }
 
 /**
- * Renders the category tabs and attaches click handlers.
+ * Toggles the visibility of markers based on the checked filters in the key panel.
+ */
+function toggleMarkers() {
+    const checkedCategories = new Set();
+    document.querySelectorAll('#marker-filters input[type="checkbox"]:checked').forEach(input => {
+        checkedCategories.add(input.value);
+    });
+
+    markerGroup.clearLayers(); // Remove all markers
+    
+    // Add markers back if their category is checked
+    markerMap.forEach(marker => {
+        if (checkedCategories.has(marker.options.category)) {
+            marker.addTo(markerGroup);
+        }
+    });
+    
+    // Re-render the list based on the new visible categories
+    const activeTab = document.querySelector('.tab-btn.bg-blue-500')?.dataset.category || 'all';
+    renderList(activeTab);
+}
+
+/**
+ * Renders the filter checkboxes in the key panel.
+ */
+function renderFilterCheckboxes(results) {
+    const filtersContainer = document.querySelector('#marker-filters .flex');
+    filtersContainer.innerHTML = '';
+    
+    // Create one checkbox for each category that has results
+    for (const key in CATEGORY_MAP) {
+        if (results[key].length > 0) {
+            const label = document.createElement('label');
+            label.className = 'flex items-center space-x-1 text-sm cursor-pointer hover:text-blue-300 transition';
+            label.innerHTML = `
+                <input type="checkbox" class="marker-filter h-4 w-4 text-red-500 rounded border-gray-600 bg-gray-900 checked:bg-red-500" value="${key}" checked>
+                <span>${CATEGORY_MAP[key].icon} ${CATEGORY_MAP[key].label}</span>
+            `;
+            filtersContainer.appendChild(label);
+            
+            // Attach toggle event listener
+            label.querySelector('input').addEventListener('change', toggleMarkers);
+        }
+    }
+}
+
+/**
+ * Renders the category tabs for list filtering and attaches handlers.
  */
 function renderTabs(results) {
     const tabsContainer = document.getElementById('category-tabs');
     tabsContainer.innerHTML = '';
     
-    let allCount = 0;
-    const allPlaces = [];
-    
-    for (const key in results) {
-        allPlaces.push(...results[key]);
-    }
-
+    const allPlaces = Object.values(results).flat();
     const categories = [{ key: 'all', label: `All (${allPlaces.length})`, icon: '🌎' }];
     
     for (const key in results) {
@@ -284,7 +323,6 @@ function renderTabs(results) {
         tabButton.classList.add('bg-gray-700', 'text-gray-300', 'hover:bg-blue-600', 'hover:text-white');
         
         tabButton.onclick = () => {
-            // Manage visual tab state
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-500', 'text-white');
                 btn.classList.add('bg-gray-700', 'text-gray-300');
@@ -297,35 +335,39 @@ function renderTabs(results) {
         tabsContainer.appendChild(tabButton);
     });
 
-    // Automatically click the 'All' tab on initial render
     if (categories.length > 0) {
         tabsContainer.querySelector('[data-category="all"]').click();
     }
 }
 
 /**
- * Renders the results list for the currently selected category.
+ * Renders the results list for the currently selected category, respecting marker visibility.
  */
 function renderList(categoryKey) {
     const listContainer = document.getElementById('places-list');
-    listContainer.innerHTML = ''; // Clear existing list
+    listContainer.innerHTML = ''; 
 
     let listItems = [];
     if (categoryKey === 'all') {
-        for (const key in categorizedPlaces) {
-            listItems = listItems.concat(categorizedPlaces[key]);
-        }
+        listItems = Object.values(categorizedPlaces).flat();
         listItems.sort((a, b) => a.distance - b.distance);
     } else {
         listItems = categorizedPlaces[categoryKey] || [];
     }
+    
+    // Filter list items based on current marker visibility (checkbox state)
+    const checkedCategories = new Set(
+        [...document.querySelectorAll('#marker-filters input[type="checkbox"]:checked')].map(input => input.value)
+    );
+    
+    const visibleItems = listItems.filter(item => checkedCategories.has(item.category));
 
-    if (listItems.length === 0) {
-        listContainer.innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No places found in this category.</p>`;
+    if (visibleItems.length === 0) {
+        listContainer.innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No visible places in this filter combination.</p>`;
         return;
     }
     
-    listItems.forEach(item => {
+    visibleItems.forEach(item => {
         const distanceKm = (item.distance / 1000).toFixed(2);
         
         const div = document.createElement('div');
@@ -345,33 +387,33 @@ function renderList(categoryKey) {
             <p class="text-xs text-gray-400 mt-1">Type: ${item.element.tags[item.category] || 'General POI'}</p>
         `;
         
-        // Attach click handler to the list item
         div.onclick = () => handlePlaceSelection(item.id, item);
         listContainer.appendChild(div);
     });
 }
 
 /**
- * Handles the selection of a place, whether via list click or marker click.
+ * Handles the selection of a place, updating map, list, and drawing route.
  */
 async function handlePlaceSelection(id, itemData) {
     if (!userLocation) return;
 
     currentActiveId = id;
 
-    // --- 1. Sync Visual State (Markers) ---
+    // 1. Sync Map Markers
     markerMap.forEach((marker, markerId) => {
         const iconElement = marker.getElement().firstChild;
         if (iconElement) {
             iconElement.classList.remove('active');
         }
-        if (markerId === id) {
+        if (markerId === id && iconElement) {
             iconElement.classList.add('active');
             marker.openPopup();
+            map.panTo(marker.getLatLng()); // Center map on marker
         }
     });
     
-    // --- 2. Sync Visual State (List) ---
+    // 2. Sync List Key
     document.querySelectorAll('.result-item').forEach(el => {
         el.classList.remove('border-blue-500', 'bg-gray-700');
         el.classList.add('bg-gray-800');
@@ -383,44 +425,27 @@ async function handlePlaceSelection(id, itemData) {
         }
     });
 
-    // --- 3. Clear Map Highlights ---
+    // 3. Draw Route and Feature Highlight
     clearRoute();
-    
-    // --- 4. Draw Highlights and Route ---
     const e = itemData.element;
 
-    // Highlight element geometry on the map (if available)
-    if (e.geometry) {
-        if (e.geometry.length && e.geometry[0].lat) { // Polylines/Polygons (Ways)
-            const coords = e.geometry.map(p => [p.lat, p.lon]);
-            const l = L.polyline(coords, { color: '#00ccff', weight: 6, opacity: 0.8 }).addTo(map);
-            highlightGroup.push(l);
-        }
+    if (e.geometry && e.geometry.length && e.geometry[0].lat) { 
+        const coords = e.geometry.map(p => [p.lat, p.lon]);
+        const l = L.polyline(coords, { color: '#00ccff', weight: 6, opacity: 0.8 }).addTo(map);
+        highlightGroup.push(l);
     }
 
-    // Draw the route
     try {
         const line = await getRoute(userLocation.lat, userLocation.lon, itemData.destLat, itemData.destLon);
         routeLine = L.polyline(line, { color: '#2ecc71', weight: 5, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
         
-        // Fit bounds to show both user marker and the route
         const bounds = routeLine.getBounds();
         bounds.extend(userMarker.getLatLng());
         map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
     } catch (error) {
         console.error("Routing error:", error.message);
-        // Display route error to the user via popup
         markerMap.get(id).setPopupContent(`<b>${itemData.name}</b><br>🚫 Route Error: ${error.message}`).openPopup();
     }
-}
-
-/**
- * Clears the currently displayed route and map feature highlights.
- */
-function clearRoute() {
-  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
-  highlightGroup.forEach(l => map.removeLayer(l));
-  highlightGroup = [];
 }
 
 
@@ -429,17 +454,20 @@ function clearRoute() {
  */
 async function locate() {
   document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🛰️ Getting your location...</p>';
-  document.getElementById('category-tabs').innerHTML = ''; // Clear tabs
+  document.getElementById('category-tabs').innerHTML = '';
+  document.querySelector('#marker-filters .flex').innerHTML = ''; // Clear filters
+  toggleKeyBtn.disabled = true;
+
   clearRoute(); 
   markerGroup.clearLayers();
-  currentActiveId = null; // Reset selection
+  currentActiveId = null;
 
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude: lat, longitude: lon } = pos.coords;
     userLocation = { lat, lon };
     map.setView([lat, lon], 15);
 
-    // Update user marker (Custom pulsing marker for start location)
+    // Update user marker
     if (userMarker) map.removeLayer(userMarker);
     const userIcon = L.divIcon({
         className: 'user-marker-icon',
@@ -449,43 +477,42 @@ async function locate() {
     });
     userMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map).bindPopup("Your Current Location").openPopup();
 
-    // Get parameters
-    const cats = [...document.querySelectorAll('.cat:checked')].map(c => c.value);
+    const cats = ['highway', 'amenity', 'shop', 'leisure']; // Search all checked categories from the header
     const dist = document.getElementById('radius').value;
     
     document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🔍 Searching for map pins...</p>';
 
-    const els = await getNearby(lat, lon, cats, dist);
-
-    // Process and categorize the results
+    const els = await fetch("https://overpass-api.de/api/interpreter?data="+encodeURIComponent(`[out:json][timeout:25];(${cats.map(c=>`node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('')}node["name"](around:${dist},${lat},${lon});way["name"](around:${dist},${lat},${lon}););out tags center geom;`)).then(r => r.json()).then(d => d.elements.filter(e => e.tags && e.tags.name)).catch(err => {
+        document.getElementById('places-list').innerHTML = `<p class="text-red-400 text-center p-4">Network Error: ${err.message}</p>`;
+        return [];
+    });
+    
     categorizedPlaces = processElements(lat, lon, els);
     const allUniquePlaces = Object.values(categorizedPlaces).flat();
 
-    // Render Markers first for the "Game Map" feel
-    renderMarkers(allUniquePlaces);
-
-    // Render the category tabs
-    renderTabs(categorizedPlaces);
-
-    // If no places found at all
     if (allUniquePlaces.length === 0) {
-        document.getElementById('places-list').innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No places found within ${dist} m matching the selected filters. Try increasing the search radius.</p>`;
+        document.getElementById('places-list').innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No places found. Try increasing the search radius.</p>`;
+        toggleKeyBtn.disabled = true;
+    } else {
+        renderMarkers(allUniquePlaces);
+        renderFilterCheckboxes(categorizedPlaces);
+        renderTabs(categorizedPlaces);
+        toggleKeyBtn.classList.remove('hidden');
+        toggleKeyBtn.disabled = false;
+        // Automatically open the key on first load
+        keyPanel.classList.add('open');
     }
 
   }, err => {
-    // Location error handling
     let message = 'An unknown error occurred.';
-    if (err.code === err.PERMISSION_DENIED) {
-        message = 'Location access was denied. Please check browser settings.';
-    } else if (err.code === err.POSITION_UNAVAILABLE) {
-        message = 'Location information is unavailable.';
-    }
+    if (err.code === err.PERMISSION_DENIED) { message = 'Location access was denied.'; } 
+    else if (err.code === err.POSITION_UNAVAILABLE) { message = 'Location information is unavailable.'; }
     document.getElementById('places-list').innerHTML = `<p class="text-red-400 text-center p-4">🚫 Location Error: ${message}</p>`;
   }, { enableHighAccuracy: true });
 }
 
 // Initial Map Load
-map.setView([20, 0], 2); // Default view
+map.setView([20, 0], 2);
 document.getElementById('btn').onclick = locate;
 </script>
 </body>
