@@ -2,124 +2,315 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Nearby Map + Directions</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sleek Nearby Navigator</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <style>
-body{margin:0;font-family:system-ui,sans-serif;background:#0d1117;color:#e6edf3;}
-#map{height:55vh;}
-#controls{padding:.6rem 1rem;background:#161b22;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;}
-#places{padding:1rem;max-height:40vh;overflow:auto;}
-h2{text-align:center;margin:.7em 0;}
-button{padding:.8em 1.4em;border:none;border-radius:10px;background:#238636;color:#fff;font-size:1rem;}
-label{font-size:.9rem;}
-li{margin:.4em 0;cursor:pointer;}
-li:hover{color:#58a6ff;}
-#rangeVal{min-width:3em;display:inline-block;text-align:right;}
+  /* Custom styles for the dark theme and responsive map/slider track */
+  body {
+    font-family: 'Inter', sans-serif;
+  }
+  /* Style for the range slider track */
+  input[type=range]::-webkit-slider-runnable-track {
+    background: #4b5563; /* Gray-600 */
+    border-radius: 8px;
+    height: 8px;
+  }
+  input[type=range]::-moz-range-track {
+    background: #4b5563; /* Gray-600 */
+    border-radius: 8px;
+    height: 8px;
+  }
+  /* Style for the range slider thumb (handle) */
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6; /* Blue-500 */
+    cursor: pointer;
+    margin-top: -6px; /* Center the thumb vertically */
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    transition: background 0.15s ease-in-out;
+  }
+  input[type=range]::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6; /* Blue-500 */
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+    transition: background 0.15s ease-in-out;
+  }
+  /* Custom scrollbar for results */
+  #places::-webkit-scrollbar {
+    width: 6px;
+  }
+  #places::-webkit-scrollbar-track {
+    background: #1f2937; /* Gray-800 */
+  }
+  #places::-webkit-scrollbar-thumb {
+    background: #4b5563; /* Gray-600 */
+    border-radius: 3px;
+  }
 </style>
 </head>
-<body>
-<h2>Nearby Places + Directions</h2>
-<div id="controls">
-  <button id="btn">Locate</button>
-  <label><input type="checkbox" class="cat" value="highway" checked> Roads</label>
-  <label><input type="checkbox" class="cat" value="amenity" checked> Amenities</label>
-  <label><input type="checkbox" class="cat" value="shop" checked> Shops</label>
-  <label><input type="checkbox" class="cat" value="leisure" checked> Parks</label>
-  <label>Distance: <input id="radius" type="range" min="200" max="2000" step="100" value="1000">
-    <span id="rangeVal">1000 m</span></label>
-</div>
-<div id="map"></div>
-<div id="places"></div>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+
+  <!-- Header and Controls Section (Fixed/Sticky for Mobile Access) -->
+  <header class="p-4 bg-gray-800 shadow-xl z-10 sticky top-0">
+    <h1 class="text-2xl font-extrabold text-center text-blue-400 mb-4 tracking-wider">Nearby Finder</h1>
+    <div id="controls" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+
+      <!-- Locate Button -->
+      <button id="btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 transition duration-150 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+        </svg>
+        Find My Location
+      </button>
+
+      <!-- Filters Group -->
+      <div class="flex flex-wrap justify-center gap-3 p-2 bg-gray-700/50 rounded-lg">
+        <label class="flex items-center space-x-2 text-sm cursor-pointer hover:text-blue-300 transition">
+          <input type="checkbox" class="cat form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="highway" checked>
+          <span>Roads</span>
+        </label>
+        <label class="flex items-center space-x-2 text-sm cursor-pointer hover:text-blue-300 transition">
+          <input type="checkbox" class="cat form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="amenity" checked>
+          <span>Amenities</span>
+        </label>
+        <label class="flex items-center space-x-2 text-sm cursor-pointer hover:text-blue-300 transition">
+          <input type="checkbox" class="cat form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="shop" checked>
+          <span>Shops</span>
+        </label>
+        <label class="flex items-center space-x-2 text-sm cursor-pointer hover:text-blue-300 transition">
+          <input type="checkbox" class="cat form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 bg-gray-900 checked:bg-blue-500" value="leisure" checked>
+          <span>Parks</span>
+        </label>
+      </div>
+
+      <!-- Radius Slider -->
+      <div class="flex flex-col w-full sm:w-48 p-2">
+        <label class="text-sm font-semibold mb-2 flex justify-between">
+          Search Radius: <span id="rangeVal" class="text-blue-400 font-bold">1000 m</span>
+        </label>
+        <input id="radius" type="range" min="200" max="2000" step="100" value="1000" class="w-full appearance-none h-2 bg-gray-700 rounded-lg cursor-pointer">
+      </div>
+    </div>
+  </header>
+
+  <!-- Map Container (Main Focus) -->
+  <div id="map" class="w-full h-[50vh] sm:h-[60vh] z-0 shadow-inner"></div>
+
+  <!-- Results Section -->
+  <div id="places-container" class="p-4 bg-gray-900 flex-grow overflow-hidden">
+    <h2 class="text-xl font-bold mb-3 border-b border-gray-700 pb-1 text-yellow-500">Nearby Results</h2>
+    <div id="places" class="max-h-full overflow-y-auto space-y-2 pb-4">
+        <p class="text-gray-400 text-center p-4">Tap **Find My Location** to load places and directions.</p>
+    </div>
+  </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const map=L.map('map');
-let userMarker,routeLine,highlightGroup=[];
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19,attribution:'© OpenStreetMap contributors'
+// Global variables
+const map = L.map('map');
+let userMarker = null;
+let routeLine = null;
+let highlightGroup = [];
+let groupedPlaces = {}; // Store fetched data grouped by name
+
+// Initialize Map
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap contributors',
+  // Invert tile colors for better dark theme contrast, if needed, but keeping default for simplicity
 }).addTo(map);
 
-document.getElementById('radius').oninput=e=>{
-  document.getElementById('rangeVal').textContent=e.target.value+' m';
+// Event listener for radius slider display update
+document.getElementById('radius').oninput = e => {
+  document.getElementById('rangeVal').textContent = e.target.value + ' m';
 };
 
-async function getNearby(lat,lon,cats,dist){
-  const filters=cats.map(c=>`node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('');
-  const query=`[out:json][timeout:25];(${filters}node["name"](around:${dist},${lat},${lon});way["name"](around:${dist},${lat},${lon}););out tags center geom;`;
-  const res=await fetch("https://overpass-api.de/api/interpreter?data="+encodeURIComponent(query));
-  const data=await res.json();
-  return data.elements.filter(e=>e.tags&&e.tags.name);
+/**
+ * Executes an Overpass API query to find nearby points of interest.
+ * @param {number} lat - User latitude.
+ * @param {number} lon - User longitude.
+ * @param {string[]} cats - Array of OSM feature tags (e.g., "amenity", "shop").
+ * @param {string} dist - Search radius in meters.
+ * @returns {Promise<Object[]>} Array of raw OSM elements.
+ */
+async function getNearby(lat, lon, cats, dist) {
+  const filters = cats.map(c => `node["${c}"](around:${dist},${lat},${lon});way["${c}"](around:${dist},${lat},${lon});`).join('');
+  // Also include general POIs that have a name tag but might not fit the primary categories
+  const query = `[out:json][timeout:25];(${filters}node["name"](around:${dist},${lat},${lon});way["name"](around:${dist},${lat},${lon}););out tags center geom;`;
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query));
+    if (!res.ok) throw new Error("Overpass API request failed.");
+    const data = await res.json();
+    // Filter for elements that actually have a name, as we group by name
+    return data.elements.filter(e => e.tags && e.tags.name);
+  } catch(error) {
+    console.error("Error fetching nearby places:", error);
+    document.getElementById('places').innerHTML = `<p class="text-red-400 text-center p-4">Could not load places: ${error.message}</p>`;
+    return [];
+  }
 }
 
-async function getRoute(lat1,lon1,lat2,lon2){
-  const url=`https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
-  const r=await fetch(url);const d=await r.json();
-  if(!d.routes||!d.routes[0])throw new Error("No route found");
-  return d.routes[0].geometry.coordinates.map(([lo,la])=>[la,lo]);
+/**
+ * Calculates a driving route between two points using OSRM.
+ * @param {number} lat1 - Start latitude.
+ * @param {number} lon1 - Start longitude.
+ * @param {number} lat2 - End latitude.
+ * @param {number} lon2 - End longitude.
+ * @returns {Promise<[number, number][]>} Array of coordinates [lat, lon] for the route line.
+ */
+async function getRoute(lat1, lon1, lat2, lon2) {
+  const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
+  const r = await fetch(url);
+  const d = await r.json();
+  if (!d.routes || !d.routes[0]) throw new Error("No driving route found.");
+  // OSRM returns [lon, lat], Leaflet needs [lat, lon]
+  return d.routes[0].geometry.coordinates.map(([lo, la]) => [la, lo]);
 }
 
-function clearRoute(){
-  if(routeLine){map.removeLayer(routeLine);routeLine=null;}
-  highlightGroup.forEach(l=>map.removeLayer(l));
-  highlightGroup=[];
+/**
+ * Clears the currently displayed route and highlight layers.
+ */
+function clearRoute() {
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  highlightGroup.forEach(l => map.removeLayer(l));
+  highlightGroup = [];
 }
 
-async function locate(){
-  document.getElementById('places').innerText='Getting location…';
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    const {latitude:lat,longitude:lon}=pos.coords;
-    map.setView([lat,lon],15);
-    if(userMarker)map.removeLayer(userMarker);
-    userMarker=L.marker([lat,lon]).addTo(map).bindPopup("You are here").openPopup();
+/**
+ * Main function to get user location and search for nearby places.
+ */
+async function locate() {
+  document.getElementById('places').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🛰️ Getting your location...</p>';
 
-    const cats=[...document.querySelectorAll('.cat:checked')].map(c=>c.value);
-    const dist=document.getElementById('radius').value;
-    const els=await getNearby(lat,lon,cats,dist);
+  clearRoute(); // Clear any previous route/highlights
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    map.setView([lat, lon], 15);
+
+    // Update user marker
+    if (userMarker) map.removeLayer(userMarker);
+    const userIcon = L.divIcon({
+        className: 'user-marker-icon',
+        html: '<div class="w-5 h-5 bg-red-500 rounded-full border-2 border-white shadow-xl animate-ping absolute"></div><div class="w-3 h-3 bg-red-600 rounded-full border-2 border-white"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    userMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map).bindPopup("Your Current Location").openPopup();
+
+    // Get parameters
+    const cats = [...document.querySelectorAll('.cat:checked')].map(c => c.value);
+    const dist = document.getElementById('radius').value;
+    
+    document.getElementById('places').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🔍 Searching for places nearby...</p>';
+
+    const els = await getNearby(lat, lon, cats, dist);
 
     // Group by name
-    const grouped={};
-    for(const e of els){
-      const name=e.tags.name;
-      if(!grouped[name])grouped[name]=[];
-      grouped[name].push(e);
+    groupedPlaces = {};
+    for (const e of els) {
+      const name = e.tags.name;
+      if (!groupedPlaces[name]) groupedPlaces[name] = [];
+      groupedPlaces[name].push(e);
     }
 
-    const names=Object.keys(grouped);
-    document.getElementById('places').innerHTML=`<b>${names.length}</b> unique names within ${dist} m:<ul>`+
-      names.map((n,i)=>`<li data-name="${encodeURIComponent(n)}">${n}</li>`).join('')+'</ul>';
+    const names = Object.keys(groupedPlaces);
 
-    document.querySelectorAll('#places li').forEach(li=>{
-      li.onclick=async()=>{
-        const name=decodeURIComponent(li.dataset.name);
-        const group=grouped[name];
+    // Update results list
+    if (names.length === 0) {
+        document.getElementById('places').innerHTML = `<p class="text-center text-gray-500 p-4">🚫 No places found within ${dist} m matching the selected filters.</p>`;
+    } else {
+        document.getElementById('places').innerHTML = `<p class="text-sm font-medium text-gray-400 pb-2">${names.length} unique locations found within ${dist} m:</p>` +
+          names.map((n, i) =>
+            `<div class="result-item bg-gray-800 p-3 rounded-lg shadow-md hover:bg-gray-700 transition cursor-pointer" 
+                  data-name="${encodeURIComponent(n)}">
+              <span class="font-semibold text-white">${n}</span>
+            </div>`).join('');
+    }
+
+    // Attach click handlers to the new result items
+    document.querySelectorAll('#places .result-item').forEach(div => {
+      div.onclick = async () => {
+        const name = decodeURIComponent(div.dataset.name);
+        const group = groupedPlaces[name];
+
+        // Clear previous interactions
         clearRoute();
+        
+        // Visually select the item
+        document.querySelectorAll('#places .result-item').forEach(el => el.classList.remove('border-2', 'border-blue-400'));
+        div.classList.add('border-2', 'border-blue-400');
 
         // Highlight all segments with same name
-        group.forEach(e=>{
-          if(e.type==="way"&&e.geometry){
-            const coords=e.geometry.map(p=>[p.lat,p.lon]);
-            const l=L.polyline(coords,{color:'yellow',weight:5,opacity:0.7}).addTo(map);
-            highlightGroup.push(l);
+        group.forEach(e => {
+          if ((e.type === "way" || e.type === "node") && e.geometry) {
+            let coords = [];
+            // Handle different geometry types (way/relation geometries are arrays of points, nodes are single points)
+            if (e.geometry.length && e.geometry[0].lat) {
+                coords = e.geometry.map(p => [p.lat, p.lon]);
+                const l = L.polyline(coords, { color: '#00ccff', weight: 6, opacity: 0.8 }).addTo(map);
+                highlightGroup.push(l);
+            } else if (e.lat && e.lon) {
+                // Add a marker for a single node element
+                const m = L.circleMarker([e.lat, e.lon], { radius: 8, color: '#00ccff', fillColor: '#00ccff', fillOpacity: 1 }).addTo(map);
+                highlightGroup.push(m);
+            }
           }
         });
 
-        // Route from user to center of first one
-        const e=group[0];
-        const dLat=e.lat||(e.center&&e.center.lat)||(e.geometry&&e.geometry[0].lat);
-        const dLon=e.lon||(e.center&&e.center.lon)||(e.geometry&&e.geometry[0].lon);
-        if(!dLat||!dLon)return;
-        const line=await getRoute(lat,lon,dLat,dLon);
-        routeLine=L.polyline(line,{color:'lime',weight:4}).addTo(map);
-        map.fitBounds(routeLine.getBounds(),{maxZoom:17});
+        // Route from user to center of first element in the group
+        const e = group[0];
+        const dLat = e.lat || (e.center && e.center.lat) || (e.geometry && e.geometry[0] && e.geometry[0].lat);
+        const dLon = e.lon || (e.center && e.center.lon) || (e.geometry && e.geometry[0] && e.geometry[0].lon);
+        
+        if (!dLat || !dLon) {
+             console.error("Could not find coordinates for route destination.");
+             return;
+        }
+
+        try {
+            const line = await getRoute(lat, lon, dLat, dLon);
+            routeLine = L.polyline(line, { color: '#2ecc71', weight: 5, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
+            map.fitBounds(routeLine.getBounds(), { padding: [20, 20], maxZoom: 17 });
+        } catch (error) {
+            console.error("Routing error:", error.message);
+            // Show custom message instead of alert
+             document.getElementById('places').insertAdjacentHTML('afterbegin', `<p class="text-red-400 text-sm p-1">⚠️ Route failed: ${error.message}</p>`);
+        }
       };
     });
-  },err=>{
-    document.getElementById('places').innerText='Location error: '+err.message;
-  },{enableHighAccuracy:true});
+
+  }, err => {
+    // Location error handling
+    let message = 'An unknown error occurred.';
+    if (err.code === err.PERMISSION_DENIED) {
+        message = 'Location access was denied. Please check browser settings.';
+    } else if (err.code === err.POSITION_UNAVAILABLE) {
+        message = 'Location information is unavailable.';
+    }
+    document.getElementById('places').innerHTML = `<p class="text-red-400 text-center p-4">🚫 Location Error: ${message}</p>`;
+  }, { enableHighAccuracy: true });
 }
 
-document.getElementById('btn').onclick=locate;
+// Initial Map Load
+map.setView([20, 0], 2); // Default view
+map.on('locationfound', e => map.setView(e.latlng, 15));
+map.on('locationerror', e => console.error("Location error on map init:", e.message));
+
+// Attach main button handler
+document.getElementById('btn').onclick = locate;
 </script>
 </body>
 </html>
+
