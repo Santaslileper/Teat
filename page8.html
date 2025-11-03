@@ -8,25 +8,29 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Leaflet CSS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<!-- Markercluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 
 <style>
   /* Base styles */
   body { font-family: 'Inter', sans-serif; }
   
-  /* --- CUSTOM PIN STYLE (DYNAMICALLY COLORED) --- */
+  /* --- CUSTOM PIN STYLE (NOW PLAIN) --- */
   .custom-pin {
     width: 16px;
     height: 16px;
-    background-color: var(--pin-color, #9ca3af); /* Default to gray if color not set */
-    border: 2px solid #ffffff; /* White border for high contrast */
+    /* Uniform dark gray color for a plainer look */
+    background-color: #374151; 
+    border: 2px solid #ffffff; 
     border-radius: 50%;
     position: relative;
-    box-shadow: 0 0 6px var(--pin-color, #9ca3af);
+    box-shadow: 0 0 2px #00000080; /* Subtle shadow */
     cursor: pointer;
     transition: all 0.2s ease-in-out;
   }
   .custom-pin.active {
-    /* Fixed highlight color for consistency */
+    /* Retain bright highlight for the selected pin */
     background-color: #3b82f6 !important; 
     border-color: #1d4ed8 !important; 
     box-shadow: 0 0 12px rgba(59, 130, 246, 1);
@@ -39,9 +43,14 @@
     transition: transform 0.3s ease-in-out;
     transform: translateX(100%); 
   }
+  /* Only apply the sliding behavior on small screens */
   #key-panel.open {
     transform: translateX(0);
   }
+  
+  /* Hide scrollbar for category tabs on mobile */
+  #category-tabs::-webkit-scrollbar { display: none; }
+  #category-tabs { -ms-overflow-style: none; scrollbar-width: none; }
 
   /* Custom slider and scrollbar styles for dark theme */
   input[type=range]::-webkit-slider-runnable-track { background: #4b5563; border-radius: 8px; height: 8px; }
@@ -67,48 +76,51 @@
 </head>
 <body class="bg-gray-900 text-gray-100 h-screen overflow-hidden flex flex-col">
 
-  <!-- Header and Controls Section -->
+  <!-- Header with Title and Radius Slider -->
   <header class="p-4 bg-gray-800 shadow-xl z-20">
     <h1 class="text-2xl font-extrabold text-center text-blue-400 mb-4 tracking-wider">Offline-Ready Map Navigator</h1>
-    <div id="controls" class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-
-      <!-- Locate/Search Button -->
-      <button id="btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 transition duration-150 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-green-500/50">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-        </svg>
-        Load My Location & Data
-      </button>
-
-      <!-- Radius Slider -->
-      <div class="flex flex-col w-full sm:w-48 p-2">
-        <label class="text-sm font-semibold mb-2 flex justify-between">
-          Search Radius (Live Search Only): <span id="rangeVal" class="text-blue-400 font-bold">1000 m</span>
-        </label>
-        <input id="radius" type="range" min="200" max="2000" step="100" value="1000" class="w-full appearance-none h-2 bg-gray-700 rounded-lg cursor-pointer">
-      </div>
-      
-      <!-- Toggle Key Button -->
-      <button id="toggle-key-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transition duration-150 text-white font-bold py-3 px-6 rounded-xl shadow-lg transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-blue-500/50 hidden disabled:opacity-50" disabled>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-        </svg>
-        Open Map Key
-      </button>
+    
+    <!-- Radius Slider - Remains in the fixed header area -->
+    <div class="flex justify-center">
+        <div class="flex flex-col w-full sm:w-64 p-2">
+            <label class="text-sm font-semibold mb-2 flex justify-between">
+            Search Radius (Live Search Only): <span id="rangeVal" class="text-blue-400 font-bold">1000 m</span>
+            </label>
+            <input id="radius" type="range" min="200" max="2000" step="100" value="1000" class="w-full appearance-none h-2 bg-gray-700 rounded-lg cursor-pointer">
+        </div>
     </div>
   </header>
 
-  <!-- Map and Key Container -->
-  <div class="flex-grow relative w-full overflow-hidden">
-    <!-- Map Container -->
-    <div id="map" class="w-full h-full z-10"></div>
+  <!-- Map and Key Container - uses flex to arrange map and sidebar on desktop -->
+  <div class="flex-grow flex relative w-full overflow-hidden">
+    <!-- Map Container - takes up full width on mobile, remaining space on desktop -->
+    <div id="map" class="w-full h-full sm:flex-grow z-10"></div>
+
+    <!-- NEW: Floating Buttons Container over the Map (Top Right) -->
+    <div id="map-float-controls" class="absolute top-4 right-4 z-40 flex flex-col items-end space-y-3">
+        
+        <!-- Locate/Search Button (#btn) - Small, floating pin button -->
+        <button id="btn" class="w-12 h-12 bg-green-600 hover:bg-green-700 transition duration-150 text-white font-bold rounded-full shadow-lg flex items-center justify-center transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-green-500/50" title="Load My Location & Data">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+            </svg>
+        </button>
+
+        <!-- Toggle Key Button (#toggle-key-btn) - Small, mobile-only hamburger icon button -->
+        <button id="toggle-key-btn" class="w-12 h-12 bg-blue-600 hover:bg-blue-700 transition duration-150 text-white font-bold rounded-full shadow-lg flex items-center justify-center disabled:opacity-50 sm:hidden" disabled title="Open Map Key">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+            </svg>
+        </button>
+    </div>
 
     <!-- Sliding Key Panel (Sidebar) -->
-    <div id="key-panel" class="absolute top-0 right-0 h-full w-full max-w-sm bg-gray-900/95 backdrop-blur-sm shadow-2xl z-20 flex flex-col p-4 overflow-hidden">
+    <div id="key-panel" class="absolute top-0 right-0 h-full w-[90vw] sm:w-80 sm:max-w-sm sm:relative sm:transform-none sm:shadow-none sm:bg-gray-900 bg-gray-900/80 backdrop-blur-md shadow-2xl z-20 flex flex-col p-4 overflow-hidden">
       
       <div class="flex justify-between items-center mb-4 pb-2 border-b border-gray-700">
         <h2 class="text-xl font-bold text-yellow-500">Map Key & Filters</h2>
-        <button id="close-key-btn" class="text-gray-400 hover:text-white transition p-1 rounded-full bg-gray-800 hover:bg-gray-700">
+        <!-- Close button hidden on desktop -->
+        <button id="close-key-btn" class="text-gray-400 hover:text-white transition p-1 rounded-full bg-gray-800 hover:bg-gray-700 sm:hidden">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -123,10 +135,11 @@
           </button>
       </div>
 
-      <!-- Marker Visibility Filters -->
+      <!-- Marker Visibility Filters (now vertically scrollable) -->
       <div id="marker-filters" class="mb-4 p-3 bg-gray-800 rounded-xl shadow-inner">
         <p class="font-semibold mb-2 text-gray-300 border-b border-gray-700 pb-1">Toggle Marker Visibility:</p>
-        <div class="flex flex-wrap gap-x-4 gap-y-2">
+        <!-- Added max-h-40 overflow-y-auto for vertical scroll -->
+        <div class="flex flex-wrap gap-x-4 gap-y-2 max-h-40 overflow-y-auto p-1 -m-1">
             <p class="text-xs text-gray-500">Press 'Load' to view filters.</p>
         </div>
       </div>
@@ -144,6 +157,8 @@
   </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Markercluster JS for de-cluttering -->
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script>
 // --- CONFIG & STATE ---
 const MAP_DATA_CACHE = 'mapDataCache';
@@ -156,22 +171,49 @@ const closeKeyBtn = document.getElementById('close-key-btn');
 let userMarker = null;
 let routeLine = null;
 let highlightGroup = []; 
-let markerGroup = L.layerGroup().addTo(map); 
+// INITIALIZED MarkerClusterGroup for de-cluttering
+let markerGroup = L.markerClusterGroup({
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    spiderfyOnMaxZoom: true
+}).addTo(map); 
 let categorizedPlaces = {}; 
 let markerMap = new Map(); 
 let userLocation = null;
 let currentActiveId = null; 
 
+// Emojis removed and icons set to empty string for a plainer look
 const CATEGORY_MAP = {
-    tourism: { label: 'Landmarks', icon: '🏰', color: '#facc15' }, // Amber
-    amenity: { label: 'Facilities', icon: '📍', color: '#ff5733' }, // Orange-Red
-    shop: { label: 'Commerce', icon: '🛍️', color: '#34d399' },     // Emerald Green
-    leisure: { label: 'Attractions', icon: '🏞️', color: '#3b82f6' }, // Blue
-    public_transport: { label: 'Transit Stops', icon: '🚌', color: '#ec4899' }, // Pink
-    highway: { label: 'Roads/Transit', icon: '🛣️', color: '#6366f1' }, // Indigo
+    tourism: { label: 'Landmarks', icon: '', color: '#facc15' }, // Amber
+    amenity: { label: 'Facilities', icon: '', color: '#ff5733' }, // Orange-Red
+    shop: { label: 'Commerce', icon: '', color: '#34d399' },     // Emerald Green
+    leisure: { label: 'Attractions', icon: '', color: '#3b82f6' }, // Blue
+    public_transport: { label: 'Transit Stops', icon: '', color: '#ec4899' }, // Pink
+    highway: { label: 'Roads/Transit', icon: '', color: '#6366f1' }, // Indigo
 };
 
-// --- INITIALIZATION ---
+// --- INITIALIZATION & UI CONTROL ---
+
+// Tailwind's 'sm' breakpoint is 640px
+function isMobileView() {
+    return window.innerWidth < 640; 
+}
+
+// Control visibility of the toggle button based on screen size
+function updateKeyButtonVisibility() {
+    // Only show/enable toggle button on mobile
+    const shouldShowToggle = isMobileView() && !toggleKeyBtn.disabled;
+    toggleKeyBtn.classList.toggle('hidden', !shouldShowToggle);
+    // Only show close button on mobile
+    closeKeyBtn.classList.toggle('hidden', !isMobileView());
+    
+    // Ensure panel is open on desktop, and only controlled by 'open' class on mobile
+    if (!isMobileView()) {
+        keyPanel.classList.add('open'); // Keep static panel visible
+    } else if (toggleKeyBtn.disabled) {
+        keyPanel.classList.remove('open'); // Hide if mobile and no data loaded
+    }
+}
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -182,13 +224,16 @@ document.getElementById('radius').oninput = e => {
   document.getElementById('rangeVal').textContent = e.target.value + ' m';
 };
 
+// Event handlers
 toggleKeyBtn.onclick = () => keyPanel.classList.toggle('open');
 closeKeyBtn.onclick = () => keyPanel.classList.remove('open');
 document.getElementById('btn').onclick = locate;
 document.getElementById('clear-cache-btn').onclick = clearLocalData;
+window.addEventListener('resize', updateKeyButtonVisibility); // Respond to screen resize
 
 // Check cache status on load
 updateStorageStatus();
+updateKeyButtonVisibility();
 map.setView([20, 0], 2);
 
 
@@ -236,8 +281,8 @@ function clearLocalData() {
     document.getElementById('places-list').innerHTML = '<p class="text-gray-400 text-center p-4">Local cache cleared. Search for new data!</p>';
     document.querySelector('#marker-filters .flex').innerHTML = '<p class="text-xs text-gray-500">Press \'Load\' to view filters.</p>';
     document.getElementById('category-tabs').innerHTML = '';
-    toggleKeyBtn.classList.add('hidden');
     toggleKeyBtn.disabled = true;
+    updateKeyButtonVisibility();
 }
 
 function updateStorageStatus(isCached) {
@@ -320,11 +365,13 @@ function processElements(userLat, userLon, els) {
 function renderMarkers(allPlaces) {
     markerGroup.clearLayers();
     markerMap.clear();
+    const newMarkers = [];
 
     allPlaces.forEach(place => {
         const markerIcon = L.divIcon({
             className: 'custom-pin-container',
-            html: `<div class="custom-pin" style="--pin-color: ${place.color};"></div>`,
+            // No custom color style here, relying on fixed CSS for plain look
+            html: `<div class="custom-pin"></div>`,
             iconSize: [16, 16],
             iconAnchor: [8, 8],
             popupAnchor: [0, -10]
@@ -334,16 +381,21 @@ function renderMarkers(allPlaces) {
             icon: markerIcon, 
             category: place.category 
         })
-            .bindPopup(`<b>${place.name}</b><br>${CATEGORY_MAP[place.category].label} (${place.element.tags[place.category]})`)
-            .addTo(markerGroup);
+            .bindPopup(`<b>${place.name}</b><br>${CATEGORY_MAP[place.category].label} (${place.element.tags[place.category]})`);
 
         marker.on('click', () => {
             handlePlaceSelection(place.id, place);
-            keyPanel.classList.add('open'); 
+            if (isMobileView()) {
+                keyPanel.classList.add('open'); 
+            }
         });
         
         markerMap.set(place.id, marker);
+        newMarkers.push(marker);
     });
+    
+    // Add all markers to the cluster group at once
+    markerGroup.addLayers(newMarkers);
 }
 
 function toggleMarkers() {
@@ -351,15 +403,21 @@ function toggleMarkers() {
     document.querySelectorAll('#marker-filters input[type="checkbox"]:checked').forEach(input => {
         checkedCategories.add(input.value);
     });
-
-    markerGroup.clearLayers(); 
     
+    // Clear all existing markers from the map before adding back filtered ones
+    markerGroup.clearLayers(); 
+
+    const markersToShow = [];
     markerMap.forEach(marker => {
         if (checkedCategories.has(marker.options.category)) {
-            marker.addTo(markerGroup);
+            markersToShow.push(marker);
         }
     });
     
+    // Add filtered markers back to the cluster group
+    markerGroup.addLayers(markersToShow);
+    
+    // Re-render the list based on the active tab and visible markers
     const activeTab = document.querySelector('.tab-btn.bg-blue-500')?.dataset.category || 'all';
     renderList(activeTab);
 }
@@ -372,9 +430,9 @@ function renderFilterCheckboxes(results) {
         if (Object.values(results).flat().some(p => p.category === key)) {
             const label = document.createElement('label');
             label.className = 'flex items-center space-x-1 text-sm cursor-pointer hover:text-white transition';
+            // Use the label text, no emoji icon
             label.innerHTML = `
                 <input type="checkbox" class="marker-filter h-4 w-4 rounded border-gray-600 bg-gray-900 checked:bg-current" style="color:${CATEGORY_MAP[key].color};" value="${key}" checked>
-                <span style="color:${CATEGORY_MAP[key].color};">${CATEGORY_MAP[key].icon}</span>
                 <span>${CATEGORY_MAP[key].label}</span>
             `;
             filtersContainer.appendChild(label);
@@ -389,18 +447,20 @@ function renderTabs(results) {
     tabsContainer.innerHTML = '';
     
     const allPlaces = Object.values(results).flat();
-    const categories = [{ key: 'all', label: `All (${allPlaces.length})`, icon: '🌎' }];
+    // Replaced emoji with plain text for 'All'
+    const categories = [{ key: 'all', label: `All (${allPlaces.length})`, icon: 'Total', color: '#60a5fa' }];
     
     for (const key in results) {
         const count = results[key].length;
         if (count > 0) {
-            categories.push({ key: key, label: `${CATEGORY_MAP[key].label} (${count})`, icon: CATEGORY_MAP[key].icon, color: CATEGORY_MAP[key].color });
+            categories.push({ key: key, label: `${CATEGORY_MAP[key].label} (${count})`, icon: '', color: CATEGORY_MAP[key].color });
         }
     }
     
     categories.forEach(cat => {
         const tabButton = document.createElement('button');
-        tabButton.textContent = `${cat.icon} ${cat.label}`;
+        // Check if icon is provided, otherwise just use label
+        tabButton.textContent = cat.icon ? `${cat.icon} ${cat.label}` : cat.label; 
         tabButton.dataset.category = cat.key;
         tabButton.className = 'tab-btn px-3 py-1.5 text-sm font-semibold rounded-lg transition duration-150 whitespace-nowrap border-b-2 border-transparent';
         tabButton.classList.add('bg-gray-700', 'text-gray-300', 'hover:bg-gray-600');
@@ -485,20 +545,30 @@ async function handlePlaceSelection(id, itemData) {
     if (!userLocation) return;
 
     currentActiveId = id;
-
-    // 1. Sync Map Markers
-    markerMap.forEach((marker, markerId) => {
-        const iconElement = marker.getElement().firstChild;
-        if (iconElement) {
-            iconElement.classList.remove('active');
-        }
-        if (markerId === id && iconElement) {
-            iconElement.classList.add('active');
-            map.panTo(marker.getLatLng()); 
-        }
-    });
+    const markerToHighlight = markerMap.get(id);
     
-    // 2. Sync List Key
+    // 1. Zoom/Pan to the marker (or cluster, if clustered)
+    if (markerToHighlight) {
+        // If clustered, MarkerClusterGroup provides the panAndZoom method
+        markerGroup.zoomToShowLayer(markerToHighlight, () => {
+            map.panTo(markerToHighlight.getLatLng());
+        });
+        
+        // Temporarily highlight the icon
+        markerMap.forEach((marker, markerId) => {
+            const iconElement = marker.getElement()?.firstChild;
+            if (iconElement) {
+                iconElement.classList.remove('active');
+            }
+        });
+        const iconElement = markerToHighlight.getElement()?.firstChild;
+        if (iconElement) {
+            iconElement.classList.add('active');
+        }
+    }
+
+
+    // 2. Sync List Key (and open panel on mobile)
     document.querySelectorAll('.result-item').forEach(el => {
         el.classList.remove('border-blue-500', 'bg-gray-700');
         el.classList.add('bg-gray-800');
@@ -509,18 +579,24 @@ async function handlePlaceSelection(id, itemData) {
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
     });
+    
+    // Open the panel on mobile view
+    if (isMobileView()) {
+        keyPanel.classList.add('open'); 
+    }
 
-    // 3. Draw Feature Highlight
+    // 3. Draw Feature Highlight (Simplified: thin, light gray line)
     clearRoute();
     const e = itemData.element;
 
     if (e.geometry && e.geometry.length && e.geometry[0].lat) { 
         const coords = e.geometry.map(p => [p.lat, p.lon]);
-        const l = L.polyline(coords, { color: itemData.color, weight: 8, opacity: 0.9 }).addTo(map);
+        // Changed to a subtle gray line, weight 6
+        const l = L.polyline(coords, { color: '#888', weight: 6, opacity: 0.7 }).addTo(map);
         highlightGroup.push(l);
     }
 
-    // 4. Calculate and Draw Route with Metrics (Requires Network)
+    // 4. Calculate and Draw Route with Metrics (Simplified: thin, darker gray line, solid)
     try {
         const routeData = await getRoute(userLocation.lat, userLocation.lon, itemData.destLat, itemData.destLon);
         const line = routeData.geometry.coordinates.map(([lo, la]) => [la, lo]);
@@ -528,7 +604,8 @@ async function handlePlaceSelection(id, itemData) {
         const distanceKm = (routeData.distance / 1000).toFixed(1);
         const durationMin = Math.round(routeData.duration / 60);
 
-        routeLine = L.polyline(line, { color: '#2ecc71', weight: 5, opacity: 0.8, dashArray: '10, 10' }).addTo(map);
+        // Changed to dark gray, thinner, solid line
+        routeLine = L.polyline(line, { color: '#555', weight: 3, opacity: 0.8, dashArray: '0' }).addTo(map);
         
         routeLine.bindPopup(`
             <b class="text-green-600">ROUTE TO ${itemData.name}</b><br>
@@ -555,6 +632,7 @@ async function handlePlaceSelection(id, itemData) {
 async function locate() {
   document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 p-4 flex items-center justify-center">Attempting to locate... <div class="loader ml-3"></div></p>';
   toggleKeyBtn.disabled = true;
+  updateKeyButtonVisibility(); // Hide button while loading
 
   navigator.geolocation.getCurrentPosition(async pos => {
     const { latitude: lat, longitude: lon } = pos.coords;
@@ -574,7 +652,10 @@ async function locate() {
     // 1. TRY LOADING FROM CACHE
     const cachedData = loadLocalData();
 
-    if (cachedData && cachedData.userLocation.lat === lat && cachedData.userLocation.lon === lon) {
+    // Small tolerance check (1 degree is huge, but sufficient for a simple check)
+    const significantChange = (cachedData && Math.abs(cachedData.userLocation.lat - lat) > 0.0001) || (cachedData && Math.abs(cachedData.userLocation.lon - lon) > 0.0001);
+
+    if (cachedData && !significantChange) {
         document.getElementById('places-list').innerHTML = '<p class="text-center text-green-400 p-4">✅ Data loaded from local cache!</p>';
         categorizedPlaces = cachedData.places;
     } else {
@@ -592,16 +673,21 @@ async function locate() {
         renderMarkers(allUniquePlaces);
         renderFilterCheckboxes(categorizedPlaces);
         renderTabs(categorizedPlaces);
-        toggleKeyBtn.classList.remove('hidden');
         toggleKeyBtn.disabled = false;
-        keyPanel.classList.add('open');
+        // Panel opens by default here, if mobile view, it slides open
+        if (isMobileView()) {
+            keyPanel.classList.add('open');
+        }
     }
+    updateKeyButtonVisibility(); // Show button if data loaded and mobile view
 
   }, err => {
     let message = 'An unknown error occurred.';
     if (err.code === err.PERMISSION_DENIED) { message = 'Location access was denied.'; } 
     else if (err.code === err.POSITION_UNAVAILABLE) { message = 'Location information is unavailable.'; }
     document.getElementById('places-list').innerHTML = `<p class="text-red-400 text-center p-4">🚫 Location Error: ${message}</p>`;
+    toggleKeyBtn.disabled = true;
+    updateKeyButtonVisibility();
   }, { enableHighAccuracy: true });
 }
 
