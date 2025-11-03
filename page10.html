@@ -14,7 +14,7 @@
 
 ```
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
         display: flex;
@@ -45,6 +45,7 @@
         border-radius: 10px;
         margin-bottom: 20px;
         font-weight: 500;
+        font-size: 14px;
     }
     
     .status.disconnected {
@@ -52,9 +53,14 @@
         color: #c33;
     }
     
+    .status.connecting {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
     .status.connected {
-        background: #efe;
-        color: #3c3;
+        background: #d4edda;
+        color: #155724;
     }
     
     .connection-section {
@@ -81,6 +87,10 @@
         transition: all 0.3s;
     }
     
+    button:active {
+        transform: scale(0.95);
+    }
+    
     .connect-btn {
         background: #667eea;
         color: white;
@@ -89,7 +99,11 @@
     
     .connect-btn:hover {
         background: #5568d3;
-        transform: translateY(-2px);
+    }
+    
+    .connect-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
     }
     
     .remote-section {
@@ -154,6 +168,19 @@
         border-radius: 10px;
         font-size: 12px;
         color: #666;
+        line-height: 1.5;
+    }
+    
+    .log {
+        margin-top: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        font-size: 11px;
+        color: #666;
+        max-height: 100px;
+        overflow-y: auto;
+        font-family: monospace;
     }
 </style>
 ```
@@ -164,239 +191,270 @@
         <h1>🖥️ LG webOS Remote</h1>
 
 ```
-    <div class="status disconnected" id="status">Disconnected</div>
+    <div class="status disconnected" id="status">Not Connected</div>
     
     <div class="connection-section" id="connectionSection">
-        <input type="text" id="tvIp" placeholder="TV IP Address (e.g., 192.168.1.100)" />
-        <button class="connect-btn" onclick="connect()">Connect to TV</button>
+        <input type="text" id="tvIp" placeholder="TV IP (e.g., 192.168.1.100)" />
+        <button class="connect-btn" onclick="connectToTV()" id="connectBtn">Connect to TV</button>
         <div class="info">
-            Find your TV's IP in: Settings → Network → Wi-Fi Connection → Advanced Wi-Fi Settings
+            <strong>How to find your TV's IP:</strong><br>
+            Settings → Network → Wi-Fi Connection → Advanced<br><br>
+            Make sure your TV and this device are on the same WiFi network.
         </div>
+        <div class="log" id="log"></div>
     </div>
     
     <div class="remote-section" id="remoteSection">
         <div class="dpad">
-            <button class="up" onclick="sendKey('UP')">▲</button>
-            <button class="left" onclick="sendKey('LEFT')">◄</button>
-            <button class="ok" onclick="sendKey('ENTER')">OK</button>
-            <button class="right" onclick="sendKey('RIGHT')">►</button>
-            <button class="down" onclick="sendKey('DOWN')">▼</button>
+            <button class="up" onclick="pressButton('UP')">▲</button>
+            <button class="left" onclick="pressButton('LEFT')">◄</button>
+            <button class="ok" onclick="pressButton('ENTER')">OK</button>
+            <button class="right" onclick="pressButton('RIGHT')">►</button>
+            <button class="down" onclick="pressButton('DOWN')">▼</button>
         </div>
         
         <div class="controls">
-            <button onclick="sendKey('BACK')">← Back</button>
-            <button onclick="sendKey('HOME')">🏠 Home</button>
+            <button onclick="pressButton('BACK')">← Back</button>
+            <button onclick="pressButton('HOME')">🏠 Home</button>
         </div>
         
         <div class="volume-controls">
-            <button onclick="sendKey('VOLUMEUP')">Vol +</button>
-            <button onclick="sendKey('MUTE')">🔇 Mute</button>
-            <button onclick="sendKey('VOLUMEDOWN')">Vol -</button>
+            <button onclick="pressButton('VOLUMEUP')">Vol +</button>
+            <button onclick="pressButton('MUTE')">🔇 Mute</button>
+            <button onclick="pressButton('VOLUMEDOWN')">Vol -</button>
         </div>
         
-        <button class="connect-btn" onclick="disconnect()" style="margin-top: 20px; background: #c33;">Disconnect</button>
+        <button class="connect-btn" onclick="disconnectFromTV()" style="margin-top: 20px; background: #dc3545;">Disconnect</button>
     </div>
 </div>
 
 <script>
-    let ws = null;
+    let socket = null;
+    let isConnected = false;
     let clientKey = null;
+    let messageId = 0;
 
-    function connect() {
+    function log(msg) {
+        const logEl = document.getElementById('log');
+        const time = new Date().toLocaleTimeString();
+        logEl.innerHTML = `[${time}] ${msg}<br>` + logEl.innerHTML;
+        console.log(msg);
+    }
+
+    function updateStatus(status, message) {
+        const statusEl = document.getElementById('status');
+        statusEl.className = 'status ' + status;
+        statusEl.textContent = message;
+    }
+
+    function showRemote(show) {
+        document.getElementById('connectionSection').style.display = show ? 'none' : 'block';
+        document.getElementById('remoteSection').classList.toggle('active', show);
+    }
+
+    function connectToTV() {
         const ip = document.getElementById('tvIp').value.trim();
         if (!ip) {
-            alert('Please enter TV IP address');
+            alert('Please enter your TV IP address');
             return;
         }
 
-        // Save IP for next time
-        localStorage.setItem('webos_tv_ip', ip);
+        const btn = document.getElementById('connectBtn');
+        btn.disabled = true;
+        btn.textContent = 'Connecting...';
 
-        // Try to get saved client key
+        localStorage.setItem('webos_tv_ip', ip);
         clientKey = localStorage.getItem('webos_client_key');
 
-        const wsUrl = `ws://${ip}:3000`;
-        ws = new WebSocket(wsUrl);
+        updateStatus('connecting', 'Connecting to TV...');
+        log('Attempting connection to ' + ip);
 
-        ws.onopen = () => {
-            console.log('WebSocket connected');
-            register();
-        };
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log('Received:', data);
+        try {
+            socket = new WebSocket('ws://' + ip + ':3000');
             
-            if (data.type === 'registered') {
-                if (data.payload && data.payload['client-key']) {
-                    clientKey = data.payload['client-key'];
-                    localStorage.setItem('webos_client_key', clientKey);
+            socket.onopen = function() {
+                log('WebSocket opened, sending registration...');
+                sendRegistration();
+            };
+
+            socket.onmessage = function(event) {
+                try {
+                    const msg = JSON.parse(event.data);
+                    log('Received: ' + msg.type);
+                    handleMessage(msg);
+                } catch(e) {
+                    log('Error parsing message: ' + e.message);
                 }
-                updateStatus(true);
-            }
-            
-            if (data.type === 'response' && data.payload && data.payload.returnValue === false) {
-                console.error('Command failed:', data.payload);
-            }
-        };
+            };
 
-        ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            alert('Connection failed. Make sure:\n1. TV is on\n2. IP address is correct\n3. You\'re on the same network');
-        };
+            socket.onerror = function(error) {
+                log('WebSocket error occurred');
+                updateStatus('disconnected', 'Connection failed');
+                btn.disabled = false;
+                btn.textContent = 'Connect to TV';
+            };
 
-        ws.onclose = () => {
-            console.log('WebSocket closed');
-            updateStatus(false);
-        };
+            socket.onclose = function() {
+                log('WebSocket closed');
+                isConnected = false;
+                updateStatus('disconnected', 'Connection closed');
+                showRemote(false);
+                btn.disabled = false;
+                btn.textContent = 'Connect to TV';
+            };
+        } catch(e) {
+            log('Connection error: ' + e.message);
+            updateStatus('disconnected', 'Failed to connect');
+            btn.disabled = false;
+            btn.textContent = 'Connect to TV';
+        }
     }
 
-    function register() {
-        const registerPayload = {
-            type: 'register',
-            id: 'register_0',
+    function sendRegistration() {
+        const handshake = {
+            type: "register",
+            id: "register_0",
             payload: {
-                'forcePairing': false,
-                'pairingType': 'PROMPT',
-                'manifest': {
-                    'manifestVersion': 1,
-                    'appVersion': '1.0.0',
-                    'signed': {
-                        'created': '20140509',
-                        'appId': 'com.lge.test',
-                        'vendorId': 'com.lge',
-                        'localizedAppNames': {
-                            '': 'Web Remote',
-                            'en-US': 'Web Remote'
+                forcePairing: false,
+                pairingType: "PROMPT",
+                manifest: {
+                    manifestVersion: 1,
+                    appVersion: "1.1",
+                    signed: {
+                        created: "20140509",
+                        appId: "com.lge.test",
+                        vendorId: "com.lge",
+                        localizedAppNames: {
+                            "": "Web Remote",
+                            "en-US": "Web Remote"
                         },
-                        'localizedVendorNames': {
-                            '': 'LG Electronics'
+                        localizedVendorNames: {
+                            "": "LG"
                         },
-                        'permissions': [
-                            'TEST_SECURE',
-                            'CONTROL_INPUT_TV',
-                            'CONTROL_POWER',
-                            'READ_INSTALLED_APPS',
-                            'CONTROL_DISPLAY',
-                            'CONTROL_INPUT_JOYSTICK',
-                            'CONTROL_INPUT_MEDIA_RECORDING',
-                            'CONTROL_INPUT_MEDIA_PLAYBACK',
-                            'READ_INPUT_DEVICE_LIST',
-                            'READ_NETWORK_STATE',
-                            'READ_RUNNING_APPS',
-                            'READ_UPDATE_INFO',
-                            'WRITE_SETTINGS',
-                            'WRITE_NOTIFICATION_TOAST'
+                        permissions: [
+                            "TEST_SECURE",
+                            "CONTROL_INPUT_TV",
+                            "CONTROL_POWER",
+                            "READ_INSTALLED_APPS",
+                            "CONTROL_DISPLAY",
+                            "CONTROL_INPUT_JOYSTICK",
+                            "CONTROL_INPUT_MEDIA_RECORDING",
+                            "CONTROL_INPUT_MEDIA_PLAYBACK",
+                            "READ_INPUT_DEVICE_LIST",
+                            "READ_NETWORK_STATE",
+                            "READ_RUNNING_APPS",
+                            "WRITE_SETTINGS",
+                            "WRITE_NOTIFICATION_TOAST"
                         ],
-                        'serial': '2f930e2d2cfe083771f68e4fe7bb07'
+                        serial: "2f930e2d2cfe083771f68e4fe7bb07"
                     },
-                    'permissions': [
-                        'LAUNCH',
-                        'LAUNCH_WEBAPP',
-                        'APP_TO_APP',
-                        'CLOSE',
-                        'TEST_OPEN',
-                        'TEST_PROTECTED',
-                        'CONTROL_AUDIO',
-                        'CONTROL_DISPLAY',
-                        'CONTROL_INPUT_JOYSTICK',
-                        'CONTROL_INPUT_MEDIA_RECORDING',
-                        'CONTROL_INPUT_MEDIA_PLAYBACK',
-                        'CONTROL_INPUT_TV',
-                        'CONTROL_POWER',
-                        'READ_APP_STATUS',
-                        'READ_CURRENT_CHANNEL',
-                        'READ_INPUT_DEVICE_LIST',
-                        'READ_NETWORK_STATE',
-                        'READ_RUNNING_APPS',
-                        'READ_UPDATE_INFO',
-                        'WRITE_NOTIFICATION_ALERT',
-                        'WRITE_NOTIFICATION_TOAST',
-                        'WRITE_SETTINGS'
+                    permissions: [
+                        "LAUNCH",
+                        "LAUNCH_WEBAPP",
+                        "APP_TO_APP",
+                        "CLOSE",
+                        "TEST_OPEN",
+                        "TEST_PROTECTED",
+                        "CONTROL_AUDIO",
+                        "CONTROL_DISPLAY",
+                        "CONTROL_INPUT_JOYSTICK",
+                        "CONTROL_INPUT_MEDIA_RECORDING",
+                        "CONTROL_INPUT_MEDIA_PLAYBACK",
+                        "CONTROL_INPUT_TV",
+                        "CONTROL_POWER",
+                        "READ_APP_STATUS",
+                        "READ_CURRENT_CHANNEL",
+                        "READ_INPUT_DEVICE_LIST",
+                        "READ_NETWORK_STATE",
+                        "READ_RUNNING_APPS",
+                        "WRITE_NOTIFICATION_ALERT",
+                        "WRITE_NOTIFICATION_TOAST",
+                        "WRITE_SETTINGS"
                     ]
                 }
             }
         };
 
         if (clientKey) {
-            registerPayload.payload['client-key'] = clientKey;
+            handshake.payload["client-key"] = clientKey;
+            log('Using saved client key');
         }
 
-        ws.send(JSON.stringify(registerPayload));
+        socket.send(JSON.stringify(handshake));
     }
 
-    function sendKey(key) {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
+    function handleMessage(msg) {
+        if (msg.type === "registered") {
+            log('Registration successful!');
+            isConnected = true;
+            
+            if (msg.payload && msg.payload["client-key"]) {
+                clientKey = msg.payload["client-key"];
+                localStorage.setItem('webos_client_key', clientKey);
+                log('Client key saved');
+            }
+            
+            updateStatus('connected', 'Connected! Check TV for pairing prompt if needed');
+            showRemote(true);
+        } else if (msg.type === "response") {
+            if (msg.payload && msg.payload.returnValue === false) {
+                log('Command failed: ' + JSON.stringify(msg.payload));
+            }
+        } else if (msg.type === "error") {
+            log('Error: ' + msg.error);
+        }
+    }
+
+    function pressButton(button) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
             alert('Not connected to TV');
             return;
         }
 
-        const payload = {
-            type: 'request',
-            id: 'button_' + Date.now(),
-            uri: 'ssap://com.webos.service.ime/sendEnterKey'
+        log('Pressing: ' + button);
+
+        let request = {
+            type: "request",
+            id: "btn_" + (++messageId),
+            uri: "ssap://com.webos.service.ime/sendEnterKey"
         };
 
-        // Map keys to webOS commands
-        const keyMap = {
-            'UP': 'UP',
-            'DOWN': 'DOWN',
-            'LEFT': 'LEFT',
-            'RIGHT': 'RIGHT',
-            'ENTER': 'ENTER',
-            'BACK': 'BACK',
-            'HOME': 'HOME',
-            'VOLUMEUP': 'VOLUMEUP',
-            'VOLUMEDOWN': 'VOLUMEDOWN',
-            'MUTE': 'MUTE'
-        };
-
-        if (key === 'HOME') {
-            payload.uri = 'ssap://system.launcher/open';
-            payload.payload = { id: 'com.webos.app.home' };
-        } else if (key === 'VOLUMEUP' || key === 'VOLUMEDOWN') {
-            payload.uri = 'ssap://audio/volumeUp';
-            if (key === 'VOLUMEDOWN') {
-                payload.uri = 'ssap://audio/volumeDown';
-            }
-        } else if (key === 'MUTE') {
-            payload.uri = 'ssap://audio/setMute';
-            payload.payload = { mute: true };
-        } else {
-            payload.uri = 'ssap://com.webos.service.ime/sendEnterKey';
+        // Different commands for different buttons
+        switch(button) {
+            case 'HOME':
+                request.uri = "ssap://system.launcher/open";
+                request.payload = { id: "com.webos.app.livetv" };
+                break;
+            case 'VOLUMEUP':
+                request.uri = "ssap://audio/volumeUp";
+                break;
+            case 'VOLUMEDOWN':
+                request.uri = "ssap://audio/volumeDown";
+                break;
+            case 'MUTE':
+                request.uri = "ssap://audio/setMute";
+                request.payload = { mute: true };
+                break;
+            default:
+                // For directional and other keys
+                request.uri = "ssap://com.webos.service.ime/sendEnterKey";
         }
 
-        ws.send(JSON.stringify(payload));
+        socket.send(JSON.stringify(request));
     }
 
-    function updateStatus(connected) {
-        const status = document.getElementById('status');
-        const connectionSection = document.getElementById('connectionSection');
-        const remoteSection = document.getElementById('remoteSection');
-
-        if (connected) {
-            status.textContent = 'Connected ✓';
-            status.className = 'status connected';
-            connectionSection.style.display = 'none';
-            remoteSection.classList.add('active');
-        } else {
-            status.textContent = 'Disconnected';
-            status.className = 'status disconnected';
-            connectionSection.style.display = 'block';
-            remoteSection.classList.remove('active');
+    function disconnectFromTV() {
+        if (socket) {
+            socket.close();
+            socket = null;
         }
+        isConnected = false;
+        updateStatus('disconnected', 'Disconnected');
+        showRemote(false);
     }
 
-    function disconnect() {
-        if (ws) {
-            ws.close();
-            ws = null;
-        }
-        updateStatus(false);
-    }
-
-    // Load saved IP on page load
-    window.addEventListener('DOMContentLoaded', () => {
+    // Load saved IP on startup
+    window.addEventListener('DOMContentLoaded', function() {
         const savedIp = localStorage.getItem('webos_tv_ip');
         if (savedIp) {
             document.getElementById('tvIp').value = savedIp;
