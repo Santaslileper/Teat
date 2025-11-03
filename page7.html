@@ -3,70 +3,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Offline Map Navigator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Offline Map Navigator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
 ```
     body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: linear-gradient(135deg, #1e293b 0%, #1e40af 50%, #1e293b 100%);
-        min-height: 100vh;
-        padding: 2rem;
+        background: #0f172a;
         color: white;
+        overflow: hidden;
+        height: 100vh;
     }
 
-    .container {
-        max-width: 1400px;
-        margin: 0 auto;
+    /* Map Container - Full Screen */
+    #map {
+        width: 100%;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1;
     }
 
+    /* Floating Header */
     .header {
-        background: rgba(255, 255, 255, 0.1);
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        right: 1rem;
+        background: rgba(15, 23, 42, 0.95);
         backdrop-filter: blur(20px);
-        border-radius: 1.5rem;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1.25rem;
+        padding: 1rem;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        z-index: 1000;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
 
     .header-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        gap: 0.75rem;
     }
 
     .header-title {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.5rem;
+        flex: 1;
+        min-width: 0;
     }
 
     .icon-box {
         background: #3b82f6;
-        padding: 1rem;
-        border-radius: 1rem;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    h1 {
+        font-size: 1rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .status-badge {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        background: rgba(255, 255, 255, 0.1);
+        gap: 0.4rem;
+        padding: 0.4rem 0.75rem;
+        background: rgba(59, 130, 246, 0.2);
         border-radius: 0.5rem;
         font-weight: 600;
+        font-size: 0.75rem;
+        flex-shrink: 0;
     }
 
     .status-dot {
-        width: 10px;
-        height: 10px;
+        width: 6px;
+        height: 6px;
         border-radius: 50%;
         animation: pulse 2s infinite;
     }
@@ -79,153 +107,176 @@
         50% { opacity: 0.5; }
     }
 
-    .controls {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 2rem;
-        align-items: end;
+    /* Control Buttons - Bottom Right */
+    .control-buttons {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        z-index: 1000;
     }
 
-    .radius-control label {
-        display: block;
-        font-weight: 600;
+    .control-btn {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(59, 130, 246, 0.95);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .control-btn:active {
+        transform: scale(0.95);
+    }
+
+    .control-btn.primary {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        box-shadow: 0 10px 40px rgba(59, 130, 246, 0.6);
+    }
+
+    /* Bottom Sheet */
+    .bottom-sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.98);
+        backdrop-filter: blur(20px);
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        z-index: 999;
+        transform: translateY(calc(100% - 60px));
+        transition: transform 0.3s ease;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .bottom-sheet.open {
+        transform: translateY(0);
+    }
+
+    .sheet-handle {
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        margin: 0.75rem auto 0;
+    }
+
+    .sheet-header {
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .sheet-title {
+        font-weight: 700;
+        font-size: 1rem;
+    }
+
+    .sheet-content {
+        padding: 0 1.25rem 1.25rem;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
         margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(59, 130, 246, 0.2);
     }
 
+    .tab-btn {
+        flex: 1;
+        padding: 0.75rem;
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* Radius Control */
     .radius-buttons {
         display: flex;
         gap: 0.5rem;
-        flex-wrap: wrap;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
     }
 
     .radius-btn {
-        padding: 0.75rem 1.5rem;
-        border: none;
+        padding: 0.625rem 1rem;
+        border: 1px solid rgba(59, 130, 246, 0.3);
         border-radius: 0.75rem;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s;
-        background: rgba(255, 255, 255, 0.1);
+        background: rgba(59, 130, 246, 0.1);
         color: white;
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 0.875rem;
+        transition: all 0.3s;
     }
 
     .radius-btn.active {
         background: #3b82f6;
-        transform: scale(1.05);
-        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+        border-color: #3b82f6;
     }
 
-    .radius-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .load-btn {
-        padding: 1rem 2rem;
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-        border: none;
-        border-radius: 1rem;
-        color: white;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .load-btn:hover {
-        box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6);
-        transform: translateY(-2px);
-    }
-
-    .load-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .main-grid {
-        display: grid;
-        grid-template-columns: 350px 1fr;
-        gap: 2rem;
-    }
-
-    .sidebar, .main-content {
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
-    }
-
-    .card {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border-radius: 1.5rem;
-        padding: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
-    .card-title {
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-
-    .cache-stats {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .stat-box {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-    }
-
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-
-    .stat-label {
-        font-size: 0.9rem;
-        opacity: 0.8;
-    }
-
-    .clear-btn {
-        padding: 0.5rem;
-        background: rgba(239, 68, 68, 0.2);
-        border: none;
-        border-radius: 0.5rem;
-        color: #fca5a5;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .clear-btn:hover {
-        background: rgba(239, 68, 68, 0.3);
-    }
-
+    /* Category Filters */
     .category-filters {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
     }
 
     .category-btn {
-        padding: 1rem;
-        border: 2px solid transparent;
+        padding: 0.75rem;
+        border: 1px solid rgba(59, 130, 246, 0.3);
         border-radius: 0.75rem;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(59, 130, 246, 0.1);
         color: white;
         cursor: pointer;
         display: flex;
         justify-content: space-between;
         align-items: center;
         font-weight: 600;
+        font-size: 0.875rem;
         transition: all 0.3s;
     }
 
@@ -235,9 +286,9 @@
     }
 
     .category-indicator {
-        width: 16px;
-        height: 16px;
-        border-radius: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
         background: #4b5563;
         transition: all 0.3s;
     }
@@ -246,243 +297,242 @@
         background: #3b82f6;
     }
 
+    /* Search Bar */
     .search-bar {
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 1rem;
+        padding: 0.875rem;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 0.75rem;
         color: white;
-        font-size: 1rem;
+        font-size: 0.9rem;
         width: 100%;
+        margin-bottom: 1rem;
     }
 
     .search-bar::placeholder {
         color: rgba(255, 255, 255, 0.5);
     }
 
+    /* Locations List */
     .locations-list {
-        max-height: 600px;
-        overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.75rem;
     }
 
     .location-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 1rem;
-        padding: 1.5rem;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 0.875rem;
+        padding: 1rem;
         transition: all 0.3s;
     }
 
-    .location-card:hover {
-        background: rgba(255, 255, 255, 0.1);
+    .location-card:active {
+        background: rgba(59, 130, 246, 0.2);
+        transform: scale(0.98);
     }
 
     .location-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
+        gap: 0.75rem;
     }
 
     .location-name {
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
     }
 
     .location-type {
         color: #93c5fd;
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         text-transform: capitalize;
     }
 
     .location-rating {
         color: #fbbf24;
         font-weight: 600;
+        font-size: 0.875rem;
     }
 
     .location-distance {
         color: #9ca3af;
-        font-size: 0.9rem;
-    }
-
-    .location-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-    }
-
-    .action-btn {
-        flex: 1;
-        padding: 0.75rem;
-        border: none;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-
-    .navigate-btn {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
-    }
-
-    .details-btn {
-        background: rgba(139, 92, 246, 0.2);
-        color: #c4b5fd;
-    }
-
-    .action-btn:hover {
-        transform: translateY(-2px);
+        font-size: 0.8rem;
     }
 
     .empty-state {
         text-align: center;
-        padding: 4rem 2rem;
+        padding: 2rem 1rem;
         color: #9ca3af;
     }
 
-    .empty-icon {
-        font-size: 4rem;
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
         margin-bottom: 1rem;
-        opacity: 0.5;
     }
 
-    .cached-badge {
-        display: inline-block;
-        color: #4ade80;
-        font-size: 0.8rem;
-        margin-left: 0.5rem;
+    .stat-box {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        text-align: center;
     }
 
-    @media (max-width: 1024px) {
-        .main-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .controls {
-            grid-template-columns: 1fr;
-        }
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #93c5fd;
+    }
+
+    .clear-btn {
+        width: 100%;
+        padding: 0.875rem;
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 0.75rem;
+        color: #fca5a5;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    /* Custom Leaflet Styles */
+    .leaflet-popup-content-wrapper {
+        background: rgba(15, 23, 42, 0.95);
+        color: white;
+        border-radius: 0.75rem;
+    }
+
+    .leaflet-popup-tip {
+        background: rgba(15, 23, 42, 0.95);
     }
 </style>
 ```
 
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="header-top">
-                <div class="header-title">
-                    <div class="icon-box">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Offline Map Navigator</h1>
-                        <p style="color: #93c5fd; font-size: 0.9rem;">Intelligent Location Discovery System</p>
-                    </div>
-                </div>
-                <div class="status-badge">
-                    <div class="status-dot online" id="statusDot"></div>
-                    <span id="statusText">Online</span>
-                </div>
-            </div>
+    <!-- Map -->
+    <div id="map"></div>
 
 ```
-        <div class="controls">
-            <div class="radius-control">
-                <label>Search Radius: <span id="radiusDisplay">1000m</span></label>
-                <div class="radius-buttons">
-                    <button class="radius-btn" data-radius="500">500m</button>
-                    <button class="radius-btn active" data-radius="1000">1km</button>
-                    <button class="radius-btn" data-radius="2000">2km</button>
-                    <button class="radius-btn" data-radius="5000">5km</button>
-                    <button class="radius-btn" data-radius="10000">10km</button>
-                </div>
+<!-- Floating Header -->
+<div class="header">
+    <div class="header-top">
+        <div class="header-title">
+            <div class="icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                </svg>
             </div>
-            <button class="load-btn" id="loadBtn">📍 Load Current Location</button>
+            <h1>Map Navigator</h1>
         </div>
-    </div>
-
-    <div class="main-grid">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <!-- Cache Status -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">💾 Cache Status</h3>
-                    <button class="clear-btn" id="clearBtn">🗑️</button>
-                </div>
-                <div class="cache-stats">
-                    <div class="stat-box">
-                        <div class="stat-value" style="color: #60a5fa;" id="cacheSize">0 MB</div>
-                        <div class="stat-label">Cached Data</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" style="color: #a78bfa;" id="locationCount">0</div>
-                        <div class="stat-label">Locations Stored</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Category Filters -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">🔍 Category Filters</h3>
-                </div>
-                <div class="category-filters" id="categoryFilters">
-                    <button class="category-btn active" data-category="restaurants">
-                        <span>Restaurants</span>
-                        <div class="category-indicator"></div>
-                    </button>
-                    <button class="category-btn active" data-category="cafes">
-                        <span>Cafes</span>
-                        <div class="category-indicator"></div>
-                    </button>
-                    <button class="category-btn active" data-category="hotels">
-                        <span>Hotels</span>
-                        <div class="category-indicator"></div>
-                    </button>
-                    <button class="category-btn active" data-category="attractions">
-                        <span>Attractions</span>
-                        <div class="category-indicator"></div>
-                    </button>
-                    <button class="category-btn active" data-category="transport">
-                        <span>Transport</span>
-                        <div class="category-indicator"></div>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Search Bar -->
-            <div class="card" id="searchCard" style="display: none;">
-                <input type="text" class="search-bar" id="searchBar" placeholder="🔎 Search locations...">
-            </div>
-
-            <!-- Locations List -->
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">📍 Nearby Places (<span id="resultCount">0</span>)</h3>
-                </div>
-                <div id="locationsContainer">
-                    <div class="empty-state">
-                        <div class="empty-icon">📍</div>
-                        <p>Load your location to discover nearby places</p>
-                    </div>
-                </div>
-            </div>
+        <div class="status-badge">
+            <div class="status-dot online" id="statusDot"></div>
+            <span id="statusText">Online</span>
         </div>
     </div>
 </div>
 
+<!-- Control Buttons -->
+<div class="control-buttons">
+    <button class="control-btn primary" id="locateBtn" title="My Location">📍</button>
+    <button class="control-btn" id="zoomInBtn" title="Zoom In">➕</button>
+    <button class="control-btn" id="zoomOutBtn" title="Zoom Out">➖</button>
+</div>
+
+<!-- Bottom Sheet -->
+<div class="bottom-sheet" id="bottomSheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header" id="sheetHeader">
+        <div class="sheet-title">🗺️ Controls & Places (<span id="resultCount">0</span>)</div>
+        <div>▲</div>
+    </div>
+    <div class="sheet-content">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="places">Places</button>
+            <button class="tab-btn" data-tab="filters">Filters</button>
+            <button class="tab-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- Places Tab -->
+        <div class="tab-content active" id="placesTab">
+            <input type="text" class="search-bar" id="searchBar" placeholder="🔎 Search locations...">
+            <div id="locationsContainer">
+                <div class="empty-state">
+                    <p>📍 Tap the location button to load nearby places</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters Tab -->
+        <div class="tab-content" id="filtersTab">
+            <h3 style="margin-bottom: 0.75rem; font-size: 0.9rem;">Category Filters</h3>
+            <div class="category-filters">
+                <button class="category-btn active" data-category="restaurants">
+                    <span>Restaurants</span>
+                    <div class="category-indicator"></div>
+                </button>
+                <button class="category-btn active" data-category="cafes">
+                    <span>Cafes</span>
+                    <div class="category-indicator"></div>
+                </button>
+                <button class="category-btn active" data-category="hotels">
+                    <span>Hotels</span>
+                    <div class="category-indicator"></div>
+                </button>
+                <button class="category-btn active" data-category="attractions">
+                    <span>Attractions</span>
+                    <div class="category-indicator"></div>
+                </button>
+                <button class="category-btn active" data-category="transport">
+                    <span>Transport</span>
+                    <div class="category-indicator"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-content" id="settingsTab">
+            <h3 style="margin-bottom: 0.75rem; font-size: 0.9rem;">Search Radius</h3>
+            <div class="radius-buttons">
+                <button class="radius-btn" data-radius="500">500m</button>
+                <button class="radius-btn active" data-radius="1000">1km</button>
+                <button class="radius-btn" data-radius="2000">2km</button>
+                <button class="radius-btn" data-radius="5000">5km</button>
+                <button class="radius-btn" data-radius="10000">10km</button>
+            </div>
+
+            <h3 style="margin: 1.25rem 0 0.75rem; font-size: 0.9rem;">Cache Status</h3>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" style="color: #60a5fa;" id="cacheSize">0 MB</div>
+                    <div class="stat-label">Cached Data</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" style="color: #a78bfa;" id="locationCount">0</div>
+                    <div class="stat-label">Locations</div>
+                </div>
+            </div>
+            <button class="clear-btn" id="clearBtn">🗑️ Clear All Cache</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script>
-    // State management
+    // State
     const state = {
         searchRadius: 1000,
         locations: [],
@@ -495,96 +545,78 @@
         },
         userLocation: null,
         searchQuery: '',
-        isOnline: navigator.onLine
+        isOnline: navigator.onLine,
+        map: null,
+        markers: [],
+        userMarker: null
     };
 
-    // Online/Offline detection
+    // Initialize Map
+    state.map = L.map('map', {
+        zoomControl: false
+    }).setView([40.7128, -74.0060], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(state.map);
+
+    // Category icons
+    const categoryIcons = {
+        restaurants: '🍽️',
+        cafes: '☕',
+        hotels: '🏨',
+        attractions: '🎭',
+        transport: '🚇'
+    };
+
+    // Online/Offline
     window.addEventListener('online', () => {
         state.isOnline = true;
-        updateStatus();
+        document.getElementById('statusDot').className = 'status-dot online';
+        document.getElementById('statusText').textContent = 'Online';
     });
 
     window.addEventListener('offline', () => {
         state.isOnline = false;
-        updateStatus();
+        document.getElementById('statusDot').className = 'status-dot offline';
+        document.getElementById('statusText').textContent = 'Offline';
     });
 
-    function updateStatus() {
-        const dot = document.getElementById('statusDot');
-        const text = document.getElementById('statusText');
-        if (state.isOnline) {
-            dot.className = 'status-dot online';
-            text.textContent = 'Online';
-        } else {
-            dot.className = 'status-dot offline';
-            text.textContent = 'Offline';
-        }
-    }
+    // Bottom Sheet Toggle
+    const sheet = document.getElementById('bottomSheet');
+    const sheetHeader = document.getElementById('sheetHeader');
+    let isSheetOpen = false;
 
-    // Radius buttons
+    sheetHeader.addEventListener('click', () => {
+        isSheetOpen = !isSheetOpen;
+        sheet.classList.toggle('open', isSheetOpen);
+    });
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+        });
+    });
+
+    // Radius Buttons
     document.querySelectorAll('.radius-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             state.searchRadius = parseInt(btn.dataset.radius);
-            const display = state.searchRadius >= 1000 ? 
-                `${state.searchRadius / 1000}km` : 
-                `${state.searchRadius}m`;
-            document.getElementById('radiusDisplay').textContent = display;
-            
-            if (state.userLocation) {
-                generateLocations();
-            }
+            if (state.userLocation) generateLocations();
         });
     });
 
-    // Load location
-    document.getElementById('loadBtn').addEventListener('click', () => {
-        const btn = document.getElementById('loadBtn');
-        btn.disabled = true;
-        btn.textContent = '⏳ Loading...';
-        
-        setTimeout(() => {
-            const mockLat = 40.7128 + (Math.random() - 0.5) * 0.1;
-            const mockLon = -74.0060 + (Math.random() - 0.5) * 0.1;
-            state.userLocation = { lat: mockLat, lon: mockLon };
-            generateLocations();
-            btn.disabled = false;
-            btn.textContent = '📍 Load Current Location';
-            document.getElementById('searchCard').style.display = 'block';
-        }, 1000);
-    });
-
-    // Generate mock locations
-    function generateLocations() {
-        const types = Object.keys(state.categories);
-        const locations = [];
-        const count = Math.floor(state.searchRadius / 100);
-        
-        for (let i = 0; i < count; i++) {
-            const angle = (Math.PI * 2 * i) / count;
-            const distance = Math.random() * state.searchRadius;
-            
-            locations.push({
-                id: `loc_${i}`,
-                name: `Location ${i + 1}`,
-                type: types[Math.floor(Math.random() * types.length)],
-                distance: Math.round(distance),
-                rating: (Math.random() * 2 + 3).toFixed(1),
-                cached: Math.random() > 0.3
-            });
-        }
-        
-        state.locations = locations;
-        updateUI();
-    }
-
-    // Category filters
+    // Category Filters
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             btn.classList.toggle('active');
-            const category = btn.dataset.category;
-            state.categories[category] = !state.categories[category];
+            state.categories[btn.dataset.category] = !state.categories[btn.dataset.category];
             updateUI();
         });
     });
@@ -595,15 +627,106 @@
         updateUI();
     });
 
-    // Clear cache
-    document.getElementById('clearBtn').addEventListener('click', () => {
-        state.locations = [];
-        state.userLocation = null;
-        state.searchQuery = '';
-        document.getElementById('searchBar').value = '';
-        document.getElementById('searchCard').style.display = 'none';
-        updateUI();
+    // Map Controls
+    document.getElementById('locateBtn').addEventListener('click', () => {
+        const btn = document.getElementById('locateBtn');
+        btn.textContent = '⏳';
+        
+        setTimeout(() => {
+            const lat = 40.7128 + (Math.random() - 0.5) * 0.1;
+            const lon = -74.0060 + (Math.random() - 0.5) * 0.1;
+            state.userLocation = { lat, lon };
+            
+            if (state.userMarker) {
+                state.map.removeLayer(state.userMarker);
+            }
+            
+            state.userMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: '<div style="background: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [20, 20]
+                })
+            }).addTo(state.map);
+            
+            state.map.setView([lat, lon], 15);
+            generateLocations();
+            btn.textContent = '📍';
+        }, 1000);
     });
+
+    document.getElementById('zoomInBtn').addEventListener('click', () => {
+        state.map.zoomIn();
+    });
+
+    document.getElementById('zoomOutBtn').addEventListener('click', () => {
+        state.map.zoomOut();
+    });
+
+    // Clear Cache
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        if (confirm('Clear all cached data?')) {
+            state.markers.forEach(m => state.map.removeLayer(m));
+            state.markers = [];
+            state.locations = [];
+            state.searchQuery = '';
+            document.getElementById('searchBar').value = '';
+            updateUI();
+        }
+    });
+
+    // Generate Locations
+    function generateLocations() {
+        state.markers.forEach(m => state.map.removeLayer(m));
+        state.markers = [];
+        
+        const types = Object.keys(state.categories);
+        const locations = [];
+        const count = Math.floor(state.searchRadius / 100);
+        
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count;
+            const distance = Math.random() * state.searchRadius;
+            const deltaLat = (distance * Math.cos(angle)) / 111320;
+            const deltaLon = (distance * Math.sin(angle)) / (111320 * Math.cos(state.userLocation.lat * Math.PI / 180));
+            
+            const type = types[Math.floor(Math.random() * types.length)];
+            const lat = state.userLocation.lat + deltaLat;
+            const lon = state.userLocation.lon + deltaLon;
+            
+            const loc = {
+                id: `loc_${i}`,
+                name: `Location ${i + 1}`,
+                type: type,
+                lat: lat,
+                lon: lon,
+                distance: Math.round(distance),
+                rating: (Math.random() * 2 + 3).toFixed(1),
+                cached: Math.random() > 0.3
+            };
+            
+            locations.push(loc);
+            
+            const marker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="font-size: 24px;">${categoryIcons[type]}</div>`,
+                    iconSize: [30, 30]
+                })
+            }).addTo(state.map);
+            
+            marker.bindPopup(`
+                <strong>${loc.name}</strong><br>
+                ${loc.type}<br>
+                ⭐ ${loc.rating} | ${loc.distance}m
+            `);
+            
+            state.markers.push(marker);
+        }
+        
+        state.locations = locations;
+        updateUI();
+    }
 
     // Update UI
     function updateUI() {
@@ -614,38 +737,25 @@
             return categoryMatch && searchMatch;
         });
 
-        // Update stats
         const cacheSize = (state.locations.length * 2.5 + (state.searchRadius / 100) * 1.2).toFixed(2);
         document.getElementById('cacheSize').textContent = `${cacheSize} MB`;
         document.getElementById('locationCount').textContent = state.locations.length;
         document.getElementById('resultCount').textContent = filtered.length;
 
-        // Update locations list
         const container = document.getElementById('locationsContainer');
         
-        if (filtered.length === 0 && state.locations.length === 0) {
+        if (filtered.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-icon">📍</div>
-                    <p>Load your location to discover nearby places</p>
-                </div>
-            `;
-        } else if (filtered.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">🔍</div>
-                    <p>No locations match your filters</p>
+                    <p>${state.locations.length === 0 ? '📍 Tap the location button to load nearby places' : '🔍 No locations match your filters'}</p>
                 </div>
             `;
         } else {
             container.innerHTML = `<div class="locations-list">${filtered.map(loc => `
-                <div class="location-card">
+                <div class="location-card" onclick="state.map.setView([${loc.lat}, ${loc.lon}], 17)">
                     <div class="location-header">
                         <div>
-                            <div class="location-name">
-                                ${loc.name}
-                                ${loc.cached ? '<span class="cached-badge">✓ Cached</span>' : ''}
-                            </div>
+                            <div class="location-name">${categoryIcons[loc.type]} ${loc.name}</div>
                             <div class="location-type">${loc.type}</div>
                         </div>
                         <div style="text-align: right;">
@@ -653,17 +763,12 @@
                             <div class="location-distance">${loc.distance}m</div>
                         </div>
                     </div>
-                    <div class="location-actions">
-                        <button class="action-btn navigate-btn">Navigate</button>
-                        <button class="action-btn details-btn">Details</button>
-                    </div>
                 </div>
             `).join('')}</div>`;
         }
     }
 
-    // Initialize
-    updateStatus();
+    updateUI();
 </script>
 ```
 
