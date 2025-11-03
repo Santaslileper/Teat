@@ -1,313 +1,671 @@
-import React, { useState, useEffect, useCallback, useMemo } from ‘react’;
-import { MapPin, Layers, Database, Trash2, Navigation, Search, Filter, Download, Wifi, WifiOff } from ‘lucide-react’;
+<!DOCTYPE html>
 
-const AdvancedOfflineNavigator = () => {
-const [searchRadius, setSearchRadius] = useState(1000);
-const [cacheSize, setCacheSize] = useState(0);
-const [isOnline, setIsOnline] = useState(navigator.onLine);
-const [locations, setLocations] = useState([]);
-const [categories, setCategories] = useState({
-restaurants: true,
-cafes: true,
-hotels: true,
-attractions: true,
-transport: true
-});
-const [userLocation, setUserLocation] = useState(null);
-const [loading, setLoading] = useState(false);
-const [searchQuery, setSearchQuery] = useState(’’);
-
-// Monitor online/offline status
-useEffect(() => {
-const handleOnline = () => setIsOnline(true);
-const handleOffline = () => setIsOnline(false);
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Offline Map Navigator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
 ```
-window.addEventListener('online', handleOnline);
-window.addEventListener('offline', handleOffline);
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #1e293b 0%, #1e40af 50%, #1e293b 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        color: white;
+    }
 
-return () => {
-  window.removeEventListener('online', handleOnline);
-  window.removeEventListener('offline', handleOffline);
-};
-```
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
 
-}, []);
+    .header {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-// Simulate cache calculation
-useEffect(() => {
-const calculateCache = () => {
-const base = locations.length * 2.5;
-const tiles = (searchRadius / 100) * 1.2;
-setCacheSize(Math.round((base + tiles) * 100) / 100);
-};
-calculateCache();
-}, [locations, searchRadius]);
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
 
-// Generate mock nearby locations
-const generateMockLocations = useCallback((lat, lon, radius) => {
-const types = Object.keys(categories);
-const mockData = [];
-const count = Math.floor(radius / 100);
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
 
-```
-for (let i = 0; i < count; i++) {
-  const angle = (Math.PI * 2 * i) / count;
-  const distance = Math.random() * radius;
-  const deltaLat = (distance * Math.cos(angle)) / 111320;
-  const deltaLon = (distance * Math.sin(angle)) / (111320 * Math.cos(lat * Math.PI / 180));
-  
-  mockData.push({
-    id: `loc_${i}`,
-    name: `Location ${i + 1}`,
-    type: types[Math.floor(Math.random() * types.length)],
-    lat: lat + deltaLat,
-    lon: lon + deltaLon,
-    distance: Math.round(distance),
-    rating: (Math.random() * 2 + 3).toFixed(1),
-    cached: Math.random() > 0.3
-  });
-}
-return mockData;
-```
+    .icon-box {
+        background: #3b82f6;
+        padding: 1rem;
+        border-radius: 1rem;
+    }
 
-}, [categories]);
+    .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
 
-const loadLocation = () => {
-setLoading(true);
-// Simulate geolocation
-setTimeout(() => {
-const mockLat = 40.7128 + (Math.random() - 0.5) * 0.1;
-const mockLon = -74.0060 + (Math.random() - 0.5) * 0.1;
-setUserLocation({ lat: mockLat, lon: mockLon });
-const nearbyPlaces = generateMockLocations(mockLat, mockLon, searchRadius);
-setLocations(nearbyPlaces);
-setLoading(false);
-}, 1000);
-};
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
 
-const clearCache = () => {
-setLocations([]);
-setCacheSize(0);
-setUserLocation(null);
-};
+    .online { background: #4ade80; }
+    .offline { background: #fb923c; }
 
-const toggleCategory = (cat) => {
-setCategories(prev => ({ …prev, [cat]: !prev[cat] }));
-};
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
 
-const filteredLocations = useMemo(() => {
-return locations.filter(loc => {
-const categoryMatch = categories[loc.type];
-const searchMatch = searchQuery === ‘’ ||
-loc.name.toLowerCase().includes(searchQuery.toLowerCase());
-return categoryMatch && searchMatch;
-});
-}, [locations, categories, searchQuery]);
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2rem;
+        align-items: end;
+    }
 
-const radiusOptions = [500, 1000, 2000, 5000, 10000];
+    .radius-control label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
 
-return (
-<div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-6">
-<div className="max-w-6xl mx-auto">
-{/* Header */}
-<div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
-<div className="flex items-center justify-between mb-4">
-<div className="flex items-center gap-3">
-<div className="p-3 bg-blue-500 rounded-xl">
-<Navigation className="w-8 h-8 text-white" />
-</div>
-<div>
-<h1 className="text-3xl font-bold text-white">Offline Map Navigator</h1>
-<p className="text-blue-200 text-sm">Intelligent Location Discovery System</p>
-</div>
-</div>
-<div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg">
-{isOnline ? (
-<>
-<Wifi className="w-5 h-5 text-green-400" />
-<span className="text-green-400 font-medium">Online</span>
-</>
-) : (
-<>
-<WifiOff className="w-5 h-5 text-orange-400" />
-<span className="text-orange-400 font-medium">Offline</span>
-</>
-)}
-</div>
-</div>
+    .radius-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
 
-```
-      {/* Search Radius Control */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="text-white font-medium mb-3 block flex items-center gap-2">
-            <Search className="w-4 h-4" />
-            Search Radius: {searchRadius}m
-          </label>
-          <div className="flex gap-2">
-            {radiusOptions.map(radius => (
-              <button
-                key={radius}
-                onClick={() => setSearchRadius(radius)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  searchRadius === radius
-                    ? 'bg-blue-500 text-white shadow-lg scale-105'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                {radius >= 1000 ? `${radius / 1000}km` : `${radius}m`}
-              </button>
-            ))}
-          </div>
-        </div>
+    .radius-btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .radius-btn.active {
+        background: #3b82f6;
+        transform: scale(1.05);
+        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.5);
+    }
+
+    .radius-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .load-btn {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border: none;
+        border-radius: 1rem;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .load-btn:hover {
+        box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6);
+        transform: translateY(-2px);
+    }
+
+    .load-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 2rem;
+    }
+
+    .sidebar, .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 1.5rem;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .cache-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .stat-box {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 0.75rem;
+        padding: 1.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+
+    .clear-btn {
+        padding: 0.5rem;
+        background: rgba(239, 68, 68, 0.2);
+        border: none;
+        border-radius: 0.5rem;
+        color: #fca5a5;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .clear-btn:hover {
+        background: rgba(239, 68, 68, 0.3);
+    }
+
+    .category-filters {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .category-btn {
+        padding: 1rem;
+        border: 2px solid transparent;
+        border-radius: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .category-btn.active {
+        background: rgba(59, 130, 246, 0.3);
+        border-color: #3b82f6;
+    }
+
+    .category-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        background: #4b5563;
+        transition: all 0.3s;
+    }
+
+    .category-btn.active .category-indicator {
+        background: #3b82f6;
+    }
+
+    .search-bar {
+        padding: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 1rem;
+        color: white;
+        font-size: 1rem;
+        width: 100%;
+    }
+
+    .search-bar::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .locations-list {
+        max-height: 600px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .location-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .location-card:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .location-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .location-name {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .location-type {
+        color: #93c5fd;
+        font-size: 0.9rem;
+        text-transform: capitalize;
+    }
+
+    .location-rating {
+        color: #fbbf24;
+        font-weight: 600;
+    }
+
+    .location-distance {
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+
+    .location-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .navigate-btn {
+        background: rgba(59, 130, 246, 0.2);
+        color: #93c5fd;
+    }
+
+    .details-btn {
+        background: rgba(139, 92, 246, 0.2);
+        color: #c4b5fd;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #9ca3af;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .cached-badge {
+        display: inline-block;
+        color: #4ade80;
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .main-grid {
+            grid-template-columns: 1fr;
+        }
         
-        <div className="flex items-end justify-end">
-          <button
-            onClick={loadLocation}
-            disabled={loading}
-            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <MapPin className="w-5 h-5" />
-            {loading ? 'Loading...' : 'Load Current Location'}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Sidebar */}
-      <div className="lg:col-span-1 space-y-6">
-        {/* Cache Info */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-bold flex items-center gap-2">
-              <Database className="w-5 h-5" />
-              Cache Status
-            </h3>
-            <button
-              onClick={clearCache}
-              className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-all"
-              title="Clear Cache"
-            >
-              <Trash2 className="w-4 h-4 text-red-400" />
-            </button>
-          </div>
-          <div className="space-y-3">
-            <div className="bg-white/5 rounded-lg p-4">
-              <div className="text-3xl font-bold text-blue-400 mb-1">
-                {cacheSize} MB
-              </div>
-              <div className="text-blue-200 text-sm">Cached Data</div>
-            </div>
-            <div className="bg-white/5 rounded-lg p-4">
-              <div className="text-2xl font-bold text-purple-400 mb-1">
-                {locations.length}
-              </div>
-              <div className="text-purple-200 text-sm">Locations Stored</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Category Filters */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Category Filters
-          </h3>
-          <div className="space-y-2">
-            {Object.entries(categories).map(([cat, enabled]) => (
-              <button
-                key={cat}
-                onClick={() => toggleCategory(cat)}
-                className={`w-full px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-between ${
-                  enabled
-                    ? 'bg-blue-500/30 text-white border-2 border-blue-400'
-                    : 'bg-white/5 text-gray-400 border-2 border-transparent'
-                }`}
-              >
-                <span className="capitalize">{cat}</span>
-                <div className={`w-4 h-4 rounded ${enabled ? 'bg-blue-400' : 'bg-gray-600'}`} />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:col-span-2 space-y-6">
-        {/* Search Bar */}
-        {locations.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-            <input
-              type="text"
-              placeholder="Search locations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        )}
-
-        {/* Locations List */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-          <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-            <Layers className="w-5 h-5" />
-            Nearby Places ({filteredLocations.length})
-          </h3>
-          
-          {!userLocation ? (
-            <div className="text-center py-12">
-              <MapPin className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400">Load your location to discover nearby places</p>
-            </div>
-          ) : filteredLocations.length === 0 ? (
-            <div className="text-center py-12">
-              <Search className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-              <p className="text-gray-400">No locations match your filters</p>
-            </div>
-          ) : (
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {filteredLocations.map(loc => (
-                <div
-                  key={loc.id}
-                  className="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition-all border border-white/10"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-white font-semibold">{loc.name}</h4>
-                        {loc.cached && (
-                          <Download className="w-4 h-4 text-green-400" title="Cached" />
-                        )}
-                      </div>
-                      <p className="text-blue-300 text-sm capitalize">{loc.type}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-yellow-400 font-medium">★ {loc.rating}</div>
-                      <div className="text-gray-400 text-sm">{loc.distance}m</div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <button className="flex-1 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg text-sm font-medium transition-all">
-                      Navigate
-                    </button>
-                    <button className="flex-1 px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-lg text-sm font-medium transition-all">
-                      Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+        .controls {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 ```
 
-);
-};
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <div class="header-title">
+                    <div class="icon-box">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem;">Offline Map Navigator</h1>
+                        <p style="color: #93c5fd; font-size: 0.9rem;">Intelligent Location Discovery System</p>
+                    </div>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot online" id="statusDot"></div>
+                    <span id="statusText">Online</span>
+                </div>
+            </div>
 
-export default AdvancedOfflineNavigator;
+```
+        <div class="controls">
+            <div class="radius-control">
+                <label>Search Radius: <span id="radiusDisplay">1000m</span></label>
+                <div class="radius-buttons">
+                    <button class="radius-btn" data-radius="500">500m</button>
+                    <button class="radius-btn active" data-radius="1000">1km</button>
+                    <button class="radius-btn" data-radius="2000">2km</button>
+                    <button class="radius-btn" data-radius="5000">5km</button>
+                    <button class="radius-btn" data-radius="10000">10km</button>
+                </div>
+            </div>
+            <button class="load-btn" id="loadBtn">📍 Load Current Location</button>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Cache Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">💾 Cache Status</h3>
+                    <button class="clear-btn" id="clearBtn">🗑️</button>
+                </div>
+                <div class="cache-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: #60a5fa;" id="cacheSize">0 MB</div>
+                        <div class="stat-label">Cached Data</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" style="color: #a78bfa;" id="locationCount">0</div>
+                        <div class="stat-label">Locations Stored</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Filters -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔍 Category Filters</h3>
+                </div>
+                <div class="category-filters" id="categoryFilters">
+                    <button class="category-btn active" data-category="restaurants">
+                        <span>Restaurants</span>
+                        <div class="category-indicator"></div>
+                    </button>
+                    <button class="category-btn active" data-category="cafes">
+                        <span>Cafes</span>
+                        <div class="category-indicator"></div>
+                    </button>
+                    <button class="category-btn active" data-category="hotels">
+                        <span>Hotels</span>
+                        <div class="category-indicator"></div>
+                    </button>
+                    <button class="category-btn active" data-category="attractions">
+                        <span>Attractions</span>
+                        <div class="category-indicator"></div>
+                    </button>
+                    <button class="category-btn active" data-category="transport">
+                        <span>Transport</span>
+                        <div class="category-indicator"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Search Bar -->
+            <div class="card" id="searchCard" style="display: none;">
+                <input type="text" class="search-bar" id="searchBar" placeholder="🔎 Search locations...">
+            </div>
+
+            <!-- Locations List -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📍 Nearby Places (<span id="resultCount">0</span>)</h3>
+                </div>
+                <div id="locationsContainer">
+                    <div class="empty-state">
+                        <div class="empty-icon">📍</div>
+                        <p>Load your location to discover nearby places</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // State management
+    const state = {
+        searchRadius: 1000,
+        locations: [],
+        categories: {
+            restaurants: true,
+            cafes: true,
+            hotels: true,
+            attractions: true,
+            transport: true
+        },
+        userLocation: null,
+        searchQuery: '',
+        isOnline: navigator.onLine
+    };
+
+    // Online/Offline detection
+    window.addEventListener('online', () => {
+        state.isOnline = true;
+        updateStatus();
+    });
+
+    window.addEventListener('offline', () => {
+        state.isOnline = false;
+        updateStatus();
+    });
+
+    function updateStatus() {
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        if (state.isOnline) {
+            dot.className = 'status-dot online';
+            text.textContent = 'Online';
+        } else {
+            dot.className = 'status-dot offline';
+            text.textContent = 'Offline';
+        }
+    }
+
+    // Radius buttons
+    document.querySelectorAll('.radius-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.radius-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.searchRadius = parseInt(btn.dataset.radius);
+            const display = state.searchRadius >= 1000 ? 
+                `${state.searchRadius / 1000}km` : 
+                `${state.searchRadius}m`;
+            document.getElementById('radiusDisplay').textContent = display;
+            
+            if (state.userLocation) {
+                generateLocations();
+            }
+        });
+    });
+
+    // Load location
+    document.getElementById('loadBtn').addEventListener('click', () => {
+        const btn = document.getElementById('loadBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Loading...';
+        
+        setTimeout(() => {
+            const mockLat = 40.7128 + (Math.random() - 0.5) * 0.1;
+            const mockLon = -74.0060 + (Math.random() - 0.5) * 0.1;
+            state.userLocation = { lat: mockLat, lon: mockLon };
+            generateLocations();
+            btn.disabled = false;
+            btn.textContent = '📍 Load Current Location';
+            document.getElementById('searchCard').style.display = 'block';
+        }, 1000);
+    });
+
+    // Generate mock locations
+    function generateLocations() {
+        const types = Object.keys(state.categories);
+        const locations = [];
+        const count = Math.floor(state.searchRadius / 100);
+        
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count;
+            const distance = Math.random() * state.searchRadius;
+            
+            locations.push({
+                id: `loc_${i}`,
+                name: `Location ${i + 1}`,
+                type: types[Math.floor(Math.random() * types.length)],
+                distance: Math.round(distance),
+                rating: (Math.random() * 2 + 3).toFixed(1),
+                cached: Math.random() > 0.3
+            });
+        }
+        
+        state.locations = locations;
+        updateUI();
+    }
+
+    // Category filters
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('active');
+            const category = btn.dataset.category;
+            state.categories[category] = !state.categories[category];
+            updateUI();
+        });
+    });
+
+    // Search
+    document.getElementById('searchBar').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.toLowerCase();
+        updateUI();
+    });
+
+    // Clear cache
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        state.locations = [];
+        state.userLocation = null;
+        state.searchQuery = '';
+        document.getElementById('searchBar').value = '';
+        document.getElementById('searchCard').style.display = 'none';
+        updateUI();
+    });
+
+    // Update UI
+    function updateUI() {
+        const filtered = state.locations.filter(loc => {
+            const categoryMatch = state.categories[loc.type];
+            const searchMatch = state.searchQuery === '' || 
+                loc.name.toLowerCase().includes(state.searchQuery);
+            return categoryMatch && searchMatch;
+        });
+
+        // Update stats
+        const cacheSize = (state.locations.length * 2.5 + (state.searchRadius / 100) * 1.2).toFixed(2);
+        document.getElementById('cacheSize').textContent = `${cacheSize} MB`;
+        document.getElementById('locationCount').textContent = state.locations.length;
+        document.getElementById('resultCount').textContent = filtered.length;
+
+        // Update locations list
+        const container = document.getElementById('locationsContainer');
+        
+        if (filtered.length === 0 && state.locations.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📍</div>
+                    <p>Load your location to discover nearby places</p>
+                </div>
+            `;
+        } else if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <p>No locations match your filters</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `<div class="locations-list">${filtered.map(loc => `
+                <div class="location-card">
+                    <div class="location-header">
+                        <div>
+                            <div class="location-name">
+                                ${loc.name}
+                                ${loc.cached ? '<span class="cached-badge">✓ Cached</span>' : ''}
+                            </div>
+                            <div class="location-type">${loc.type}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="location-rating">★ ${loc.rating}</div>
+                            <div class="location-distance">${loc.distance}m</div>
+                        </div>
+                    </div>
+                    <div class="location-actions">
+                        <button class="action-btn navigate-btn">Navigate</button>
+                        <button class="action-btn details-btn">Details</button>
+                    </div>
+                </div>
+            `).join('')}</div>`;
+        }
+    }
+
+    // Initialize
+    updateStatus();
+</script>
+```
+
+</body>
+</html>
