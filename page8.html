@@ -2,101 +2,75 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Nearby Places</title>
+  <title>Nearby Streets & Places</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 1.5rem;
-    }
-    h1 {
-      font-size: 1.4rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
+    body { margin:0; font-family: system-ui,sans-serif; background:#0d1117; color:#e6edf3;}
+    #map { height: 60vh; }
+    #places { padding:1rem; max-height:40vh; overflow:auto; }
+    h2 { text-align:center; margin:0.7em 0; }
     button {
-      background: #238636;
-      color: white;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 12px;
-      padding: 1rem 2rem;
-      box-shadow: 0 3px 10px rgba(0,0,0,.3);
-      transition: .2s;
-      width: 90%;
-      max-width: 340px;
+      display:block; margin:1em auto; padding:1em 2em;
+      border:none; border-radius:12px; background:#238636; color:#fff;
+      font-size:1.1rem;
     }
-    button:active { transform: scale(.97); background:#2ea043; }
-    #loader {
-      display: none;
-      margin-top: 1.5rem;
-      border: 4px solid rgba(255,255,255,0.2);
-      border-top-color: #58a6ff;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #out {
-      margin-top: 1.5rem;
-      font-size: 1rem;
-      line-height: 1.4;
-      text-align: left;
-      width: 100%;
-      max-width: 400px;
-      background: #161b22;
-      padding: 1rem;
-      border-radius: 12px;
-      overflow-wrap: break-word;
-    }
+    li{margin:.4em 0;}
   </style>
 </head>
 <body>
-  <h1>Find Nearby Places</h1>
-  <button id="getLoc">Get My Location</button>
-  <div id="loader"></div>
-  <div id="out"></div>
+  <h2>Nearby Streets & Places</h2>
+  <button id="btn">Show My Area</button>
+  <div id="map"></div>
+  <div id="places"></div>
 
-<script>
-const btn = document.getElementById('getLoc');
-const loader = document.getElementById('loader');
-const out = document.getElementById('out');
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  const map = L.map('map');
+  let userMarker;
 
-btn.onclick = () => {
-  out.textContent = '';
-  loader.style.display = 'block';
-  navigator.geolocation.getCurrentPosition(async pos => {
-    try {
-      const { latitude: lat, longitude: lon } = pos.coords;
-      const revUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
-      const nearUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=&bounded=1&limit=10&viewbox=${lon-0.01},${lat+0.01},${lon+0.01},${lat-0.01}`;
-      const [rev, near] = await Promise.all([
-        fetch(revUrl).then(r=>r.json()),
-        fetch(nearUrl).then(r=>r.json())
-      ]);
-      let txt = `📍 You are near:\n${rev.display_name}\n\nNearby places:\n`;
-      if (!near.length) txt += 'No nearby named places found.';
-      else txt += near.slice(0,6).map(p=>'• '+p.display_name).join('\n');
-      out.textContent = txt;
-    } catch(e) {
-      out.textContent = 'Error: ' + e.message;
-    } finally {
-      loader.style.display = 'none';
-    }
-  }, err => {
-    loader.style.display = 'none';
-    out.textContent = 'Location error: ' + err.message;
-  }, { enableHighAccuracy:true });
-};
-</script>
+  async function getNearby(lat, lon){
+    // Overpass API query for named highways + places within 1 km
+    const query = `
+      [out:json][timeout:25];
+      (
+        node["name"](around:1000,${lat},${lon});
+        way["name"](around:1000,${lat},${lon});
+      );
+      out tags center;`;
+    const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
+    const res = await fetch(url);
+    const data = await res.json();
+    const names = new Set();
+    data.elements.forEach(el=>{
+      if(el.tags && el.tags.name) names.add(el.tags.name);
+    });
+    return Array.from(names).sort();
+  }
+
+  async function locate(){
+    document.getElementById('places').innerHTML = 'Getting location…';
+    navigator.geolocation.getCurrentPosition(async pos=>{
+      const {latitude:lat, longitude:lon} = pos.coords;
+
+      map.setView([lat, lon], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution:'© OpenStreetMap'
+      }).addTo(map);
+
+      if(userMarker) map.removeLayer(userMarker);
+      userMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
+
+      const names = await getNearby(lat, lon);
+      document.getElementById('places').innerHTML =
+        `<b>${names.length}</b> named streets/places within 1 km:<br><ul>` +
+        names.map(n=>`<li>${n}</li>`).join('') + '</ul>';
+    }, err=>{
+      document.getElementById('places').innerText = 'Location error: ' + err.message;
+    }, {enableHighAccuracy:true});
+  }
+
+  document.getElementById('btn').onclick = locate;
+  </script>
 </body>
 </html>
