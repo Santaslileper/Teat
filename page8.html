@@ -12,22 +12,25 @@
 <style>
   /* Base styles */
   body { font-family: 'Inter', sans-serif; }
-  /* Custom pin icon for the game map vibe */
+  
+  /* --- SIMPLIFIED PIN STYLE (EASY TO RENDER) --- */
   .custom-pin {
-    width: 24px; height: 24px; background-color: #fca5a5; /* Red-300 */
-    border: 3px solid #dc2626; /* Red-600 */
-    border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
-    position: relative; box-shadow: 0 0 5px rgba(220, 38, 38, 0.7);
-    cursor: pointer; transition: all 0.2s ease-in-out;
+    width: 14px;
+    height: 14px;
+    background-color: #f87171; /* Red-400 */
+    border: 2px solid #b91c1c; /* Red-700 */
+    border-radius: 50%; /* Simple circle */
+    position: relative;
+    box-shadow: 0 0 5px rgba(220, 38, 38, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
   }
   .custom-pin.active {
-    background-color: #3b82f6; border-color: #1d4ed8;
+    background-color: #3b82f6; /* Blue-500 */
+    border-color: #1d4ed8; /* Blue-700 */
     box-shadow: 0 0 10px rgba(59, 130, 246, 1);
-    transform: scale(1.3) rotate(-45deg); z-index: 1000;
-  }
-  .custom-pin::after {
-    content: ''; width: 6px; height: 6px; margin: 9px 0 0 9px;
-    background-color: white; position: absolute; border-radius: 50%;
+    transform: scale(1.5); /* Simple scale up on activation */
+    z-index: 1000;
   }
 
   /* Key Panel transition and size on mobile */
@@ -226,15 +229,15 @@ function renderMarkers(allPlaces) {
     markerMap.clear();
 
     allPlaces.forEach(place => {
+        // Use the simplified, easy-to-render circular icon
         const markerIcon = L.divIcon({
             className: 'custom-pin',
             html: '',
-            iconSize: [24, 24],
-            iconAnchor: [12, 24],
-            popupAnchor: [0, -20]
+            iconSize: [18, 18], // Adjusted size for the new circle
+            iconAnchor: [9, 9], // Center anchor point
+            popupAnchor: [0, -10]
         });
 
-        // Store the category on the marker itself for filtering
         const marker = L.marker([place.destLat, place.destLon], { 
             icon: markerIcon, 
             category: place.category 
@@ -260,7 +263,7 @@ function toggleMarkers() {
         checkedCategories.add(input.value);
     });
 
-    markerGroup.clearLayers(); // Remove all markers
+    markerGroup.clearLayers(); 
     
     // Add markers back if their category is checked
     markerMap.forEach(marker => {
@@ -281,9 +284,8 @@ function renderFilterCheckboxes(results) {
     const filtersContainer = document.querySelector('#marker-filters .flex');
     filtersContainer.innerHTML = '';
     
-    // Create one checkbox for each category that has results
     for (const key in CATEGORY_MAP) {
-        if (results[key].length > 0) {
+        if (Object.values(results).flat().some(p => p.category === key)) {
             const label = document.createElement('label');
             label.className = 'flex items-center space-x-1 text-sm cursor-pointer hover:text-blue-300 transition';
             label.innerHTML = `
@@ -292,7 +294,6 @@ function renderFilterCheckboxes(results) {
             `;
             filtersContainer.appendChild(label);
             
-            // Attach toggle event listener
             label.querySelector('input').addEventListener('change', toggleMarkers);
         }
     }
@@ -455,7 +456,7 @@ async function handlePlaceSelection(id, itemData) {
 async function locate() {
   document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🛰️ Getting your location...</p>';
   document.getElementById('category-tabs').innerHTML = '';
-  document.querySelector('#marker-filters .flex').innerHTML = ''; // Clear filters
+  document.querySelector('#marker-filters .flex').innerHTML = ''; 
   toggleKeyBtn.disabled = true;
 
   clearRoute(); 
@@ -467,17 +468,17 @@ async function locate() {
     userLocation = { lat, lon };
     map.setView([lat, lon], 15);
 
-    // Update user marker
+    // Update user marker (SIMPLIFIED)
     if (userMarker) map.removeLayer(userMarker);
     const userIcon = L.divIcon({
         className: 'user-marker-icon',
-        html: '<div class="w-5 h-5 bg-yellow-500 rounded-full border-2 border-white shadow-xl animate-ping absolute"></div><div class="w-3 h-3 bg-yellow-600 rounded-full border-2 border-white"></div>',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
+        html: '<div class="w-4 h-4 bg-yellow-400 rounded-full border-2 border-white shadow-xl"></div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
     });
     userMarker = L.marker([lat, lon], {icon: userIcon}).addTo(map).bindPopup("Your Current Location").openPopup();
 
-    const cats = ['highway', 'amenity', 'shop', 'leisure']; // Search all checked categories from the header
+    const cats = ['highway', 'amenity', 'shop', 'leisure']; 
     const dist = document.getElementById('radius').value;
     
     document.getElementById('places-list').innerHTML = '<p class="text-center text-blue-400 animate-pulse p-4">🔍 Searching for map pins...</p>';
@@ -499,7 +500,6 @@ async function locate() {
         renderTabs(categorizedPlaces);
         toggleKeyBtn.classList.remove('hidden');
         toggleKeyBtn.disabled = false;
-        // Automatically open the key on first load
         keyPanel.classList.add('open');
     }
 
