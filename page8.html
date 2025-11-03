@@ -7,15 +7,16 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     body { margin:0; font-family: system-ui,sans-serif; background:#0d1117; color:#e6edf3;}
-    #map { height: 60vh; }
+    #map { height:60vh; }
     #places { padding:1rem; max-height:40vh; overflow:auto; }
-    h2 { text-align:center; margin:0.7em 0; }
+    h2 { text-align:center; margin:.7em 0; }
     button {
       display:block; margin:1em auto; padding:1em 2em;
       border:none; border-radius:12px; background:#238636; color:#fff;
       font-size:1.1rem;
     }
-    li{margin:.4em 0;}
+    li { margin:.4em 0; cursor:pointer; }
+    li:hover { color:#58a6ff; }
   </style>
 </head>
 <body>
@@ -27,32 +28,42 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
   const map = L.map('map');
-  let userMarker;
+  let userMarker, yellowLayer;
 
   async function getNearby(lat, lon){
-    // Overpass API query for named highways + places within 1 km
     const query = `
       [out:json][timeout:25];
       (
         node["name"](around:1000,${lat},${lon});
         way["name"](around:1000,${lat},${lon});
       );
-      out tags center;`;
+      out tags center geom;`;
     const url = "https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query);
     const res = await fetch(url);
     const data = await res.json();
-    const names = new Set();
-    data.elements.forEach(el=>{
-      if(el.tags && el.tags.name) names.add(el.tags.name);
-    });
-    return Array.from(names).sort();
+    return data.elements.filter(el=>el.tags && el.tags.name);
+  }
+
+  function clearHighlight(){
+    if(yellowLayer){ map.removeLayer(yellowLayer); yellowLayer=null; }
+  }
+
+  function highlightElement(el){
+    clearHighlight();
+    if(el.type==="way" && el.geometry){
+      const latlngs = el.geometry.map(p=>[p.lat,p.lon]);
+      yellowLayer = L.polyline(latlngs,{color:'yellow',weight:5}).addTo(map);
+      map.fitBounds(yellowLayer.getBounds(), {maxZoom:18});
+    } else if(el.lat && el.lon){
+      yellowLayer = L.circleMarker([el.lat, el.lon],{radius:10,color:'yellow'}).addTo(map);
+      map.setView([el.lat, el.lon],18);
+    }
   }
 
   async function locate(){
     document.getElementById('places').innerHTML = 'Getting location…';
     navigator.geolocation.getCurrentPosition(async pos=>{
       const {latitude:lat, longitude:lon} = pos.coords;
-
       map.setView([lat, lon], 16);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19, attribution:'© OpenStreetMap'
@@ -61,10 +72,17 @@
       if(userMarker) map.removeLayer(userMarker);
       userMarker = L.marker([lat, lon]).addTo(map).bindPopup("You are here").openPopup();
 
-      const names = await getNearby(lat, lon);
+      const els = await getNearby(lat, lon);
+      const list = els.map((el,i)=>`<li data-i="${i}">${el.tags.name}</li>`).join('');
       document.getElementById('places').innerHTML =
-        `<b>${names.length}</b> named streets/places within 1 km:<br><ul>` +
-        names.map(n=>`<li>${n}</li>`).join('') + '</ul>';
+        `<b>${els.length}</b> named items:<ul>${list}</ul>`;
+
+      document.querySelectorAll('#places li').forEach(li=>{
+        li.onclick = ()=>{
+          const i = li.getAttribute('data-i');
+          highlightElement(els[i]);
+        };
+      });
     }, err=>{
       document.getElementById('places').innerText = 'Location error: ' + err.message;
     }, {enableHighAccuracy:true});
