@@ -627,32 +627,66 @@
         updateUI();
     });
 
-    // Map Controls
+    // Map Controls - Get Real Location
     document.getElementById('locateBtn').addEventListener('click', () => {
         const btn = document.getElementById('locateBtn');
         btn.textContent = '⏳';
         
-        setTimeout(() => {
-            const lat = 40.7128 + (Math.random() - 0.5) * 0.1;
-            const lon = -74.0060 + (Math.random() - 0.5) * 0.1;
-            state.userLocation = { lat, lon };
-            
-            if (state.userMarker) {
-                state.map.removeLayer(state.userMarker);
-            }
-            
-            state.userMarker = L.marker([lat, lon], {
-                icon: L.divIcon({
-                    className: 'user-marker',
-                    html: '<div style="background: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
-                    iconSize: [20, 20]
-                })
-            }).addTo(state.map);
-            
-            state.map.setView([lat, lon], 15);
-            generateLocations();
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser');
             btn.textContent = '📍';
-        }, 1000);
+            return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                state.userLocation = { lat, lon };
+                
+                if (state.userMarker) {
+                    state.map.removeLayer(state.userMarker);
+                }
+                
+                state.userMarker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'user-marker',
+                        html: '<div style="background: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"></div>',
+                        iconSize: [20, 20]
+                    })
+                }).addTo(state.map);
+                
+                state.map.setView([lat, lon], 15);
+                generateLocations();
+                btn.textContent = '📍';
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                let message = 'Could not get your location. ';
+                
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Please allow location access in your browser settings.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out.';
+                        break;
+                    default:
+                        message += 'An unknown error occurred.';
+                }
+                
+                alert(message);
+                btn.textContent = '📍';
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
     });
 
     document.getElementById('zoomInBtn').addEventListener('click', () => {
