@@ -262,6 +262,9 @@
     let clientKey = null;
     let messageId = 0;
     let currentPort = 3000;
+    let connectionAttempts = 0;
+    let maxAttempts = 5;
+    let retryTimeout = null;
 
     function log(msg) {
         const logEl = document.getElementById('log');
@@ -364,68 +367,137 @@
             return;
         }
 
+        // Reset connection state
+        connectionAttempts = 0;
+        if (retryTimeout) clearTimeout(retryTimeout);
+        
+        attemptConnection(ip);
+    }
+
+    function attemptConnection(ip) {
+        connectionAttempts++;
+        
         const btn = document.getElementById('connectBtn');
         btn.disabled = true;
-        btn.textContent = 'Connecting...';
+        btn.textContent = `Connecting... (${connectionAttempts}/${maxAttempts})`;
 
         localStorage.setItem('webos_tv_ip', ip);
         clientKey = localStorage.getItem('webos_client_key');
 
-        updateStatus('connecting', 'Connecting to TV...');
-        log('Connecting to ' + ip + ':' + currentPort);
+        // Try both ports in sequence
+        const ports = [3000, 3001];
+        const portIndex = (connectionAttempts - 1) % ports.length;
+        currentPort = ports[portIndex];
+
+        updateStatus('connecting', `Attempt ${connectionAttempts}/${maxAttempts} - Port ${currentPort}`);
+        log(`[Attempt ${connectionAttempts}] Trying ${ip}:${currentPort}`);
 
         try {
-            socket = new WebSocket('ws://' + ip + ':' + currentPort);
+            // Close existing socket if any
+            if (socket) {
+                socket.onclose = null;
+                socket.onerror = null;
+                socket.close();
+            }
+
+            socket = new WebSocket(`ws://${ip}:${currentPort}`);
             
             const connectionTimeout = setTimeout(() => {
                 if (!isConnected) {
-                    log('❌ Connection timeout');
-                    socket.close();
-                    btn.disabled = false;
-                    btn.textContent = 'Connect to TV';
-                    updateStatus('disconnected', 'Connection timeout');
+                    log(`[Attempt ${connectionAttempts}] Timeout on port ${currentPort}`);
+                    
+                    if (connectionAttempts < maxAttempts) {
+                        // Retry with exponential backoff
+                        const delay = Math.min(1000 * Math.pow(2, connectionAttempts - 1), 5000);
+                        log(`Retrying in ${delay}ms...`);
+                        
+                        retryTimeout = setTimeout(() => {
+                            attemptConnection(ip);
+                        }, delay);
+                    } else {
+                        log('❌ All connection attempts failed');
+                        updateStatus('disconnected', 'Failed - Check TV settings');
+                        btn.disabled = false;
+                        btn.textContent = 'Connect to TV';
+                        showFailureHelp();
+                    }
                 }
-            }, 10000);
+            }, 5000);
 
             socket.onopen = function() {
-                log('✅ WebSocket opened');
+                clearTimeout(connectionTimeout);
+                log(`✅ [Attempt ${connectionAttempts}] WebSocket opened on port ${currentPort}`);
                 sendRegistration();
             };
 
             socket.onmessage = function(event) {
                 try {
                     const msg = JSON.parse(event.data);
-                    log('← Received: ' + msg.type);
+                    log(`← ${msg.type}`);
                     handleMessage(msg);
-                    clearTimeout(connectionTimeout);
                 } catch(e) {
-                    log('Parse error: ' + e.message);
+                    log(`Parse error: ${e.message}`);
                 }
             };
 
             socket.onerror = function(error) {
-                log('❌ WebSocket error');
                 clearTimeout(connectionTimeout);
-                updateStatus('disconnected', 'Connection failed');
-                btn.disabled = false;
-                btn.textContent = 'Connect to TV';
+                log(`❌ [Attempt ${connectionAttempts}] WebSocket error on port ${currentPort}`);
+                
+                if (!isConnected && connectionAttempts < maxAttempts) {
+                    const delay = Math.min(1000 * connectionAttempts, 3000);
+                    log(`Retrying in ${delay}ms...`);
+                    
+                    retryTimeout = setTimeout(() => {
+                        attemptConnection(ip);
+                    }, delay);
+                } else if (connectionAttempts >= maxAttempts) {
+                    updateStatus('disconnected', 'Connection failed');
+                    btn.disabled = false;
+                    btn.textContent = 'Connect to TV';
+                    showFailureHelp();
+                }
             };
 
             socket.onclose = function() {
-                log('Connection closed');
                 clearTimeout(connectionTimeout);
-                isConnected = false;
-                updateStatus('disconnected', 'Disconnected');
-                showRemote(false);
-                btn.disabled = false;
-                btn.textContent = 'Connect to TV';
+                
+                if (isConnected) {
+                    log('Connection closed by TV');
+                    isConnected = false;
+                    updateStatus('disconnected', 'Disconnected');
+                    showRemote(false);
+                    btn.disabled = false;
+                    btn.textContent = 'Connect to TV';
+                }
             };
         } catch(e) {
-            log('Error: ' + e.message);
-            updateStatus('disconnected', 'Failed');
-            btn.disabled = false;
-            btn.textContent = 'Connect to TV';
+            log(`Exception: ${e.message}`);
+            
+            if (connectionAttempts < maxAttempts) {
+                const delay = 2000;
+                log(`Retrying in ${delay}ms...`);
+                
+                retryTimeout = setTimeout(() => {
+                    attemptConnection(ip);
+                }, delay);
+            } else {
+                updateStatus('disconnected', 'Failed');
+                btn.disabled = false;
+                btn.textContent = 'Connect to TV';
+                showFailureHelp();
+            }
         }
+    }
+
+    function showFailureHelp() {
+        log('━━━━━━━━━━━━━━━━━━━━━━');
+        log('TROUBLESHOOTING STEPS:');
+        log('1. TV must be fully ON (not standby)');
+        log('2. Enable: Settings → Network → LG Connect Apps');
+        log('3. Same WiFi network required');
+        log('4. Restart TV after enabling LG Connect Apps');
+        log('━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     function sendRegistration() {
@@ -506,12 +578,16 @@
         if (msg.type === "registered") {
             log('✅ Registration successful!');
             isConnected = true;
+            connectionAttempts = 0; // Reset on success
             
             if (msg.payload && msg.payload["client-key"]) {
                 clientKey = msg.payload["client-key"];
                 localStorage.setItem('webos_client_key', clientKey);
                 log('Client key saved');
             }
+            
+            const btn = document.getElementById('connectBtn');
+            btn.disabled = false;
             
             updateStatus('connected', '✅ Connected! Accept pairing on TV');
             showRemote(true);
@@ -559,13 +635,27 @@
     }
 
     function disconnectFromTV() {
+        if (retryTimeout) {
+            clearTimeout(retryTimeout);
+            retryTimeout = null;
+        }
+        
+        connectionAttempts = 0;
+        
         if (socket) {
+            socket.onclose = null;
+            socket.onerror = null;
             socket.close();
             socket = null;
         }
+        
         isConnected = false;
         updateStatus('disconnected', 'Disconnected');
         showRemote(false);
+        
+        const btn = document.getElementById('connectBtn');
+        btn.disabled = false;
+        btn.textContent = 'Connect to TV';
     }
 
     window.addEventListener('DOMContentLoaded', function() {
