@@ -14,170 +14,113 @@
 
 ```
     body {
-        font-family: 'Courier New', monospace;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         background: #0a0a0a;
-        color: #00ff41;
         min-height: 100vh;
-        padding: 20px;
-        position: relative;
-        overflow-x: hidden;
+        color: #ffffff;
+        padding: 40px 20px;
     }
-    
-    body::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: 
-            repeating-linear-gradient(0deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px, rgba(0,255,65,0.03) 3px),
-            repeating-linear-gradient(90deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px, rgba(0,255,65,0.03) 3px);
-        pointer-events: none;
-        z-index: 1;
-    }
-    
+
     .container {
-        max-width: 1400px;
+        max-width: 1200px;
         margin: 0 auto;
-        position: relative;
-        z-index: 2;
     }
-    
+
     header {
         text-align: center;
         margin-bottom: 60px;
-        padding: 40px 20px;
-        border: 2px solid #00ff41;
-        background: rgba(0, 255, 65, 0.05);
-        box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
-        position: relative;
+        padding-bottom: 30px;
+        border-bottom: 1px solid #222;
     }
-    
-    .clock-display {
-        font-size: 4em;
-        font-weight: bold;
-        letter-spacing: 0.1em;
-        text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
-        margin-bottom: 10px;
-        font-family: 'Courier New', monospace;
+
+    h1 {
+        font-size: 3em;
+        font-weight: 400;
+        margin-bottom: 15px;
+        letter-spacing: -1px;
     }
-    
-    .date-display {
-        font-size: 1.2em;
-        opacity: 0.8;
-        letter-spacing: 0.15em;
-    }
-    
+
     .subtitle {
-        font-size: 1em;
-        margin-top: 20px;
-        opacity: 0.7;
-        letter-spacing: 0.2em;
+        font-size: 0.9em;
+        color: #666;
+        letter-spacing: 2px;
         text-transform: uppercase;
     }
-    
+
     .category {
         margin-bottom: 50px;
-        border: 1px solid #00ff41;
-        padding: 30px;
-        background: rgba(0, 0, 0, 0.7);
-        position: relative;
     }
-    
-    .category::before {
-        content: '';
-        position: absolute;
-        top: -2px;
-        left: -2px;
-        right: -2px;
-        bottom: -2px;
-        background: linear-gradient(45deg, #00ff41, transparent, #00ff41);
-        z-index: -1;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-    
-    .category:hover::before {
-        opacity: 0.3;
-    }
-    
+
     .category h2 {
-        color: #00ff41;
-        margin-bottom: 30px;
-        font-size: 1.5em;
-        letter-spacing: 0.2em;
+        font-size: 1.2em;
+        font-weight: 400;
+        color: #666;
         text-transform: uppercase;
-        border-bottom: 2px solid #00ff41;
-        padding-bottom: 15px;
-        text-shadow: 0 0 10px #00ff41;
+        letter-spacing: 2px;
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #222;
     }
-    
+
     .app-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 25px;
+        gap: 20px;
     }
-    
+
     .app-card {
-        border: 1px solid #00ff41;
+        border: 1px solid #222;
         padding: 25px;
         text-decoration: none;
-        color: #00ff41;
-        transition: all 0.3s;
+        color: #ffffff;
         display: block;
-        background: rgba(0, 0, 0, 0.5);
+        transition: all 0.2s;
+        background: #0a0a0a;
         position: relative;
-        overflow: hidden;
     }
-    
-    .app-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .app-card:hover::before {
-        left: 100%;
-    }
-    
+
     .app-card:hover {
-        background: rgba(0, 255, 65, 0.1);
-        box-shadow: 0 0 30px rgba(0, 255, 65, 0.4);
-        transform: translateX(5px);
+        background: #111;
+        border-color: #444;
+        transform: translateY(-2px);
     }
-    
-    .app-card h3 {
-        font-size: 1.3em;
-        margin-bottom: 15px;
-        letter-spacing: 0.1em;
-        text-shadow: 0 0 10px #00ff41;
-    }
-    
-    .app-card p {
-        opacity: 0.7;
-        font-size: 0.9em;
-        line-height: 1.6;
-        letter-spacing: 0.05em;
-    }
-    
+
     .app-number {
         position: absolute;
-        top: 10px;
-        right: 10px;
-        font-size: 2em;
-        opacity: 0.2;
-        font-weight: bold;
+        top: 15px;
+        right: 15px;
+        font-size: 1.5em;
+        color: #222;
+        font-weight: 400;
     }
-    
+
+    .app-card h3 {
+        font-size: 1.1em;
+        font-weight: 400;
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    .app-card p {
+        font-size: 0.85em;
+        color: #666;
+        line-height: 1.6;
+        letter-spacing: 0.3px;
+    }
+
+    footer {
+        margin-top: 80px;
+        padding-top: 30px;
+        border-top: 1px solid #222;
+        text-align: center;
+        font-size: 0.8em;
+        color: #666;
+        letter-spacing: 1px;
+    }
+
     @media (max-width: 768px) {
-        .clock-display {
-            font-size: 2.5em;
+        h1 {
+            font-size: 2em;
         }
         
         .app-grid {
@@ -185,17 +128,8 @@
         }
         
         header {
-            padding: 30px 15px;
+            margin-bottom: 40px;
         }
-    }
-    
-    @keyframes flicker {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.8; }
-    }
-    
-    .clock-display {
-        animation: flicker 3s infinite;
     }
 </style>
 ```
@@ -204,14 +138,13 @@
 <body>
     <div class="container">
         <header>
-            <div class="clock-display" id="clock">00:00:00</div>
-            <div class="date-display" id="date">LOADING...</div>
-            <p class="subtitle">[ System Ready ]</p>
+            <h1>App Collection</h1>
+            <p class="subtitle">Tools & Utilities</p>
         </header>
 
 ```
     <div class="category">
-        <h2>[ Games & Entertainment ]</h2>
+        <h2>Games & Entertainment</h2>
         <div class="app-grid">
             <a href="page2.html" class="app-card">
                 <span class="app-number">02</span>
@@ -227,7 +160,7 @@
     </div>
     
     <div class="category">
-        <h2>[ Productivity Tools ]</h2>
+        <h2>Productivity Tools</h2>
         <div class="app-grid">
             <a href="page1.html" class="app-card">
                 <span class="app-number">01</span>
@@ -248,7 +181,7 @@
     </div>
     
     <div class="category">
-        <h2>[ Development Tools ]</h2>
+        <h2>Development Tools</h2>
         <div class="app-grid">
             <a href="page5.html" class="app-card">
                 <span class="app-number">05</span>
@@ -264,7 +197,7 @@
     </div>
     
     <div class="category">
-        <h2>[ Navigation & Maps ]</h2>
+        <h2>Navigation & Maps</h2>
         <div class="app-grid">
             <a href="page7.html" class="app-card">
                 <span class="app-number">07</span>
@@ -280,7 +213,7 @@
     </div>
     
     <div class="category">
-        <h2>[ Smart Home & Media ]</h2>
+        <h2>Smart Home & Media</h2>
         <div class="app-grid">
             <a href="page10.html" class="app-card">
                 <span class="app-number">10</span>
@@ -291,7 +224,7 @@
     </div>
     
     <div class="category">
-        <h2>[ Customization ]</h2>
+        <h2>Customization</h2>
         <div class="app-grid">
             <a href="page13.html" class="app-card">
                 <span class="app-number">13</span>
@@ -300,24 +233,11 @@
             </a>
         </div>
     </div>
-</div>
 
-<script>
-    function updateClock() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
-        
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        const dateStr = now.toLocaleDateString('en-US', options).toUpperCase();
-        document.getElementById('date').textContent = dateStr;
-    }
-    
-    updateClock();
-    setInterval(updateClock, 1000);
-</script>
+    <footer>
+        App Collection • Built with care
+    </footer>
+</div>
 ```
 
 </body>
