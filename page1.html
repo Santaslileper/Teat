@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reaction Timer</title>
+    <title>Dark Project Organizer</title>
     <style>
         * {
             margin: 0;
@@ -21,110 +21,99 @@
         justify-content: center;
         align-items: center;
         color: #ffffff;
-        user-select: none;
+        padding: 20px;
     }
 
     .container {
-        text-align: center;
-        padding: 60px 40px;
         width: 100%;
-        max-width: 600px;
+        max-width: 800px;
+        padding: 40px;
     }
 
     h1 {
         font-size: 2em;
         font-weight: 400;
-        margin-bottom: 40px;
+        margin-bottom: 25px;
         padding-bottom: 15px;
         border-bottom: 1px solid #222;
+        text-align: center;
     }
 
-    #gameArea {
-        width: 100%;
-        height: 400px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+    .upload-section {
+        margin-bottom: 30px;
+        padding: 30px;
         border: 1px solid #222;
-        cursor: pointer;
-        transition: background 0.3s;
-        position: relative;
+        text-align: center;
     }
 
-    #gameArea.waiting {
-        background: #1a1a1a;
-    }
-
-    #gameArea.ready {
-        background: #0f4d0f;
-    }
-
-    #gameArea.clicked {
-        background: #4d0f0f;
-    }
-
-    #message {
-        font-size: 1.5em;
-        font-weight: 300;
-        margin-bottom: 20px;
-    }
-
-    #result {
-        font-size: 3em;
-        font-weight: 400;
-        letter-spacing: -2px;
-    }
-
-    #stats {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #222;
-    }
-
-    .stat-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
+    .upload-label {
         font-size: 0.85em;
         color: #999;
         letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        display: block;
     }
 
-    .stat-value {
-        color: #fff;
+    input[type="file"] {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        background: #ffffff;
+        color: #0a0a0a;
+        border: none;
+        cursor: pointer;
         font-weight: bold;
+        border-radius: 4px;
+        transition: background 0.1s;
     }
 
-    #leaderboard {
+    input[type="file"]:hover {
+        background: #dddddd;
+    }
+
+    .file-list {
         margin-top: 30px;
         padding-top: 20px;
         border-top: 1px solid #222;
     }
 
-    .leaderboard-title {
-        font-size: 0.9em;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 15px;
-    }
-
-    .leaderboard-item {
+    .file-item {
+        padding: 15px;
+        margin-bottom: 10px;
+        background: #111;
+        border: 1px solid #222;
         display: flex;
         justify-content: space-between;
-        padding: 8px 0;
-        font-size: 0.85em;
-        color: #999;
+        align-items: center;
+        transition: background 0.1s;
     }
 
-    .leaderboard-time {
+    .file-item:hover {
+        background: #1a1a1a;
+    }
+
+    .file-name {
+        font-size: 0.9em;
         color: #fff;
-        font-weight: bold;
+        flex: 1;
+    }
+
+    .file-size {
+        font-size: 0.75em;
+        color: #666;
+        margin-left: 20px;
+        letter-spacing: 1px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
     }
 
     button {
-        margin-top: 20px;
         padding: 10px 20px;
         background: #ffffff;
         color: #0a0a0a;
@@ -142,12 +131,27 @@
         background: #dddddd;
     }
 
+    button:disabled {
+        background: #333;
+        color: #666;
+        cursor: not-allowed;
+    }
+
+    .info {
+        font-size: 0.85em;
+        color: #999;
+        text-align: center;
+        margin-top: 20px;
+        letter-spacing: 1px;
+    }
+
     @media (max-width: 768px) {
-        #gameArea {
-            height: 300px;
+        .container {
+            padding: 20px;
         }
-        #result {
-            font-size: 2em;
+        
+        .action-buttons {
+            flex-direction: column;
         }
     }
 </style>
@@ -156,147 +160,125 @@
 </head>
 <body>
     <div class="container">
-        <h1>Reaction Timer</h1>
+        <h1>Dark Project Organizer</h1>
 
 ```
-    <div id="gameArea" class="waiting">
-        <div id="message">Tap to start</div>
-        <div id="result"></div>
+    <div class="upload-section">
+        <label class="upload-label">Select multiple files:</label>
+        <input type="file" id="fileInput" multiple accept="*/*">
     </div>
 
-    <div id="stats">
-        <div class="stat-row">
-            <span>Attempts:</span>
-            <span class="stat-value" id="attempts">0</span>
-        </div>
-        <div class="stat-row">
-            <span>Average Time:</span>
-            <span class="stat-value" id="average">—</span>
-        </div>
-        <div class="stat-row">
-            <span>Best Time:</span>
-            <span class="stat-value" id="best">—</span>
-        </div>
+    <div id="fileList" class="file-list" style="display: none;">
+        <div class="info" style="margin-bottom: 20px;">Selected Files</div>
+        <div id="filesContainer"></div>
     </div>
 
-    <div id="leaderboard">
-        <div class="leaderboard-title">Recent Times</div>
-        <div id="recentTimes"></div>
+    <div class="action-buttons">
+        <button id="organizeBtn" disabled>Organize Files</button>
+        <button id="clearBtn" disabled>Clear Selection</button>
     </div>
 
-    <button id="resetBtn">Reset Stats</button>
+    <div class="info">
+        Upload files to organize them by type and export as a structured project.
+    </div>
 </div>
 
 <script>
-    const gameArea = document.getElementById('gameArea');
-    const message = document.getElementById('message');
-    const result = document.getElementById('result');
-    const attemptsEl = document.getElementById('attempts');
-    const averageEl = document.getElementById('average');
-    const bestEl = document.getElementById('best');
-    const recentTimesEl = document.getElementById('recentTimes');
-    const resetBtn = document.getElementById('resetBtn');
+    let selectedFiles = [];
+    
+    const fileInput = document.getElementById('fileInput');
+    const filesContainer = document.getElementById('filesContainer');
+    const fileList = document.getElementById('fileList');
+    const organizeBtn = document.getElementById('organizeBtn');
+    const clearBtn = document.getElementById('clearBtn');
 
-    let state = 'idle';
-    let startTime = 0;
-    let timeout = null;
-    let stats = {
-        attempts: 0,
-        times: [],
-        best: null
-    };
+    fileInput.addEventListener('change', (e) => {
+        selectedFiles = Array.from(e.target.files);
+        displayFiles();
+        updateButtons();
+    });
 
-    gameArea.addEventListener('click', handleClick);
-    resetBtn.addEventListener('click', resetStats);
-
-    function handleClick() {
-        if (state === 'idle') {
-            startWaiting();
-        } else if (state === 'waiting') {
-            tooSoon();
-        } else if (state === 'ready') {
-            recordTime();
+    function displayFiles() {
+        if (selectedFiles.length === 0) {
+            fileList.style.display = 'none';
+            return;
         }
-    }
 
-    function startWaiting() {
-        state = 'waiting';
-        gameArea.className = 'waiting';
-        message.textContent = 'Wait for green...';
-        result.textContent = '';
-        
-        const delay = 2000 + Math.random() * 3000;
-        timeout = setTimeout(showReady, delay);
-    }
+        fileList.style.display = 'block';
+        filesContainer.innerHTML = '';
 
-    function showReady() {
-        state = 'ready';
-        gameArea.className = 'ready';
-        message.textContent = 'Click now!';
-        startTime = Date.now();
-    }
-
-    function recordTime() {
-        const reactionTime = Date.now() - startTime;
-        state = 'idle';
-        gameArea.className = 'waiting';
-        message.textContent = 'Tap to try again';
-        result.textContent = `${reactionTime}ms`;
-        
-        stats.attempts++;
-        stats.times.push(reactionTime);
-        if (stats.best === null || reactionTime < stats.best) {
-            stats.best = reactionTime;
-        }
-        
-        updateStats();
-    }
-
-    function tooSoon() {
-        clearTimeout(timeout);
-        state = 'idle';
-        gameArea.className = 'clicked';
-        message.textContent = 'Too soon! Tap to retry';
-        result.textContent = '';
-        
-        setTimeout(() => {
-            gameArea.className = 'waiting';
-        }, 500);
-    }
-
-    function updateStats() {
-        attemptsEl.textContent = stats.attempts;
-        
-        if (stats.times.length > 0) {
-            const avg = stats.times.reduce((a, b) => a + b, 0) / stats.times.length;
-            averageEl.textContent = `${Math.round(avg)}ms`;
-            bestEl.textContent = `${stats.best}ms`;
+        selectedFiles.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
             
-            const recent = stats.times.slice(-5).reverse();
-            recentTimesEl.innerHTML = recent.map((time, i) => 
-                `<div class="leaderboard-item">
-                    <span>#${stats.times.length - i}</span>
-                    <span class="leaderboard-time">${time}ms</span>
-                </div>`
-            ).join('');
-        }
+            const fileName = document.createElement('span');
+            fileName.className = 'file-name';
+            fileName.textContent = file.name;
+            
+            const fileSize = document.createElement('span');
+            fileSize.className = 'file-size';
+            fileSize.textContent = formatFileSize(file.size);
+            
+            fileItem.appendChild(fileName);
+            fileItem.appendChild(fileSize);
+            filesContainer.appendChild(fileItem);
+        });
     }
 
-    function resetStats() {
-        stats = {
-            attempts: 0,
-            times: [],
-            best: null
-        };
-        attemptsEl.textContent = '0';
-        averageEl.textContent = '—';
-        bestEl.textContent = '—';
-        recentTimesEl.innerHTML = '';
-        message.textContent = 'Tap to start';
-        result.textContent = '';
-        state = 'idle';
-        gameArea.className = 'waiting';
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
+
+    function updateButtons() {
+        const hasFiles = selectedFiles.length > 0;
+        organizeBtn.disabled = !hasFiles;
+        clearBtn.disabled = !hasFiles;
+    }
+
+    organizeBtn.addEventListener('click', () => {
+        if (selectedFiles.length === 0) return;
+        
+        const organized = organizeFilesByType(selectedFiles);
+        console.log('Organized files:', organized);
+        alert(`Files organized into ${Object.keys(organized).length} categories!`);
+    });
+
+    clearBtn.addEventListener('click', () => {
+        selectedFiles = [];
+        fileInput.value = '';
+        displayFiles();
+        updateButtons();
+    });
+
+    function organizeFilesByType(files) {
+        const organized = {};
+        
+        files.forEach(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            let category = 'other';
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) {
+                category = 'images';
+            } else if (['mp4', 'avi', 'mov', 'wmv', 'webm'].includes(ext)) {
+                category = 'videos';
+            } else if (['mp3', 'wav', 'ogg', 'flac'].includes(ext)) {
+                category = 'audio';
+            } else if (['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(ext)) {
+                category = 'documents';
+            } else if (['js', 'html', 'css', 'py', 'java', 'cpp'].includes(ext)) {
+                category = 'code';
+            }
+            
+            if (!organized[category]) organized[category] = [];
+            organized[category].push(file);
+        });
+        
+        return organized;
+    }
+
+    updateButtons();
 </script>
 ```
 
