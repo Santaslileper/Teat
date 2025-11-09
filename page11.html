@@ -225,6 +225,8 @@
 
         /**
          * Converts a duration in milliseconds into a detailed time breakdown (for checks).
+         * NOTE: This function's formatting (for time since last check) remains unchanged, 
+         * showing days/hours/minutes/seconds/milliseconds, even if they are zero.
          */
         function formatTimeBreakdown(totalMilliseconds) {
             let ms = Math.max(0, totalMilliseconds); 
@@ -247,12 +249,13 @@
         }
         
         /**
-         * Converts total elapsed milliseconds since the anchor into Y W D H M S MS (for total time).
+         * Converts total elapsed milliseconds since the anchor into Y W D H M S MS.
+         * MODIFIED: Suppresses Years, Weeks, Days, Hours, Minutes, and Seconds if their value is 0.
          */
         function formatTotalTimeBreakdown(totalMilliseconds) {
             let ms = Math.max(0, totalMilliseconds);
             
-            // Calculate Years and Weeks first (approximated for display)
+            // Calculate components
             const years = Math.floor(ms / MS_PER_YEAR);
             ms %= MS_PER_YEAR;
 
@@ -273,13 +276,26 @@
             
             const milliseconds = Math.floor(ms);
             
-            // Part 1: Years, Weeks, Days, Hours, Minutes, Seconds (Large display)
-            const largeDisplay = 
-                `${years}y ${weeks}w ${days}d ` +
-                `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ` + 
-                `${String(seconds).padStart(2, '0')}s`;
+            // --- MODIFIED LOGIC: Suppress zero values ---
+            let largeParts = [];
+            if (years > 0) largeParts.push(`${years}y`);
+            if (weeks > 0) largeParts.push(`${weeks}w`);
+            if (days > 0) largeParts.push(`${days}d`);
+            
+            // Hours, Minutes, Seconds must be padded if they show up
+            if (hours > 0) largeParts.push(`${String(hours).padStart(2, '0')}h`);
+            if (minutes > 0) largeParts.push(`${String(minutes).padStart(2, '0')}m`);
+            if (seconds > 0) largeParts.push(`${String(seconds).padStart(2, '0')}s`);
 
-            // Part 2: Milliseconds (Smaller display)
+            // If absolutely no time has passed, display at least 0s (This prevents a blank display)
+            if (largeParts.length === 0) {
+                 largeParts.push('0s');
+            }
+            
+            // Part 1: Years, Weeks, Days, Hours, Minutes, Seconds (Large display)
+            const largeDisplay = largeParts.join(' ');
+
+            // Part 2: Milliseconds (Smaller display - always displayed and padded)
             const msDisplay = `${String(milliseconds).padStart(3, '0')}ms`;
 
             return { large: largeDisplay, ms: msDisplay };
@@ -360,7 +376,7 @@
                 timeSinceCheckElement.textContent = `0d 0h 0m 0s 000ms`; // Default display
             }
 
-            // --- COUNTDOWN FORMATTING ---
+            // --- COUNTDOWN FORMATTING (Still padded and shown if 0) ---
             const remainingSecondsTotal = Math.floor(remainingMS / 1000);
             const minutes = Math.floor(remainingSecondsTotal / 60);
             const seconds = remainingSecondsTotal % 60;
