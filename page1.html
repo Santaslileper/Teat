@@ -1,17 +1,304 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Organizer</title><style>
-body{font-family:Arial;margin:0;padding:10px;background:#1a1a1a;color:#fff}input,button{font-size:16px;margin:5px 0;width:100%;background:#333;color:#fff;border:none;padding:10px;border-radius:5px}button:hover{background:#555;cursor:pointer}.collapsible{background-color:rgba(0,0,0,0.5);color:#fff;cursor:pointer;padding:10px;width:100%;border:none;text-align:left;font-size:16px;margin-top:5px;border-radius:5px}.active,.collapsible:hover{background-color:#555}.content{padding:10px;display:none;background-color:rgba(0,0,0,0.3);border-radius:5px;margin-bottom:5px}pre{white-space:pre-wrap;word-wrap:break-word;color:#fff}.download-btn{margin-top:5px;background:#444;width:auto;padding:5px 10px}.download-btn:hover{background:#666}#version{position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.5);padding:5px 10px;border-radius:5px;font-size:14px;color:#fff}
-</style></head><body>
-<h2>Dark Project Organizer</h2>
-<p>Select multiple files:</p>
-<input type="file" id="f" multiple><br>
-<button onclick="p()">Analyze Files</button>
-<button onclick="c()">Download CSV</button>
-<div id="r"></div>
-<div id="v"></div>
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reaction Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+```
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background: #0a0a0a;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ffffff;
+        user-select: none;
+    }
+
+    .container {
+        text-align: center;
+        padding: 60px 40px;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    h1 {
+        font-size: 2em;
+        font-weight: 400;
+        margin-bottom: 40px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #222;
+    }
+
+    #gameArea {
+        width: 100%;
+        height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #222;
+        cursor: pointer;
+        transition: background 0.3s;
+        position: relative;
+    }
+
+    #gameArea.waiting {
+        background: #1a1a1a;
+    }
+
+    #gameArea.ready {
+        background: #0f4d0f;
+    }
+
+    #gameArea.clicked {
+        background: #4d0f0f;
+    }
+
+    #message {
+        font-size: 1.5em;
+        font-weight: 300;
+        margin-bottom: 20px;
+    }
+
+    #result {
+        font-size: 3em;
+        font-weight: 400;
+        letter-spacing: -2px;
+    }
+
+    #stats {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #222;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 0.85em;
+        color: #999;
+        letter-spacing: 1px;
+    }
+
+    .stat-value {
+        color: #fff;
+        font-weight: bold;
+    }
+
+    #leaderboard {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #222;
+    }
+
+    .leaderboard-title {
+        font-size: 0.9em;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 15px;
+    }
+
+    .leaderboard-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 0.85em;
+        color: #999;
+    }
+
+    .leaderboard-time {
+        color: #fff;
+        font-weight: bold;
+    }
+
+    button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background: #ffffff;
+        color: #0a0a0a;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+        border-radius: 4px;
+        transition: background 0.1s;
+        font-size: 0.85em;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    button:hover {
+        background: #dddddd;
+    }
+
+    @media (max-width: 768px) {
+        #gameArea {
+            height: 300px;
+        }
+        #result {
+            font-size: 2em;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="container">
+        <h1>Reaction Timer</h1>
+
+```
+    <div id="gameArea" class="waiting">
+        <div id="message">Tap to start</div>
+        <div id="result"></div>
+    </div>
+
+    <div id="stats">
+        <div class="stat-row">
+            <span>Attempts:</span>
+            <span class="stat-value" id="attempts">0</span>
+        </div>
+        <div class="stat-row">
+            <span>Average Time:</span>
+            <span class="stat-value" id="average">—</span>
+        </div>
+        <div class="stat-row">
+            <span>Best Time:</span>
+            <span class="stat-value" id="best">—</span>
+        </div>
+    </div>
+
+    <div id="leaderboard">
+        <div class="leaderboard-title">Recent Times</div>
+        <div id="recentTimes"></div>
+    </div>
+
+    <button id="resetBtn">Reset Stats</button>
+</div>
+
 <script>
-let d=[],ver=parseInt(localStorage.getItem('v')||'1');document.getElementById('v').textContent='Version:'+ver;
-function s(t){return t.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,' ').replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/<!--[\s\S]*?-->/g,' ').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/\/\/.*$/gm,' ').replace(/\b(var|let|const|function|return|if|else|for|while|switch|case|break|continue|=>|class|new|this)\b/g,' ').replace(/\b[a-z]+[A-Z][a-zA-Z]*\b/g,' ').replace(/\b\w+_\w+\b/g,' ').replace(/[0-9]/g,' ').replace(/[^\w\s]/g,' ').replace(/\s+/g,' ').trim()}
-function p(){const fI=document.getElementById('f').files;if(!fI.length)return alert('Select files first!');d=[];ver++;localStorage.setItem('v',ver);document.getElementById('v').textContent='Version:'+ver;const res=document.getElementById('r');res.innerHTML='';Array.from(fI).forEach(f=>{let fr=new FileReader();fr.onload=function(e){let t=s(e.target.result.toLowerCase());let w=t.match(/\b\w+\b/g)||[],x={};w.forEach(y=>{if(y.length>2&&!y.includes('_'))x[y]=(x[y]||0)+1});let srt=Object.entries(x).sort((a,b)=>b[1]-a[1]),sg=srt.slice(0,3).map(z=>z[0]).join('_')||'untitled';let sample=t.substring(0,200)+(t.length>200?'...':'');let idx=d.push({o:f.name,s:sg+'_v'+ver+'.html',m:f.lastModifiedDate?f.lastModifiedDate.toISOString():'N/A',c:sample,cont:e.target.result})-1;let div=document.createElement('div');let btn=document.createElement('button');btn.className='collapsible';btn.textContent=sg+'_v'+ver+'.html';let cont=document.createElement('div');cont.className='content';cont.innerHTML=`<strong>Original Name:</strong> ${f.name}<br><strong>Date Modified:</strong> ${f.lastModifiedDate?f.lastModifiedDate.toLocaleString():'N/A'}<br><strong>Content Sample:</strong><pre>${sample}</pre>`;let dl=document.createElement('button');dl.className='download-btn';dl.textContent='Download This File';dl.addEventListener('click',()=>{let b=new Blob([d[idx].cont],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=d[idx].s;a.click();URL.revokeObjectURL(a.href)});cont.appendChild(dl);btn.addEventListener('click',function(){this.classList.toggle('active');cont.style.display=cont.style.display==='block'?'none':'block'});div.appendChild(btn);div.appendChild(cont);res.appendChild(div)},fr.readAsText(f)})}
-function c(){if(!d.length)return alert('No data to download!');const h=['Original Name','Suggested Name','Date Modified','Content Sample'],csv=[h.join(','),...d.map(f=>`"${f.o}","${f.s}","${f.m}","${f.c.replace(/"/g,'""')}"`)].join('\n');let b=new Blob([csv],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='project_suggestions.csv';a.click();URL.revokeObjectURL(a.href)}
+    const gameArea = document.getElementById('gameArea');
+    const message = document.getElementById('message');
+    const result = document.getElementById('result');
+    const attemptsEl = document.getElementById('attempts');
+    const averageEl = document.getElementById('average');
+    const bestEl = document.getElementById('best');
+    const recentTimesEl = document.getElementById('recentTimes');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let state = 'idle';
+    let startTime = 0;
+    let timeout = null;
+    let stats = {
+        attempts: 0,
+        times: [],
+        best: null
+    };
+
+    gameArea.addEventListener('click', handleClick);
+    resetBtn.addEventListener('click', resetStats);
+
+    function handleClick() {
+        if (state === 'idle') {
+            startWaiting();
+        } else if (state === 'waiting') {
+            tooSoon();
+        } else if (state === 'ready') {
+            recordTime();
+        }
+    }
+
+    function startWaiting() {
+        state = 'waiting';
+        gameArea.className = 'waiting';
+        message.textContent = 'Wait for green...';
+        result.textContent = '';
+        
+        const delay = 2000 + Math.random() * 3000;
+        timeout = setTimeout(showReady, delay);
+    }
+
+    function showReady() {
+        state = 'ready';
+        gameArea.className = 'ready';
+        message.textContent = 'Click now!';
+        startTime = Date.now();
+    }
+
+    function recordTime() {
+        const reactionTime = Date.now() - startTime;
+        state = 'idle';
+        gameArea.className = 'waiting';
+        message.textContent = 'Tap to try again';
+        result.textContent = `${reactionTime}ms`;
+        
+        stats.attempts++;
+        stats.times.push(reactionTime);
+        if (stats.best === null || reactionTime < stats.best) {
+            stats.best = reactionTime;
+        }
+        
+        updateStats();
+    }
+
+    function tooSoon() {
+        clearTimeout(timeout);
+        state = 'idle';
+        gameArea.className = 'clicked';
+        message.textContent = 'Too soon! Tap to retry';
+        result.textContent = '';
+        
+        setTimeout(() => {
+            gameArea.className = 'waiting';
+        }, 500);
+    }
+
+    function updateStats() {
+        attemptsEl.textContent = stats.attempts;
+        
+        if (stats.times.length > 0) {
+            const avg = stats.times.reduce((a, b) => a + b, 0) / stats.times.length;
+            averageEl.textContent = `${Math.round(avg)}ms`;
+            bestEl.textContent = `${stats.best}ms`;
+            
+            const recent = stats.times.slice(-5).reverse();
+            recentTimesEl.innerHTML = recent.map((time, i) => 
+                `<div class="leaderboard-item">
+                    <span>#${stats.times.length - i}</span>
+                    <span class="leaderboard-time">${time}ms</span>
+                </div>`
+            ).join('');
+        }
+    }
+
+    function resetStats() {
+        stats = {
+            attempts: 0,
+            times: [],
+            best: null
+        };
+        attemptsEl.textContent = '0';
+        averageEl.textContent = '—';
+        bestEl.textContent = '—';
+        recentTimesEl.innerHTML = '';
+        message.textContent = 'Tap to start';
+        result.textContent = '';
+        state = 'idle';
+        gameArea.className = 'waiting';
+    }
 </script>
-</body></html>
+```
+
+</body>
+</html>
