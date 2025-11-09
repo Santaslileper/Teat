@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10-Minute GMT Cycle Counter</title>
+    <title>10-Minute GMT Cycle Counter with Check-In</title>
     <style>
         /* CSS from your uploaded clock.html */
         * {
@@ -87,6 +87,25 @@
             letter-spacing: -1px;
         }
 
+        #mark-check-button {
+            padding: 10px 20px; 
+            background: #ffffff; 
+            color: #0a0a0a; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+            border-radius: 4px;
+            margin-top: 30px;
+            transition: background 0.1s;
+        }
+        #mark-check-button:hover {
+            background: #dddddd;
+        }
+        #cycles-since-check {
+            font-weight: bold;
+            color: #fff;
+        }
+
         @media (max-width: 768px) {
             .countdown {
                 gap: 40px;
@@ -118,7 +137,14 @@
         <div class="info">
             Total Cycles Completed: <span id="cycle-count" style="font-weight: bold; color: #fff;">0</span>
         </div>
+        
+        <div class="info" style="margin-top: 50px;">
+            <button id="mark-check-button">Mark Current Cycle</button>
+        </div>
         <div class="info">
+            <span id="cycles-since-check"></span>
+        </div>
+        <div class="info" style="margin-top: 30px;">
             Start Time (GMT Epoch): <span id="start-epoch" style="font-weight: bold; color: #fff;"></span>
         </div>
         <div class="info">
@@ -127,15 +153,37 @@
     </div>
 
     <script>
-        // --- HARDCODED GMT ANCHOR ---
-        // Sunday, November 9, 2025, at 7:30:00 PM GMT
-        const START_EPOCH_MS = 1762721400000; 
-        
-        // Cycle length constants
+        // --- CONSTANTS ---
+        const START_EPOCH_MS = 1762721400000; // Sunday, November 9, 2025, at 7:30:00 PM GMT
         const CYCLE_MINUTES = 10;
         const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000; // 600,000 milliseconds
+        const LAST_CHECK_KEY = 'lastCycleCheckTime'; // Local storage key
 
-        // Function to format the start date accurately in GMT
+        // --- LOCAL STORAGE FUNCTIONS ---
+
+        function getLastCheckTime() {
+            // Returns the saved timestamp (or 0 if none is found)
+            const storedTime = localStorage.getItem(LAST_CHECK_KEY);
+            return storedTime ? parseInt(storedTime) : 0;
+        }
+
+        function markCycleCheck() {
+            const now = Date.now();
+            localStorage.setItem(LAST_CHECK_KEY, now);
+            // Re-run the timer update to immediately reflect the change
+            updateTimer(); 
+            // Give user visual feedback
+            document.getElementById('mark-check-button').textContent = 'Checked!';
+            setTimeout(() => {
+                document.getElementById('mark-check-button').textContent = 'Mark Current Cycle';
+            }, 1000);
+        }
+
+        // Attach function to the button
+        document.getElementById('mark-check-button').addEventListener('click', markCycleCheck);
+
+        // --- DISPLAY FUNCTIONS ---
+
         function formatStartDate(epochMs) {
             const date = new Date(epochMs);
             return date.toLocaleString('en-US', {
@@ -151,7 +199,7 @@
             });
         }
 
-        // Display the hardcoded values
+        // Initial display of static info
         document.getElementById('start-epoch').textContent = START_EPOCH_MS;
         document.getElementById('start-date').textContent = formatStartDate(START_EPOCH_MS);
 
@@ -159,10 +207,8 @@
         function updateTimer() {
             const now = Date.now();
             
-            // Calculate time elapsed since the fixed start
             const elapsedSinceStartMS = now - START_EPOCH_MS;
             
-            // Safety check for future start time
             if (elapsedSinceStartMS < 0) {
                  document.getElementById('countdown').innerHTML = '<div class="expired" style="color:#fff;">Start Time Not Reached</div>';
                  document.getElementById('cycle-count').textContent = '0';
@@ -170,12 +216,39 @@
                  return;
             }
 
-            // Calculate cycles completed and time remaining
+            // --- CYCLE COUNTER LOGIC ---
             const totalCyclesCompleted = Math.floor(elapsedSinceStartMS / CYCLE_LENGTH_MS);
             const timeInCurrentCycleMS = elapsedSinceStartMS % CYCLE_LENGTH_MS;
             const remainingMS = CYCLE_LENGTH_MS - timeInCurrentCycleMS;
 
-            // --- Formatting Countdown ---
+            // --- LAST CHECK LOGIC ---
+            const lastCheckTime = getLastCheckTime();
+            const cyclesSinceCheckElement = document.getElementById('cycles-since-check');
+
+            if (lastCheckTime > 0) {
+                // Calculate total cycles completed at the time of the last check
+                const elapsedAtLastCheck = lastCheckTime - START_EPOCH_MS;
+                const cyclesAtLastCheck = Math.floor(elapsedAtLastCheck / CYCLE_LENGTH_MS);
+
+                // Calculate the difference in cycles
+                const cyclesDifference = totalCyclesCompleted - cyclesAtLastCheck;
+
+                if (cyclesDifference < 0) {
+                    // Should not happen unless clock is reset backwards
+                    cyclesSinceCheckElement.textContent = `Error: Last check was in the future. Resetting check time.`;
+                    localStorage.removeItem(LAST_CHECK_KEY); 
+                } else if (cyclesDifference === 0) {
+                    cyclesSinceCheckElement.textContent = `You checked this cycle!`;
+                } else if (cyclesDifference === 1) {
+                    cyclesSinceCheckElement.textContent = `It's been 1 cycle since you last checked.`;
+                } else {
+                    cyclesSinceCheckElement.textContent = `It's been ${cyclesDifference} cycles since you last checked.`;
+                }
+            } else {
+                cyclesSinceCheckElement.textContent = `Click "Mark Current Cycle" to start tracking your checks.`;
+            }
+
+            // --- COUNTDOWN FORMATTING ---
             const remainingSecondsTotal = Math.floor(remainingMS / 1000);
             const minutes = Math.floor(remainingSecondsTotal / 60);
             const seconds = remainingSecondsTotal % 60;
@@ -198,7 +271,6 @@
 
         // Initialize and loop the timer
         updateTimer();
-        // Update 10 times per second for smooth display
         setInterval(updateTimer, 100); 
     </script>
 </body>
