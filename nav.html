@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic 13-Page Cycle Tracker</title>
+    <title>Dynamic Cycle Navigation Tracker</title>
     <style>
-        /* Sleek Black Styling (As requested) */
+        /* Sleek Black Styling */
         * {
             margin: 0;
             padding: 0;
@@ -14,21 +14,19 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0a0a; /* Sleek dark gray/black background */
+            background: #0a0a0a;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #ffffff; /* White text */
+            color: #ffffff;
         }
 
         .container {
             text-align: center;
             padding: 40px;
-            max-width: 900px;
-            width: 90%;
-            border: 1px solid #1a1a1a;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+            max-width: 1000px;
+            width: 95%;
         }
 
         h1 {
@@ -37,13 +35,13 @@
             letter-spacing: 3px;
             text-transform: uppercase;
             margin-bottom: 30px;
-            color: #666; /* Muted gray header */
+            color: #666;
         }
         
         /* Time and Info Styles */
         #current-time {
             font-size: 1em;
-            color: #888; /* Muted gray for context */
+            color: #888;
             margin-bottom: 25px;
             padding-bottom: 15px;
             border-bottom: 1px solid #222;
@@ -53,7 +51,6 @@
             display: flex;
             gap: 60px;
             justify-content: center;
-            flex-wrap: wrap;
             margin-bottom: 40px;
         }
 
@@ -82,41 +79,59 @@
             line-height: 1.5;
         }
 
-        /* Dynamic Content Area */
-        #page-content {
+        /* --- Navigation Bar Styles --- */
+        .nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
             margin-top: 40px;
-            padding: 30px;
+            padding: 20px 0;
             background: #111;
-            border-radius: 8px;
-            text-align: left;
-            min-height: 150px;
+            border-radius: 5px;
+        }
+
+        .nav-item {
+            text-decoration: none;
             color: #ccc;
+            background: #222;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+            font-size: 0.9em;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
-        #page-content h2 {
-            font-size: 1.8em;
+        .nav-item:hover {
+            background: #333;
             color: #fff;
-            margin-bottom: 10px;
+        }
+        
+        /* Highlight the Active Cycle/Page */
+        .nav-item.active {
+            background: #ffffff; /* Bright white background */
+            color: #000000; /* Black text */
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Subtle white glow */
+            pointer-events: none; /* Disable clicking the current page */
         }
 
-        #page-content p {
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            .countdown {
-                gap: 40px;
-            }
-            
+        @media (max-width: 600px) {
             .time-value {
                 font-size: 3em;
+            }
+            .nav-bar {
+                gap: 5px;
+            }
+            .nav-item {
+                padding: 6px 8px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>10 MINUTE GMT CYCLE TRACKER</h1>
+        <h1>10 MINUTE GMT CYCLE NAVIGATION</h1>
         
         <div id="current-time"></div>
         
@@ -139,8 +154,8 @@
             Anchor Date: <span id="start-date" style="font-weight: bold; color: #fff;"></span>
         </div>
 
-        <div id="page-content">
-            </div>
+        <nav id="nav-container" class="nav-bar">
+            </nav>
     </div>
 
     <script>
@@ -150,61 +165,65 @@
         
         // Cycle length constants
         const CYCLE_MINUTES = 10;
-        const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000; // 600,000 milliseconds
+        const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000;
         
         const NUM_PAGES = 13;
-
-        // --- DEFINITION OF ALL 13 PAGES ---
-        const cycleContent = [
-            { title: "Cycle 0 (Page 1)", text: "This is the default starting page. The 10-minute tracker has just begun its cycle." },
-            { title: "Cycle 1 (Page 2)", text: "Data feed status: Nominal. Reviewing metrics from the previous 10 minutes. System check complete." },
-            { title: "Cycle 2 (Page 3)", text: "Module Alpha active. Initiating sequence protocols. Phase 2 currently running." },
-            { title: "Cycle 3 (Page 4)", text: "Environmental monitoring stable. Atmospheric readings within tolerance limits. Proceeding as planned." },
-            { title: "Cycle 4 (Page 5)", text: "Resource allocation reassessment in progress. Optimization parameter adjusted by 1.5%." },
-            { title: "Cycle 5 (Page 6)", text: "Security log update: No anomalies detected. Firewalls fully engaged. Green status." },
-            { title: "Cycle 6 (Page 7)", text: "Intermediate report generation. Calculating projected trajectory based on Cycle 5 data." },
-            { title: "Cycle 7 (Page 8)", text: "Standby mode activated for non-critical systems. Power consumption reduced by 20%." },
-            { title: "Cycle 8 (Page 9)", text: "Communication relay established. Awaiting signal confirmation from remote network node." },
-            { title: "Cycle 9 (Page 10)", text: "System diagnostic running. Checking memory integrity and processor load. Expected completion in 3 minutes." },
-            { title: "Cycle 10 (Page 11)", text: "Transition phase preparation. Preparing primary display for Cycle 11 content shift." },
-            { title: "Cycle 11 (Page 12)", text: "Data backup initiated and verified. Storing critical logs locally. Storage check: OK." },
-            { title: "Cycle 12 (Page 13)", text: "Full status review: All systems report ready for next cycle iteration. Prepare for cycle reset." }
-        ];
-
+        
+        // Define the file structure for the 13 dynamic pages
+        const pageFiles = [];
+        for (let i = 1; i <= NUM_PAGES; i++) {
+             // Creates an array: ['page-1.html', 'page-2.html', ..., 'page-13.html']
+            pageFiles.push(`page-${i}.html`);
+        }
+        
         // Function to format the start date accurately in GMT
         function formatStartDate(epochMs) {
             const date = new Date(epochMs);
             return date.toLocaleString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: 'GMT',
-                timeZoneName: 'short'
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                timeZone: 'GMT', timeZoneName: 'short'
             });
         }
 
-        // Display the hardcoded values
+        // Initial setup for static info
         document.getElementById('start-epoch').textContent = START_EPOCH_MS;
         document.getElementById('start-date').textContent = formatStartDate(START_EPOCH_MS);
 
 
+        let lastCycleIndex = -1; // Track cycle changes to avoid unnecessary redraws
+
+        function generateNavBar(activePageNumber) {
+            const navContainer = document.getElementById('nav-container');
+            navContainer.innerHTML = ''; // Clear previous links
+
+            pageFiles.forEach((fileName, index) => {
+                const pageNumber = index + 1;
+                const link = document.createElement('a');
+                link.href = fileName;
+                link.textContent = `Page ${pageNumber}`;
+                link.classList.add('nav-item');
+
+                // Apply the 'active' class to the link matching the current cycle
+                if (pageNumber === activePageNumber) {
+                    link.classList.add('active');
+                }
+
+                navContainer.appendChild(link);
+            });
+        }
+
+
         function updateTimer() {
             const now = Date.now();
-            
             const elapsedSinceStartMS = now - START_EPOCH_MS;
             
-            // Safety check for future start time
+            // Handle future start time
             if (elapsedSinceStartMS < 0) {
-                 const pageContent = document.getElementById('page-content');
-                 pageContent.innerHTML = '<h2>System Inactive</h2><p>Waiting for fixed GMT anchor time to begin cycle tracking.</p>';
                  document.getElementById('minutes').textContent = '—';
                  document.getElementById('seconds').textContent = '—';
                  document.getElementById('cycle-count').textContent = '0';
-                 document.getElementById('page-index-display').textContent = '';
+                 document.getElementById('page-index-display').textContent = ' (Waiting for Anchor)';
                  document.getElementById('current-time').textContent = 'Current GMT Time: Waiting for Anchor...';
                  return;
             }
@@ -215,26 +234,25 @@
             const remainingMS = CYCLE_LENGTH_MS - timeInCurrentCycleMS;
 
             // --- PAGE / CYCLE INDEXING ---
-            const cycleIndex = totalCyclesCompleted % NUM_PAGES;
-            const currentPage = cycleContent[cycleIndex];
+            const cycleIndex = totalCyclesCompleted % NUM_PAGES; // 0 to 12
+            const currentPageNumber = cycleIndex + 1; // 1 to 13
 
-            // --- UPDATE DYNAMIC CONTENT ---
-            const pageContent = document.getElementById('page-content');
-            pageContent.innerHTML = `<h2>${currentPage.title}</h2><p>${currentPage.text}</p>`;
-            document.getElementById('page-index-display').textContent = ` (Current Page: ${cycleIndex + 1} of ${NUM_PAGES})`;
-
+            // Redraw the navbar only when the cycle changes
+            if (cycleIndex !== lastCycleIndex) {
+                 generateNavBar(currentPageNumber);
+                 lastCycleIndex = cycleIndex;
+            }
+            
             // --- FORMATTING COUNTDOWN ---
             const remainingSecondsTotal = Math.floor(remainingMS / 1000);
-            const minutes = Math.floor(remainingSecondsTotal / 60);
-            const seconds = remainingSecondsTotal % 60;
-            
-            const displayMinutes = String(minutes).padStart(2, '0');
-            const displaySeconds = String(seconds).padStart(2, '0');
+            const minutes = String(Math.floor(remainingSecondsTotal / 60)).padStart(2, '0');
+            const seconds = String(remainingSecondsTotal % 60).padStart(2, '0');
 
             // Update HTML elements
-            document.getElementById('minutes').textContent = displayMinutes;
-            document.getElementById('seconds').textContent = displaySeconds;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
             document.getElementById('cycle-count').textContent = totalCyclesCompleted;
+            document.getElementById('page-index-display').textContent = ` (Current Page: ${currentPageNumber} of ${NUM_PAGES})`;
             
             // Display current time in GMT for context
             const localTime = new Date();
@@ -246,7 +264,6 @@
 
         // Initialize and loop the timer
         updateTimer();
-        // Update 10 times per second for smooth display
         setInterval(updateTimer, 100); 
     </script>
 </body>
