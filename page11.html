@@ -186,21 +186,20 @@
 
     <script>
         // --- CONSTANTS ---
-        const START_EPOCH_MS = 1762721400000; // Sunday, November 9, 2025, at 7:30:00 PM GMT
+        const START_EPOCH_MS = 1762721400000; // Sunday, November 9, 2025, 7:30:00 PM GMT
         const CYCLE_MINUTES = 10;
-        const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000; // 600,000 milliseconds
-        const LAST_CHECK_KEY = 'lastCycleCheckTime'; // Local storage key
+        const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000;
+        const LAST_CHECK_KEY = 'lastCycleCheckTime'; 
         
         const MS_PER_SECOND = 1000;
         const MS_PER_MINUTE = 60 * MS_PER_SECOND;
         const MS_PER_HOUR = 60 * MS_PER_MINUTE;
         const MS_PER_DAY = 24 * MS_PER_HOUR;
         const MS_PER_WEEK = 7 * MS_PER_DAY;
-        // Using approximate year length (365.25 days) for general display
-        const MS_PER_YEAR = 365.25 * MS_PER_DAY; 
+        const MS_PER_YEAR = 365.25 * MS_PER_DAY; // Approximate
 
 
-        // --- LOCAL STORAGE FUNCTIONS ---
+        // --- UTILITY FUNCTIONS ---
 
         function getLastCheckTime() {
             const storedTime = localStorage.getItem(LAST_CHECK_KEY);
@@ -211,22 +210,17 @@
             const now = Date.now();
             localStorage.setItem(LAST_CHECK_KEY, now);
             updateTimer(); 
-            // Give user visual feedback
+            // Visual feedback
             document.getElementById('mark-check-button').textContent = 'Checked!';
             setTimeout(() => {
                 document.getElementById('mark-check-button').textContent = 'Mark Current Cycle';
             }, 1000);
         }
 
-        // Attach function to the button
         document.getElementById('mark-check-button').addEventListener('click', markCycleCheck);
 
-        // --- TIME BREAKDOWN UTILITIES ---
-
         /**
-         * Converts a duration in milliseconds into a detailed time breakdown (for checks).
-         * NOTE: This function's formatting (for time since last check) remains unchanged, 
-         * showing days/hours/minutes/seconds/milliseconds, even if they are zero.
+         * Converts duration in ms into a time breakdown (D H M S MS). Suppresses zero units.
          */
         function formatTimeBreakdown(totalMilliseconds) {
             let ms = Math.max(0, totalMilliseconds); 
@@ -245,12 +239,26 @@
             
             const milliseconds = Math.floor(ms); 
 
-            return `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s ${String(milliseconds).padStart(3, '0')}ms`;
+            let parts = [];
+            if (days > 0) parts.push(`${days}d`);
+            if (hours > 0) parts.push(`${String(hours).padStart(2, '0')}h`);
+            if (minutes > 0) parts.push(`${String(minutes).padStart(2, '0')}m`);
+            if (seconds > 0) parts.push(`${String(seconds).padStart(2, '0')}s`);
+
+            const millisecondsDisplay = `${String(milliseconds).padStart(3, '0')}ms`;
+
+            if (parts.length === 0) {
+                if (totalMilliseconds === 0) {
+                     return `0s 000ms`;
+                }
+                return millisecondsDisplay;
+            }
+
+            return parts.join(' ') + ' ' + millisecondsDisplay;
         }
         
         /**
-         * Converts total elapsed milliseconds since the anchor into Y W D H M S MS.
-         * MODIFIED: Suppresses Years, Weeks, Days, Hours, Minutes, and Seconds if their value is 0.
+         * Converts total elapsed ms since anchor into Y W D H M S MS. Suppresses zero units.
          */
         function formatTotalTimeBreakdown(totalMilliseconds) {
             let ms = Math.max(0, totalMilliseconds);
@@ -276,33 +284,26 @@
             
             const milliseconds = Math.floor(ms);
             
-            // --- MODIFIED LOGIC: Suppress zero values ---
+            // Suppress zero values for Y W D H M S
             let largeParts = [];
             if (years > 0) largeParts.push(`${years}y`);
             if (weeks > 0) largeParts.push(`${weeks}w`);
             if (days > 0) largeParts.push(`${days}d`);
             
-            // Hours, Minutes, Seconds must be padded if they show up
             if (hours > 0) largeParts.push(`${String(hours).padStart(2, '0')}h`);
             if (minutes > 0) largeParts.push(`${String(minutes).padStart(2, '0')}m`);
             if (seconds > 0) largeParts.push(`${String(seconds).padStart(2, '0')}s`);
 
-            // If absolutely no time has passed, display at least 0s (This prevents a blank display)
+            // Ensure something is shown if only milliseconds remain
             if (largeParts.length === 0) {
                  largeParts.push('0s');
             }
             
-            // Part 1: Years, Weeks, Days, Hours, Minutes, Seconds (Large display)
             const largeDisplay = largeParts.join(' ');
-
-            // Part 2: Milliseconds (Smaller display - always displayed and padded)
             const msDisplay = `${String(milliseconds).padStart(3, '0')}ms`;
 
             return { large: largeDisplay, ms: msDisplay };
         }
-
-
-        // --- DISPLAY FUNCTIONS ---
 
         function formatStartDate(epochMs) {
             const date = new Date(epochMs);
@@ -319,6 +320,9 @@
             });
         }
 
+
+        // --- MAIN TIMER LOOP ---
+
         // Initial display of static info
         document.getElementById('start-epoch').textContent = START_EPOCH_MS;
         document.getElementById('start-date').textContent = formatStartDate(START_EPOCH_MS);
@@ -326,7 +330,6 @@
 
         function updateTimer() {
             const now = Date.now();
-            
             const elapsedSinceStartMS = now - START_EPOCH_MS;
             
             if (elapsedSinceStartMS < 0) {
@@ -336,18 +339,18 @@
                  return;
             }
             
-            // --- TOTAL TIME ELAPSED (NEW LOGIC) ---
+            // Total Time Display
             const totalTime = formatTotalTimeBreakdown(elapsedSinceStartMS);
             document.getElementById('total-ywdhms').textContent = totalTime.large;
             document.getElementById('total-ms').textContent = totalTime.ms;
 
 
-            // --- CYCLE COUNTER LOGIC ---
+            // Cycle Counter Logic
             const totalCyclesCompleted = Math.floor(elapsedSinceStartMS / CYCLE_LENGTH_MS);
             const timeInCurrentCycleMS = elapsedSinceStartMS % CYCLE_LENGTH_MS;
             const remainingMS = CYCLE_LENGTH_MS - timeInCurrentCycleMS;
 
-            // --- LAST CHECK LOGIC ---
+            // Last Check Logic
             const lastCheckTime = getLastCheckTime();
             const cyclesSinceCheckElement = document.getElementById('cycles-since-check');
             const timeSinceCheckElement = document.getElementById('time-since-check'); 
@@ -355,7 +358,6 @@
             if (lastCheckTime > 0) {
                 const elapsedAtLastCheck = lastCheckTime - START_EPOCH_MS;
                 const cyclesAtLastCheck = Math.floor(elapsedAtLastCheck / CYCLE_LENGTH_MS);
-
                 const cyclesDifference = totalCyclesCompleted - cyclesAtLastCheck;
                 let timeSinceActualCheckMS = now - lastCheckTime; 
                 
@@ -364,32 +366,24 @@
                 if (cyclesDifference < 0) {
                     cyclesSinceCheckElement.textContent = `Error: Last check was in the future. Resetting check time.`;
                     localStorage.removeItem(LAST_CHECK_KEY); 
-                } else if (cyclesDifference === 0) {
-                    cyclesSinceCheckElement.textContent = `You checked this cycle!`;
-                } else if (cyclesDifference === 1) {
-                    cyclesSinceCheckElement.textContent = `It's been 1 cycle since you last checked.`;
                 } else {
-                    cyclesSinceCheckElement.textContent = `It's been ${cyclesDifference} cycles since you last checked.`;
+                    cyclesSinceCheckElement.textContent = `It's been ${cyclesDifference} cycles since you last checked.`
                 }
             } else {
                 cyclesSinceCheckElement.textContent = `Click "Mark Current Cycle" to start tracking your checks.`;
-                timeSinceCheckElement.textContent = `0d 0h 0m 0s 000ms`; // Default display
+                timeSinceCheckElement.textContent = `0s 000ms`;
             }
 
-            // --- COUNTDOWN FORMATTING (Still padded and shown if 0) ---
+            // Countdown Formatting (always padded/shown)
             const remainingSecondsTotal = Math.floor(remainingMS / 1000);
             const minutes = Math.floor(remainingSecondsTotal / 60);
             const seconds = remainingSecondsTotal % 60;
             
-            const displayMinutes = String(minutes).padStart(2, '0');
-            const displaySeconds = String(seconds).padStart(2, '0');
-
-            // Update HTML elements
-            document.getElementById('minutes').textContent = displayMinutes;
-            document.getElementById('seconds').textContent = displaySeconds;
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
             document.getElementById('cycle-count').textContent = totalCyclesCompleted;
             
-            // Display current time in GMT for context
+            // Display current GMT time for context
             const localTime = new Date();
             const gmtTimeString = localTime.toLocaleTimeString('en-US', { timeZone: 'GMT', hour12: false });
             const gmtDateString = localTime.toLocaleDateString('en-US', { timeZone: 'GMT' });
