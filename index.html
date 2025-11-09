@@ -1,102 +1,313 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleek Navigation Menu</title>
+    <title>App Collection</title>
     <style>
-        body {
-            /* Inherit dark mode background from prior project */
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0a0a; 
+        * {
             margin: 0;
             padding: 0;
-            color: #ffffff; 
+            box-sizing: border-box;
         }
 
-        .nav-container {
-            width: 100%;
-            background: #1c1c1c; /* Darker bar background */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-            padding: 0;
+```
+    body {
+        font-family: 'Courier New', monospace;
+        background: #0a0a0a;
+        color: #00ff41;
+        min-height: 100vh;
+        padding: 20px;
+        position: relative;
+        overflow-x: hidden;
+    }
+    
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            repeating-linear-gradient(0deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px, rgba(0,255,65,0.03) 3px),
+            repeating-linear-gradient(90deg, rgba(0,255,65,0.03) 0px, transparent 1px, transparent 2px, rgba(0,255,65,0.03) 3px);
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+    
+    header {
+        text-align: center;
+        margin-bottom: 60px;
+        padding: 40px 20px;
+        border: 2px solid #00ff41;
+        background: rgba(0, 255, 65, 0.05);
+        box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+        position: relative;
+    }
+    
+    .clock-display {
+        font-size: 4em;
+        font-weight: bold;
+        letter-spacing: 0.1em;
+        text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff41;
+        margin-bottom: 10px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .date-display {
+        font-size: 1.2em;
+        opacity: 0.8;
+        letter-spacing: 0.15em;
+    }
+    
+    .subtitle {
+        font-size: 1em;
+        margin-top: 20px;
+        opacity: 0.7;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+    }
+    
+    .category {
+        margin-bottom: 50px;
+        border: 1px solid #00ff41;
+        padding: 30px;
+        background: rgba(0, 0, 0, 0.7);
+        position: relative;
+    }
+    
+    .category::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, #00ff41, transparent, #00ff41);
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    
+    .category:hover::before {
+        opacity: 0.3;
+    }
+    
+    .category h2 {
+        color: #00ff41;
+        margin-bottom: 30px;
+        font-size: 1.5em;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        border-bottom: 2px solid #00ff41;
+        padding-bottom: 15px;
+        text-shadow: 0 0 10px #00ff41;
+    }
+    
+    .app-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 25px;
+    }
+    
+    .app-card {
+        border: 1px solid #00ff41;
+        padding: 25px;
+        text-decoration: none;
+        color: #00ff41;
+        transition: all 0.3s;
+        display: block;
+        background: rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .app-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .app-card:hover::before {
+        left: 100%;
+    }
+    
+    .app-card:hover {
+        background: rgba(0, 255, 65, 0.1);
+        box-shadow: 0 0 30px rgba(0, 255, 65, 0.4);
+        transform: translateX(5px);
+    }
+    
+    .app-card h3 {
+        font-size: 1.3em;
+        margin-bottom: 15px;
+        letter-spacing: 0.1em;
+        text-shadow: 0 0 10px #00ff41;
+    }
+    
+    .app-card p {
+        opacity: 0.7;
+        font-size: 0.9em;
+        line-height: 1.6;
+        letter-spacing: 0.05em;
+    }
+    
+    .app-number {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 2em;
+        opacity: 0.2;
+        font-weight: bold;
+    }
+    
+    @media (max-width: 768px) {
+        .clock-display {
+            font-size: 2.5em;
         }
+        
+        .app-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        header {
+            padding: 30px 15px;
+        }
+    }
+    
+    @keyframes flicker {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    .clock-display {
+        animation: flicker 3s infinite;
+    }
+</style>
+```
 
-        .nav-list {
-            list-style: none;
-            display: flex; /* Arrange links horizontally */
-            justify-content: flex-start;
-            margin: 0 auto;
-            padding: 0;
-            max-width: 1200px; /* Optional max width for large screens */
-        }
-
-        .nav-item {
-            /* Flex properties ensure even spacing if needed, though links have fixed padding */
-            flex-grow: 0; 
-        }
-
-        .nav-link {
-            display: block;
-            padding: 15px 20px;
-            text-decoration: none;
-            color: #ffffff;
-            font-size: 0.9em;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            transition: background 0.2s ease, color 0.2s ease;
-        }
-
-        /* Hover and Active State Styling */
-        .nav-link:hover {
-            background: #333;
-            color: #fff;
-        }
-
-        /* Optional: Style for the link corresponding to the current page (if implemented) */
-        .nav-link.active {
-            background: #555;
-            font-weight: bold;
-            color: #fff;
-        }
-
-        /* --- Responsive Adjustments: Stack links vertically on small screens --- */
-        @media (max-width: 768px) {
-            .nav-list {
-                flex-direction: column;
-                justify-content: center;
-                text-align: center;
-            }
-            .nav-link {
-                padding: 12px 10px;
-                border-bottom: 1px solid #222;
-            }
-        }
-    </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <div class="clock-display" id="clock">00:00:00</div>
+            <div class="date-display" id="date">LOADING...</div>
+            <p class="subtitle">[ System Ready ]</p>
+        </header>
 
-    <div class="nav-container">
-        <ul class="nav-list">
-            <li class="nav-item"><a href="page1.html" class="nav-link">Page 1</a></li>
-            <li class="nav-item"><a href="page2.html" class="nav-link">Page 2</a></li>
-            <li class="nav-item"><a href="page3.html" class="nav-link">Page 3</a></li>
-            <li class="nav-item"><a href="page4.html" class="nav-link">Page 4</a></li>
-            <li class="nav-item"><a href="page5.html" class="nav-link">Page 5</a></li>
-            <li class="nav-item"><a href="page6.html" class="nav-link">Page 6</a></li>
-            <li class="nav-item"><a href="page7.html" class="nav-link">Page 7</a></li>
-            <li class="nav-item"><a href="page8.html" class="nav-link">Page 8</a></li>
-            <li class="nav-item"><a href="page9.html" class="nav-link">Page 9</a></li>
-            <li class="nav-item"><a href="page10.html" class="nav-link">Page 10</a></li>
-            <li class="nav-item"><a href="page11.html" class="nav-link">Page 11</a></li>
-            <li class="nav-item"><a href="page12.html" class="nav-link">Page 12</a></li>
-            <li class="nav-item"><a href="page13.html" class="nav-link">Page 13</a></li>
-        </ul>
+```
+    <div class="category">
+        <h2>[ Games & Entertainment ]</h2>
+        <div class="app-grid">
+            <a href="page2.html" class="app-card">
+                <span class="app-number">02</span>
+                <h3>Reaction Timer</h3>
+                <p>Test your reflexes with this reaction time game</p>
+            </a>
+            <a href="page3.html" class="app-card">
+                <span class="app-number">03</span>
+                <h3>Grapple Ascent</h3>
+                <p>Swing and climb using grappling mechanics</p>
+            </a>
+        </div>
     </div>
+    
+    <div class="category">
+        <h2>[ Productivity Tools ]</h2>
+        <div class="app-grid">
+            <a href="page1.html" class="app-card">
+                <span class="app-number">01</span>
+                <h3>Project Organizer</h3>
+                <p>Organize and manage your project files</p>
+            </a>
+            <a href="page4.html" class="app-card">
+                <span class="app-number">04</span>
+                <h3>Calculator & Notepad</h3>
+                <p>Smart calculator with integrated note-taking</p>
+            </a>
+            <a href="page11.html" class="app-card">
+                <span class="app-number">11</span>
+                <h3>Cycle Counter</h3>
+                <p>Track time cycles and elapsed periods</p>
+            </a>
+        </div>
+    </div>
+    
+    <div class="category">
+        <h2>[ Development Tools ]</h2>
+        <div class="app-grid">
+            <a href="page5.html" class="app-card">
+                <span class="app-number">05</span>
+                <h3>Mobile IDE</h3>
+                <p>Code editor for on-the-go development</p>
+            </a>
+            <a href="page6.html" class="app-card">
+                <span class="app-number">06</span>
+                <h3>AI Learning</h3>
+                <p>Train and export AI models</p>
+            </a>
+        </div>
+    </div>
+    
+    <div class="category">
+        <h2>[ Navigation & Maps ]</h2>
+        <div class="app-grid">
+            <a href="page7.html" class="app-card">
+                <span class="app-number">07</span>
+                <h3>Map Navigator</h3>
+                <p>Find nearby places and navigate</p>
+            </a>
+            <a href="page8.html" class="app-card">
+                <span class="app-number">08</span>
+                <h3>Offline Map Navigator</h3>
+                <p>Map navigation with offline support</p>
+            </a>
+        </div>
+    </div>
+    
+    <div class="category">
+        <h2>[ Customization ]</h2>
+        <div class="app-grid">
+            <a href="page13.html" class="app-card">
+                <span class="app-number">13</span>
+                <h3>Theme Switcher</h3>
+                <p>Dynamic theme customization tool</p>
+            </a>
+        </div>
+    </div>
+</div>
 
-    <div style="padding: 20px; text-align: center; margin-top: 50px;">
-        <h1>Navigation Example</h1>
-        <p style="color: #999; margin-top: 15px;">Save this file as 'nav.html' and link the pages above to your projects.</p>
-    </div>
+<script>
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const dateStr = now.toLocaleDateString('en-US', options).toUpperCase();
+        document.getElementById('date').textContent = dateStr;
+    }
+    
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
+```
 
 </body>
 </html>
