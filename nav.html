@@ -163,16 +163,14 @@
         // Sunday, November 9, 2025, at 7:30:00 PM GMT
         const START_EPOCH_MS = 1762721400000; 
         
-        // Cycle length constants
+        // Cycle constants
         const CYCLE_MINUTES = 10;
         const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000;
-        
         const NUM_PAGES = 13;
         
         // Define the file structure for the 13 dynamic pages
         const pageFiles = [];
         for (let i = 1; i <= NUM_PAGES; i++) {
-            // Creates an array: ['page-1.html', 'page-2.html', ..., 'page-13.html']
             pageFiles.push(`page-${i}.html`);
         }
         
@@ -186,12 +184,12 @@
             });
         }
 
-        // Initial setup for static info
+        // Initial display of static info
         document.getElementById('start-epoch').textContent = START_EPOCH_MS;
         document.getElementById('start-date').textContent = formatStartDate(START_EPOCH_MS);
 
 
-        let lastCycleIndex = -1; // Track cycle changes
+        let lastCycleIndex = -1; // Track cycle changes to optimize rendering
 
         function generateNavBar(activePageNumber) {
             const navContainer = document.getElementById('nav-container');
@@ -201,7 +199,7 @@
                 const pageNumber = index + 1;
                 const link = document.createElement('a');
                 link.href = fileName;
-                // --- MODIFIED TEXT HERE ---
+                // --- UNNAMED LINK TEXT ---
                 link.textContent = `Unnamed ${pageNumber}`; 
                 // --------------------------
                 link.classList.add('nav-item');
@@ -220,7 +218,7 @@
             const now = Date.now();
             const elapsedSinceStartMS = now - START_EPOCH_MS;
             
-            // Handle future start time
+            // Handle case where start time is in the future
             if (elapsedSinceStartMS < 0) {
                  document.getElementById('minutes').textContent = '—';
                  document.getElementById('seconds').textContent = '—';
@@ -230,14 +228,14 @@
                  return;
             }
 
-            // --- PERPETUAL TIMER LOGIC ---
+            // --- PERPETUAL TIMER & CYCLE LOGIC ---
             const totalCyclesCompleted = Math.floor(elapsedSinceStartMS / CYCLE_LENGTH_MS);
             const timeInCurrentCycleMS = elapsedSinceStartMS % CYCLE_LENGTH_MS;
             const remainingMS = CYCLE_LENGTH_MS - timeInCurrentCycleMS;
 
-            // --- PAGE / CYCLE INDEXING ---
-            const cycleIndex = totalCyclesCompleted % NUM_PAGES; // 0 to 12
-            const currentPageNumber = cycleIndex + 1; // 1 to 13
+            // Page indexing uses modulo to loop 0-12
+            const cycleIndex = totalCyclesCompleted % NUM_PAGES; 
+            const currentPageNumber = cycleIndex + 1; // 1 to 13 for display/linking
 
             // Redraw the navbar only when the cycle changes
             if (cycleIndex !== lastCycleIndex) {
@@ -245,18 +243,18 @@
                  lastCycleIndex = cycleIndex;
             }
             
-            // --- FORMATTING COUNTDOWN ---
+            // --- COUNTDOWN FORMATTING ---
             const remainingSecondsTotal = Math.floor(remainingMS / 1000);
             const minutes = String(Math.floor(remainingSecondsTotal / 60)).padStart(2, '0');
             const seconds = String(remainingSecondsTotal % 60).padStart(2, '0');
 
-            // Update HTML elements
+            // Update display
             document.getElementById('minutes').textContent = minutes;
             document.getElementById('seconds').textContent = seconds;
             document.getElementById('cycle-count').textContent = totalCyclesCompleted;
             document.getElementById('page-index-display').textContent = ` (Current Page: ${currentPageNumber} of ${NUM_PAGES})`;
             
-            // Display current time in GMT for context
+            // Update current GMT time display
             const localTime = new Date();
             const gmtTimeString = localTime.toLocaleTimeString('en-US', { timeZone: 'GMT', hour12: false });
             const gmtDateString = localTime.toLocaleDateString('en-US', { timeZone: 'GMT' });
