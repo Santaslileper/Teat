@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Cycle Navigation Tracker</title>
+    <title>Unnamed Dynamic Cycle Navigation Tracker</title>
     <style>
         /* Sleek Black Styling */
         * {
@@ -172,7 +172,7 @@
         // Define the file structure for the 13 dynamic pages
         const pageFiles = [];
         for (let i = 1; i <= NUM_PAGES; i++) {
-             // Creates an array: ['page-1.html', 'page-2.html', ..., 'page-13.html']
+            // Creates an array: ['page-1.html', 'page-2.html', ..., 'page-13.html']
             pageFiles.push(`page-${i}.html`);
         }
         
@@ -191,7 +191,7 @@
         document.getElementById('start-date').textContent = formatStartDate(START_EPOCH_MS);
 
 
-        let lastCycleIndex = -1; // Track cycle changes to avoid unnecessary redraws
+        let lastCycleIndex = -1; // Track cycle changes
 
         function generateNavBar(activePageNumber) {
             const navContainer = document.getElementById('nav-container');
@@ -201,7 +201,9 @@
                 const pageNumber = index + 1;
                 const link = document.createElement('a');
                 link.href = fileName;
-                link.textContent = `Page ${pageNumber}`;
+                // --- MODIFIED TEXT HERE ---
+                link.textContent = `Unnamed ${pageNumber}`; 
+                // --------------------------
                 link.classList.add('nav-item');
 
                 // Apply the 'active' class to the link matching the current cycle
