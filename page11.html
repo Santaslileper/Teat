@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10-Minute GMT Cycle Counter with Check-In</title>
+    <title>GMT Cycle Counter</title>
     <style>
-        /* CSS from your uploaded clock.html */
         * {
             margin: 0;
             padding: 0;
@@ -14,12 +13,12 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0a0a0a; /* Sleek dark gray/black background */
+            background: #0a0a0a; 
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: #ffffff; /* White text */
+            color: #ffffff; 
         }
 
         .container {
@@ -27,24 +26,15 @@
             padding: 60px 40px;
         }
 
-        h1 {
-            font-size: 1.2em; /* Slightly larger than original h1 */
-            font-weight: 400;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            margin-bottom: 30px; /* Reduced margin */
-            color: #666; /* Muted gray header */
-        }
-        
-        /* Style for current time and cycle info */
         #current-time {
             font-size: 1em;
-            color: #888; /* Muted gray for context */
+            color: #888; 
             margin-bottom: 25px;
             padding-bottom: 15px;
             border-bottom: 1px solid #222;
         }
 
+        /* --- Main Cycle Countdown Style --- */
         .countdown {
             display: flex;
             gap: 60px;
@@ -58,7 +48,7 @@
 
         .time-value {
             font-size: 5em;
-            font-weight: 400; /* Made time bold for digital display */
+            font-weight: 400; 
             display: block;
             line-height: 1;
             letter-spacing: -2px;
@@ -69,22 +59,47 @@
             text-transform: uppercase;
             letter-spacing: 2px;
             margin-top: 15px;
-            color: #666; /* Muted gray label */
+            color: #666; 
             font-weight: 400;
         }
 
+        /* --- Total Elapsed Time Clock Style (Semi-Large) --- */
+        #total-time-display {
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid #222;
+            border-bottom: 1px solid #222;
+        }
+        
+        #total-time-display h3 {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .total-time-large {
+            font-size: 1.8em; /* Semi-large clock size */
+            font-weight: 300;
+            display: block;
+            line-height: 1.2;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        
+        .total-time-ms {
+            font-size: 1.2em;
+            color: #888;
+        }
+        
+        /* --- General Info Style --- */
         .info {
             margin-top: 20px;
             font-size: 0.85em;
-            color: #999; /* Light gray for info text */
+            color: #999; 
             letter-spacing: 1px;
             line-height: 1.5;
-        }
-
-        .expired {
-            font-size: 2.5em;
-            font-weight: 200;
-            letter-spacing: -1px;
         }
 
         #mark-check-button {
@@ -101,25 +116,33 @@
         #mark-check-button:hover {
             background: #dddddd;
         }
-        #cycles-since-check {
+        #cycles-since-check, #time-since-check {
             font-weight: bold;
             color: #fff;
+        }
+        
+        .info-section {
+            margin-top: 40px; 
         }
 
         @media (max-width: 768px) {
             .countdown {
                 gap: 40px;
             }
-            
             .time-value {
                 font-size: 3.5em;
+            }
+            .total-time-large {
+                font-size: 1.4em;
+            }
+            .total-time-ms {
+                font-size: 1em;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>10 MINUTE GMT CYCLE COUNTER</h1>
         
         <div id="current-time"></div>
         
@@ -138,17 +161,26 @@
             Total Cycles Completed: <span id="cycle-count" style="font-weight: bold; color: #fff;">0</span>
         </div>
         
-        <div class="info" style="margin-top: 50px;">
+        <div id="total-time-display">
+            <h3>Total Time Elapsed Since Anchor</h3>
+            <div class="total-time-large" id="total-ywdhms"></div>
+            <div class="total-time-ms" id="total-ms"></div>
+        </div>
+        <div class="info info-section">
             <button id="mark-check-button">Mark Current Cycle</button>
         </div>
         <div class="info">
             <span id="cycles-since-check"></span>
         </div>
-        <div class="info" style="margin-top: 30px;">
-            Start Time (GMT Epoch): <span id="start-epoch" style="font-weight: bold; color: #fff;"></span>
-        </div>
         <div class="info">
+            Time Since Last Check: <span id="time-since-check"></span>
+        </div>
+        
+        <div class="info info-section">
             Anchor Date: <span id="start-date" style="font-weight: bold; color: #fff;"></span>
+        </div>
+        <div class="info" style="margin-top: 5px;">
+            Start Time (GMT Epoch): <span id="start-epoch" style="font-weight: bold; color: #fff;"></span>
         </div>
     </div>
 
@@ -158,11 +190,19 @@
         const CYCLE_MINUTES = 10;
         const CYCLE_LENGTH_MS = CYCLE_MINUTES * 60 * 1000; // 600,000 milliseconds
         const LAST_CHECK_KEY = 'lastCycleCheckTime'; // Local storage key
+        
+        const MS_PER_SECOND = 1000;
+        const MS_PER_MINUTE = 60 * MS_PER_SECOND;
+        const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+        const MS_PER_DAY = 24 * MS_PER_HOUR;
+        const MS_PER_WEEK = 7 * MS_PER_DAY;
+        // Using approximate year length (365.25 days) for general display
+        const MS_PER_YEAR = 365.25 * MS_PER_DAY; 
+
 
         // --- LOCAL STORAGE FUNCTIONS ---
 
         function getLastCheckTime() {
-            // Returns the saved timestamp (or 0 if none is found)
             const storedTime = localStorage.getItem(LAST_CHECK_KEY);
             return storedTime ? parseInt(storedTime) : 0;
         }
@@ -170,7 +210,6 @@
         function markCycleCheck() {
             const now = Date.now();
             localStorage.setItem(LAST_CHECK_KEY, now);
-            // Re-run the timer update to immediately reflect the change
             updateTimer(); 
             // Give user visual feedback
             document.getElementById('mark-check-button').textContent = 'Checked!';
@@ -181,6 +220,71 @@
 
         // Attach function to the button
         document.getElementById('mark-check-button').addEventListener('click', markCycleCheck);
+
+        // --- TIME BREAKDOWN UTILITIES ---
+
+        /**
+         * Converts a duration in milliseconds into a detailed time breakdown (for checks).
+         */
+        function formatTimeBreakdown(totalMilliseconds) {
+            let ms = Math.max(0, totalMilliseconds); 
+            
+            const days = Math.floor(ms / MS_PER_DAY);
+            ms %= MS_PER_DAY;
+            
+            const hours = Math.floor(ms / MS_PER_HOUR);
+            ms %= MS_PER_HOUR;
+            
+            const minutes = Math.floor(ms / MS_PER_MINUTE);
+            ms %= MS_PER_MINUTE;
+            
+            const seconds = Math.floor(ms / MS_PER_SECOND);
+            ms %= MS_PER_SECOND;
+            
+            const milliseconds = Math.floor(ms); 
+
+            return `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s ${String(milliseconds).padStart(3, '0')}ms`;
+        }
+        
+        /**
+         * Converts total elapsed milliseconds since the anchor into Y W D H M S MS (for total time).
+         */
+        function formatTotalTimeBreakdown(totalMilliseconds) {
+            let ms = Math.max(0, totalMilliseconds);
+            
+            // Calculate Years and Weeks first (approximated for display)
+            const years = Math.floor(ms / MS_PER_YEAR);
+            ms %= MS_PER_YEAR;
+
+            const weeks = Math.floor(ms / MS_PER_WEEK);
+            ms %= MS_PER_WEEK;
+            
+            const days = Math.floor(ms / MS_PER_DAY);
+            ms %= MS_PER_DAY;
+            
+            const hours = Math.floor(ms / MS_PER_HOUR);
+            ms %= MS_PER_HOUR;
+            
+            const minutes = Math.floor(ms / MS_PER_MINUTE);
+            ms %= MS_PER_MINUTE;
+            
+            const seconds = Math.floor(ms / MS_PER_SECOND);
+            ms %= MS_PER_SECOND;
+            
+            const milliseconds = Math.floor(ms);
+            
+            // Part 1: Years, Weeks, Days, Hours, Minutes, Seconds (Large display)
+            const largeDisplay = 
+                `${years}y ${weeks}w ${days}d ` +
+                `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ` + 
+                `${String(seconds).padStart(2, '0')}s`;
+
+            // Part 2: Milliseconds (Smaller display)
+            const msDisplay = `${String(milliseconds).padStart(3, '0')}ms`;
+
+            return { large: largeDisplay, ms: msDisplay };
+        }
+
 
         // --- DISPLAY FUNCTIONS ---
 
@@ -210,11 +314,17 @@
             const elapsedSinceStartMS = now - START_EPOCH_MS;
             
             if (elapsedSinceStartMS < 0) {
-                 document.getElementById('countdown').innerHTML = '<div class="expired" style="color:#fff;">Start Time Not Reached</div>';
+                 document.getElementById('countdown').innerHTML = '<div class="info" style="font-size: 1.5em; margin-top:0;">Start Time Not Reached</div>';
                  document.getElementById('cycle-count').textContent = '0';
                  document.getElementById('current-time').textContent = 'Current GMT Time: Waiting for Anchor...';
                  return;
             }
+            
+            // --- TOTAL TIME ELAPSED (NEW LOGIC) ---
+            const totalTime = formatTotalTimeBreakdown(elapsedSinceStartMS);
+            document.getElementById('total-ywdhms').textContent = totalTime.large;
+            document.getElementById('total-ms').textContent = totalTime.ms;
+
 
             // --- CYCLE COUNTER LOGIC ---
             const totalCyclesCompleted = Math.floor(elapsedSinceStartMS / CYCLE_LENGTH_MS);
@@ -224,17 +334,18 @@
             // --- LAST CHECK LOGIC ---
             const lastCheckTime = getLastCheckTime();
             const cyclesSinceCheckElement = document.getElementById('cycles-since-check');
+            const timeSinceCheckElement = document.getElementById('time-since-check'); 
 
             if (lastCheckTime > 0) {
-                // Calculate total cycles completed at the time of the last check
                 const elapsedAtLastCheck = lastCheckTime - START_EPOCH_MS;
                 const cyclesAtLastCheck = Math.floor(elapsedAtLastCheck / CYCLE_LENGTH_MS);
 
-                // Calculate the difference in cycles
                 const cyclesDifference = totalCyclesCompleted - cyclesAtLastCheck;
+                let timeSinceActualCheckMS = now - lastCheckTime; 
+                
+                timeSinceCheckElement.textContent = formatTimeBreakdown(timeSinceActualCheckMS);
 
                 if (cyclesDifference < 0) {
-                    // Should not happen unless clock is reset backwards
                     cyclesSinceCheckElement.textContent = `Error: Last check was in the future. Resetting check time.`;
                     localStorage.removeItem(LAST_CHECK_KEY); 
                 } else if (cyclesDifference === 0) {
@@ -246,6 +357,7 @@
                 }
             } else {
                 cyclesSinceCheckElement.textContent = `Click "Mark Current Cycle" to start tracking your checks.`;
+                timeSinceCheckElement.textContent = `0d 0h 0m 0s 000ms`; // Default display
             }
 
             // --- COUNTDOWN FORMATTING ---
@@ -271,7 +383,7 @@
 
         // Initialize and loop the timer
         updateTimer();
-        setInterval(updateTimer, 100); 
+        setInterval(updateTimer, 50); 
     </script>
 </body>
 </html>
