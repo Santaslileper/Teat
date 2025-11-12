@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Handoff (Auto Fallback)</title> <!-- Renamed Title -->
+<title>Handoff (Auto Fallback)</title>
 <style>
 /* 🎨 UI/UX Styling for Mobile */
 body {
@@ -258,7 +258,7 @@ a.download {
 </nav>
 
 <div class="card">
-    <h2>Handoff (Auto Fallback)</h2> <!-- Renamed H2 -->
+    <h2>Handoff (Auto Fallback)</h2>
     
     <div class="user-info">Logged in as: <span id="display-name">Loading...</span></div>
     <div class="status-bar" id="status">Ready. Click Connect.</div>
@@ -307,8 +307,270 @@ a.download {
 
 
 <script>
-// Translation Key: SS=SIGNALING_SERVERS, w=ws, n=name, p=peers, c=pc, d=dc, t=target, si=serverIndex, pd=peersDiv, pr=progress, st=status, ni=nameInput, dn=displayName, cb=connectButton, g=generateRandomName, l=log, sdu=setDisconnectedUI, s=start, cs=currentServer, hec=handleErrorOrClose, rp=renderPeers, ct=connectTo, sd=setupDC, ho=handleOffer, fih=fileInputHandler, dcnt=dropContainer, sf=sendFile
-(()=>{const SS=["wss://ws.shizq.xyz","wss://webrtc-signaling.glitch.me","wss://webrtc-signaling.com/ws","wss://cloudflare-rtc.glitch.me"];let w,n,p={},c,d,t;let si=0;const pd=document.getElementById("peers"),pr=document.getElementById("progress"),st=document.getElementById("status"),ni=document.getElementById("name"),dn=document.getElementById("display-name"),cb=document.getElementById("connect-ws");function g(){return"anon-"+Math.floor(Math.random()*9999);}function l(x,y){st.textContent=x;if(y)st.style.color=y;else st.style.color="#a0a6b4";}function sdu(){ni.disabled=false;cb.disabled=false;cb.textContent="Connect";cb.style.backgroundColor="#4a75a7";pd.textContent="Not connected to server...";}function s(){if(si>=SS.length){l("Connection failed: All available public servers tried.","red");sdu();return;}const cs=SS[si];n=ni.value.trim()||g();dn.textContent=n;try{w=new WebSocket(cs);}catch(e){console.error("Sync WS Error:",e);si++;setTimeout(s,50);return;}cb.disabled=true;l(`Connecting to Server #${si+1}...`,"#8cf");w.onopen=()=>{si=0;w.send(JSON.stringify({join:true,name:n}));l(`Connected to Server #${si+1}. Ready to find peers.`,"#4CAF50");ni.disabled=true;cb.textContent="Connected";cb.style.backgroundColor="#4CAF50";};const hec=e=>{if(w&&w.readyState===WebSocket.OPEN){l("Disconnected from server. Click Connect to retry.","red");sdu();return;}si++;if(si<SS.length){l(`Connection to Server #${si} failed. Trying Server #${si+1}...`,"red");setTimeout(s,250);}else{l("Connection failed: All available public servers tried.","red");sdu();}};w.onclose=hec;w.onerror=hec;w.onmessage=e=>{const m=JSON.parse(e.data);if(m.list){rp(m.list);}else if(m.offer){ho(m);}else if(m.answer){c&&c.setRemoteDescription(m.answer);}else if(m.ice){c&&c.addIceCandidate(m.ice);}};}function rp(list){pd.innerHTML='';const fL=list.filter(x=>x!==n);if(fL.length===0){pd.textContent="No other devices found yet.";return;}fL.forEach(x=>{const D=document.createElement('div');D.className='peer';const isConnected=(x===t&&d&&d.readyState==="open");const actionHtml=isConnected?`<span class="connected-text">Peer Connected</span>`:`<button class="connect-btn" data-peer="${x}">Connect</button>`;D.innerHTML=`<span class="peer-name">${x}</span>${actionHtml}`;const cPB=D.querySelector('.connect-btn');if(cPB){cPB.onclick=()=>ct(x);}pd.appendChild(D);});}async function ct(x){if(c)c.close();t=x;c=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});d=c.createDataChannel('file');sd();c.onicecandidate=e=>{if(e.candidate)w.send(JSON.stringify({to:x,ice:e.candidate}));};const offer=await c.createOffer();await c.setLocalDescription(offer);w.send(JSON.stringify({to:x,offer}));l(`Sending peer connection request to ${x}...`,"#FFC107");w.send(JSON.stringify({list:true}));}function sd(){d.binaryType='arraybuffer';d.onopen=()=>{l(`Peer connected: ${t}`,"#8cf");w.send(JSON.stringify({list:true}));};d.onclose=()=>l(`Peer connection closed with ${t}`);d.onerror=e=>l(`Peer error: ${e.error.message}`,"red");let m=null,r=[],b=0;d.onmessage=e=>{if(typeof e.data==="string"){try{const j=JSON.parse(e.data);if(j.meta){m=j.meta;r=[];b=0;pr.value=0;pr.max=j.meta.size;l(`Receiving ${m.name} (${(m.size/1024/1024).toFixed(1)} MB)`,"#8cf");document.querySelectorAll('.download').forEach(x=>x.remove());}}catch{}}else{r.push(e.data);b+=e.data.byteLength;pr.value=b;if(b>=m.size){const blob=new Blob(r,{type:m.type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=m.name;a.textContent=`Download '${m.name}'`;a.className="download";document.querySelector(".card").appendChild(a);l("File received successfully!","#4CAF50");}}};}async function ho(m){t=m.from;c=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});c.onicecandidate=e=>{if(e.candidate)w.send(JSON.stringify({to:m.from,ice:e.candidate}));};c.ondatachannel=e=>{d=e.channel;sd();};await c.setRemoteDescription(m.offer);const ans=await c.createAnswer();await c.setLocalDescription(ans);w.send(JSON.stringify({to:m.from,answer:ans}));l(`Accepted connection from ${m.from}`,"#8cf");}const fih=e=>{const f=e.target.files[0];e.target.value='';if(f)sf(f);};document.getElementById("file").onchange=fih;document.getElementById("file-camera").onchange=fih;cb.onclick=()=>{si=0;s();};const dcnt=document.getElementById("drop-container");dcnt.ondragover=e=>{e.preventDefault();dcnt.style.opacity=0.8};dcnt.ondragleave=e=>{dcnt.style.opacity=1};dcnt.ondrop=e=>{e.preventDefault();dcnt.style.opacity=1;const f=e.dataTransfer.files[0];if(f)sf(f);};async function sf(f){if(!d||d.readyState!=="open"){l("Connection required to send file. Please connect to a device.","#FFC107");return;}l(`Sending ${f.name} to ${t}...`,"#8cf");pr.max=f.size;pr.value=0;d.send(JSON.stringify({meta:{name:f.name,size:f.size,type:f.type}}));const stream=f.stream();const reader=stream.getReader();while(true){const{done:x,value:v}=await reader.read();if(x)break;d.send(v);pr.value+=v.byteLength;if(d.bufferedAmount>512000)await new Promise(y=>setTimeout(y,50));}l("File sent successfully!","#4CAF50");}window.onload=()=>{const x=g();ni.value=x;dn.textContent=x;ni.addEventListener('input',()=>{dn.textContent=ni.value.trim()||g();});};})();
+(()=>{
+// List of public signaling servers to cycle through if one fails (6 Servers)
+const SIGNALING_SERVERS = [
+    "wss://ws.shizq.xyz", 
+    "wss://webrtc-signaling.glitch.me", 
+    "wss://webrtc-signaling.com/ws",
+    "wss://cloudflare-rtc.glitch.me",
+    "wss://relay.signalhub.online",
+    "wss://websocket.s-h.xyz"
+];
+let ws, name, peers={}, pc, dc, target;
+let serverIndex = 0; // Current index in the SIGNALING_SERVERS array
+
+const peersDiv=document.getElementById("peers"),progress=document.getElementById("progress"),status=document.getElementById("status"), nameInput=document.getElementById("name"), displayName=document.getElementById("display-name"), connectButton=document.getElementById("connect-ws");
+
+// --- UTILITY FUNCTIONS ---
+
+function generateRandomName() {
+    return "anon-" + Math.floor(Math.random() * 9999);
+}
+
+function log(t, color){
+    status.textContent=t;
+    if (color) status.style.color = color;
+    else status.style.color = '#a0a6b4';
+}
+
+function setDisconnectedUI() {
+    nameInput.disabled = false;
+    connectButton.disabled = false;
+    connectButton.textContent = "Connect";
+    connectButton.style.backgroundColor = '#4a75a7';
+    peersDiv.textContent="Not connected to server...";
+}
+
+// --- MAIN LOGIC (Server Connection Loop) ---
+
+function start(){
+    // Stop if we ran out of servers to try
+    if (serverIndex >= SIGNALING_SERVERS.length) {
+        log("Connection failed: All available public servers tried.", 'red');
+        setDisconnectedUI();
+        return;
+    }
+
+    const currentServer = SIGNALING_SERVERS[serverIndex];
+
+    // Use current input value, or fallback to a new random one
+    name=nameInput.value.trim() || generateRandomName();
+    displayName.textContent = name;
+    
+    // 1. Attempt connection (Synchronous part)
+    try {
+        ws = new WebSocket(currentServer);
+    } catch(e) {
+        // Only catches invalid URL format, not network failure
+        console.error("Synchronous WebSocket Error (Trying next server):", e);
+        serverIndex++;
+        // Use a timeout to retry immediately with the next server
+        setTimeout(start, 50); 
+        return;
+    }
+
+    connectButton.disabled = true;
+    log(`Connecting to Server #${serverIndex + 1}...`, '#8cf');
+
+    // 2. Event Handlers (Asynchronous success/failure)
+
+    ws.onopen=()=>{
+        // SUCCESS: Clear fail index
+        serverIndex = 0; 
+        ws.send(JSON.stringify({join:true,name}));
+        log(`Connected to Server #${serverIndex + 1}. Ready to find peers.`, '#4CAF50');
+        nameInput.disabled = true; 
+        connectButton.textContent = "Connected";
+        connectButton.style.backgroundColor = '#4CAF50';
+    }
+
+    const handleErrorOrClose = (e) => {
+        // If the connection was OPEN when this fired, it's a disconnect.
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            log("Disconnected from server. Click Connect to retry.", 'red');
+            setDisconnectedUI();
+            return;
+        }
+
+        // If failure during connection attempt (readyState is CONNECTING or CLOSING), try the next server
+        serverIndex++;
+        
+        if (serverIndex < SIGNALING_SERVERS.length) {
+            log(`Connection to Server #${serverIndex} failed. Trying Server #${serverIndex + 1}...`, 'red');
+            // Wait a moment before trying the next server
+            setTimeout(start, 250); 
+        } else {
+            log("Connection failed: All available public servers tried.", 'red');
+            setDisconnectedUI();
+        }
+    }
+
+    // These events act as the asynchronous "catch"
+    ws.onclose = handleErrorOrClose;
+    ws.onerror = handleErrorOrClose;
+
+
+    ws.onmessage=(e)=>{const m=JSON.parse(e.data);
+        if(m.list){renderPeers(m.list);} 
+        else if(m.offer){handleOffer(m);}
+        else if(m.answer){pc&&pc.setRemoteDescription(m.answer);}
+        else if(m.ice){pc&&pc.addIceCandidate(m.ice);}
+    };
+}
+
+// --- PEER CONNECTION LOGIC ---
+
+function renderPeers(list){
+    peersDiv.innerHTML='';
+    const filteredList = list.filter(p=>p!==name);
+    
+    if(filteredList.length === 0) {
+        peersDiv.textContent="No other devices found yet.";
+        return;
+    }
+
+    filteredList.forEach(p=>{
+        const d=document.createElement('div');
+        d.className='peer';
+        
+        const isConnected = (p === target && dc && dc.readyState === "open");
+        
+        const actionHtml = isConnected 
+            ? `<span class="connected-text">Peer Connected</span>`
+            : `<button class="connect-btn" data-peer="${p}">Connect</button>`;
+            
+        d.innerHTML=`<span class="peer-name">${p}</span>${actionHtml}`;
+        
+        const connectPeerButton = d.querySelector('.connect-btn');
+        if (connectPeerButton) {
+            connectPeerButton.onclick=()=>connectTo(p);
+        }
+
+        peersDiv.appendChild(d);
+    });
+}
+
+async function connectTo(peer){
+    if(pc) pc.close();
+    target=peer;
+    
+    // WebRTC connection setup
+    pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+    dc=pc.createDataChannel('file');
+    setupDC();
+    
+    pc.onicecandidate=e=>{if(e.candidate)ws.send(JSON.stringify({to:peer,ice:e.candidate}));};
+    const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+    ws.send(JSON.stringify({to:peer,offer}));
+    log("Sending peer connection request to "+peer+"...", '#FFC107');
+    
+    ws.send(JSON.stringify({list:true}));
+}
+
+function setupDC(){
+    dc.binaryType='arraybuffer';
+    dc.onopen=()=>{
+        log("Peer connected: "+target, '#8cf');
+        ws.send(JSON.stringify({list:true})); 
+    }
+    dc.onclose=()=>log("Peer connection closed with "+target);
+    dc.onerror=(e)=>log("Peer error: "+e.error.message, 'red');
+    
+    let meta=null,received=[],bytes=0;
+    dc.onmessage=e=>{
+        if(typeof e.data==="string"){
+            try{const j=JSON.parse(e.data);
+                if(j.meta){
+                    meta=j.meta;received=[];bytes=0;
+                    progress.value=0;progress.max=j.meta.size;
+                    log(`Receiving ${meta.name} (${(meta.size/1024/1024).toFixed(1)} MB)`, '#8cf');
+                    
+                    document.querySelectorAll('.download').forEach(a=>a.remove());
+                }
+            }catch{}
+        }else{
+            received.push(e.data);bytes+=e.data.byteLength;progress.value=bytes;
+            if(bytes>=meta.size){
+                const blob=new Blob(received, {type: meta.type});
+                const a=document.createElement('a');
+                a.href=URL.createObjectURL(blob);a.download=meta.name;
+                a.textContent=`Download '${meta.name}'`;a.className="download";
+                document.querySelector(".card").appendChild(a);
+                log("File received successfully!", '#4CAF50');
+            }
+        }
+    };
+}
+
+async function handleOffer(m){
+    target=m.from;
+    pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+    pc.onicecandidate=e=>{if(e.candidate)ws.send(JSON.stringify({to:m.from,ice:e.candidate}));};
+    pc.ondatachannel=e=>{dc=e.channel;setupDC();};
+    
+    await pc.setRemoteDescription(m.offer);
+    const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+    ws.send(JSON.stringify({to:m.from,answer:ans}));
+    log("Accepted connection from "+m.from, '#8cf');
+}
+
+// --- FILE SENDING LOGIC ---
+
+const fileInputHandler = e => {
+    const f=e.target.files[0];
+    e.target.value = '';
+    if(f) sendFile(f);
+};
+
+document.getElementById("file").onchange=fileInputHandler;
+document.getElementById("file-camera").onchange=fileInputHandler;
+
+connectButton.onclick=()=>{
+    // Reset index to 0 when user manually clicks Connect
+    serverIndex = 0; 
+    start();
+};
+
+const dropContainer=document.getElementById("drop-container");
+dropContainer.ondragover=e=>{e.preventDefault();dropContainer.style.opacity=0.8};
+dropContainer.ondragleave=e=>{dropContainer.style.opacity=1};
+dropContainer.ondrop=e=>{
+    e.preventDefault();dropContainer.style.opacity=1;
+    const f=e.dataTransfer.files[0];if(f)sendFile(f);
+};
+
+async function sendFile(file){
+    if(!dc||dc.readyState!=="open"){
+        log("Connection required to send file. Please connect to a device.", '#FFC107');
+        return;
+    }
+    log(`Sending ${file.name} to ${target}...`, '#8cf');
+    progress.max=file.size;progress.value=0;
+    
+    dc.send(JSON.stringify({meta:{name:file.name,size:file.size,type:file.type}}));
+    
+    const stream=file.stream();const reader=stream.getReader();
+    while(true){
+        const {done,value}=await reader.read();if(done)break;
+        dc.send(value);
+        progress.value+=value.byteLength;
+        if(dc.bufferedAmount>512000)await new Promise(r=>setTimeout(r,50));
+    }
+    log("File sent successfully!", '#4CAF50');
+}
+
+// 🚀 INITIALIZATION
+window.onload = () => {
+    const defaultName = generateRandomName();
+    nameInput.value = defaultName;
+    displayName.textContent = defaultName;
+    nameInput.addEventListener('input', () => {
+        displayName.textContent = nameInput.value.trim() || generateRandomName();
+    });
+};
+
+})();
 </script>
 </body>
 </html>
