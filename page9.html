@@ -1,0 +1,316 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Handoff (Auto Fallback)</title> <!-- Renamed Title -->
+<style>
+/* 🎨 UI/UX Styling for Mobile */
+body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background: #0e1320; /* Dark Mode Background */
+    color: #f0f4f8; /* Light Text */
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+/* --- Navigation Bar --- */
+#navbar { /* New Navigation Bar Style */
+    width: 100%;
+    background: #111b2a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    padding: 10px 20px;
+    box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#nav-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #8cf;
+}
+#nav-link a {
+    color: #a0a6b4;
+    text-decoration: none;
+    font-size: 14px;
+    margin-left: 15px;
+}
+#nav-link a:hover {
+    color: #fff;
+}
+/* --- Main Card Styles --- */
+.card {
+    width: 100%;
+    max-width: 450px; 
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    background: #111b2a; 
+    border-radius: 0 0 20px 20px; 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+h2 {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #8cf; 
+}
+.user-info {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+.status-bar {
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #a0a6b4;
+    height: 20px; 
+}
+.action-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.action-row input, .action-row button {
+    flex-grow: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #334;
+    background: #18233a;
+    color: #eee;
+    font-size: 16px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+.action-row button#connect-ws {
+    background: #4a75a7; /* Blue for connection */
+    border: none;
+}
+.action-row button#connect-ws:disabled {
+    background: #233144;
+    color: #a0a6b4;
+}
+
+
+/* 🖼️ Peer List Design */
+.peerlist-container {
+    background: #0c1525;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
+}
+.peerlist-header {
+    font-size: 14px;
+    color: #a0a6b4;
+    text-align: left;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+.peerlist {
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 5px; 
+}
+.peer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #233144;
+    padding: 8px 0;
+}
+.peer:last-child {
+    border-bottom: none;
+}
+.peer-name {
+    font-weight: 500;
+    text-align: left;
+    flex-grow: 1;
+}
+.connect-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: none;
+    background: #4CAF50; /* Green connect button for peer */
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.connect-btn:hover {
+    background: #66BB6A;
+}
+.connected-text {
+    color: #8cf; /* Light blue for connected peer */
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* 📤 Split File Drop Zone */
+#drop-container {
+    margin-top: 20px;
+    border: 2px dashed #345e8f; /* Main border */
+    border-radius: 15px;
+    overflow: hidden; /* Contains the split sections */
+    display: flex;
+    flex-direction: row; /* Split horizontally for mobile */
+}
+.drop-zone {
+    flex: 1;
+    padding: 20px 10px;
+    background: #142034;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.drop-zone:first-child {
+    border-right: 1px dashed #345e8f; /* Split line */
+}
+.drop-zone:hover {
+    background: #1b2841;
+}
+.drop-zone strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #8cf; /* Blue for the main call to action */
+}
+.drop-zone small {
+    display: block;
+    color: #a0a6b4;
+}
+#file {
+    display: none; 
+}
+progress {
+    width: 100%;
+    margin-top: 15px;
+    height: 8px;
+    border-radius: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+}
+progress::-webkit-progress-bar {
+    background-color: #334;
+    border-radius: 4px;
+}
+progress::-webkit-progress-value {
+    background-color: #8cf; 
+    border-radius: 4px;
+}
+a.download {
+    display: block;
+    margin-top: 15px;
+    padding: 10px;
+    background: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* --- About Us Card --- */
+.about-card {
+    width: 100%;
+    max-width: 450px;
+    margin: 20px 0;
+    padding: 20px;
+    box-sizing: border-box;
+    background: #111b2a;
+    border-radius: 12px;
+    text-align: left;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.about-card h3 {
+    color: #4CAF50;
+    margin-top: 0;
+    border-bottom: 1px solid #233144;
+    padding-bottom: 8px;
+}
+.about-card p {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+.about-card ul {
+    list-style: disc;
+    margin-left: 20px;
+    padding-left: 0;
+}
+.about-card li {
+    margin-bottom: 5px;
+}
+</style>
+</head>
+<body>
+<!-- NEW NAVIGATION BAR (Add Bars to the Thing) -->
+<nav id="navbar">
+    <span id="nav-title">Handoff</span>
+    <div id="nav-link">
+        <a href="#about-us-section">About</a>
+    </div>
+</nav>
+
+<div class="card">
+    <h2>Handoff (Auto Fallback)</h2> <!-- Renamed H2 -->
+    
+    <div class="user-info">Logged in as: <span id="display-name">Loading...</span></div>
+    <div class="status-bar" id="status">Ready. Click Connect.</div>
+
+    <div class="action-row">
+        <input id="name" placeholder="Your name (e.g., My Phone)" value="">
+        <button id="connect-ws">Connect</button>
+    </div>
+
+    <div class="peerlist-container">
+        <div class="peerlist-header">Nearby Devices (Connect to Peer)</div>
+        <div class="peerlist" id="peers">Not connected to server...</div>
+    </div>
+
+    <div id="drop-container">
+        <label for="file" class="drop-zone">
+            <strong>Tap to Send File</strong>
+            <small>Select from storage</small>
+            <input type="file" id="file" multiple>
+        </label>
+        <label for="file-camera" class="drop-zone">
+            <strong>Tap to Take Photo</strong>
+            <small>Use your camera</small>
+            <input type="file" id="file-camera" accept="image/*" capture="camera" style="display:none;">
+        </label>
+    </div>
+
+    <progress id="progress" value="0" max="1"></progress>
+</div>
+
+<!-- NEW ABOUT US SECTION -->
+<div id="about-us-section" class="about-card">
+    <h3>About Handoff: Secure, Peer-to-Peer Sharing</h3>
+    
+    <p>
+        Our mission is to enable the **fastest, most reliable local file sharing possible**, free from cloud storage limitations and unnecessary network hurdles. Handoff facilitates true device-to-device communication.
+    </p>
+    
+    <h4>Business & Technology Focus</h4>
+    <ul>
+        <li>**P2P Focus:** Handoff is built entirely on WebRTC technology, ensuring data is transferred directly between your browser and your peer's browser.</li>
+        <li>**Privacy:** File data *never* touches our signaling servers. Only basic connection information (like your random name) is exchanged to set up the peer-to-peer link.</li>
+        <li>**Free and Open:** Handoff is a free-to-use, open-source concept, emphasizing secure, fast, and local connectivity.</li>
+    </ul>
+</div>
+
+
+<script>
+// Translation Key: SS=SIGNALING_SERVERS, w=ws, n=name, p=peers, c=pc, d=dc, t=target, si=serverIndex, pd=peersDiv, pr=progress, st=status, ni=nameInput, dn=displayName, cb=connectButton, g=generateRandomName, l=log, sdu=setDisconnectedUI, s=start, cs=currentServer, hec=handleErrorOrClose, rp=renderPeers, ct=connectTo, sd=setupDC, ho=handleOffer, fih=fileInputHandler, dcnt=dropContainer, sf=sendFile
+(()=>{const SS=["wss://ws.shizq.xyz","wss://webrtc-signaling.glitch.me","wss://webrtc-signaling.com/ws","wss://cloudflare-rtc.glitch.me"];let w,n,p={},c,d,t;let si=0;const pd=document.getElementById("peers"),pr=document.getElementById("progress"),st=document.getElementById("status"),ni=document.getElementById("name"),dn=document.getElementById("display-name"),cb=document.getElementById("connect-ws");function g(){return"anon-"+Math.floor(Math.random()*9999);}function l(x,y){st.textContent=x;if(y)st.style.color=y;else st.style.color="#a0a6b4";}function sdu(){ni.disabled=false;cb.disabled=false;cb.textContent="Connect";cb.style.backgroundColor="#4a75a7";pd.textContent="Not connected to server...";}function s(){if(si>=SS.length){l("Connection failed: All available public servers tried.","red");sdu();return;}const cs=SS[si];n=ni.value.trim()||g();dn.textContent=n;try{w=new WebSocket(cs);}catch(e){console.error("Sync WS Error:",e);si++;setTimeout(s,50);return;}cb.disabled=true;l(`Connecting to Server #${si+1}...`,"#8cf");w.onopen=()=>{si=0;w.send(JSON.stringify({join:true,name:n}));l(`Connected to Server #${si+1}. Ready to find peers.`,"#4CAF50");ni.disabled=true;cb.textContent="Connected";cb.style.backgroundColor="#4CAF50";};const hec=e=>{if(w&&w.readyState===WebSocket.OPEN){l("Disconnected from server. Click Connect to retry.","red");sdu();return;}si++;if(si<SS.length){l(`Connection to Server #${si} failed. Trying Server #${si+1}...`,"red");setTimeout(s,250);}else{l("Connection failed: All available public servers tried.","red");sdu();}};w.onclose=hec;w.onerror=hec;w.onmessage=e=>{const m=JSON.parse(e.data);if(m.list){rp(m.list);}else if(m.offer){ho(m);}else if(m.answer){c&&c.setRemoteDescription(m.answer);}else if(m.ice){c&&c.addIceCandidate(m.ice);}};}function rp(list){pd.innerHTML='';const fL=list.filter(x=>x!==n);if(fL.length===0){pd.textContent="No other devices found yet.";return;}fL.forEach(x=>{const D=document.createElement('div');D.className='peer';const isConnected=(x===t&&d&&d.readyState==="open");const actionHtml=isConnected?`<span class="connected-text">Peer Connected</span>`:`<button class="connect-btn" data-peer="${x}">Connect</button>`;D.innerHTML=`<span class="peer-name">${x}</span>${actionHtml}`;const cPB=D.querySelector('.connect-btn');if(cPB){cPB.onclick=()=>ct(x);}pd.appendChild(D);});}async function ct(x){if(c)c.close();t=x;c=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});d=c.createDataChannel('file');sd();c.onicecandidate=e=>{if(e.candidate)w.send(JSON.stringify({to:x,ice:e.candidate}));};const offer=await c.createOffer();await c.setLocalDescription(offer);w.send(JSON.stringify({to:x,offer}));l(`Sending peer connection request to ${x}...`,"#FFC107");w.send(JSON.stringify({list:true}));}function sd(){d.binaryType='arraybuffer';d.onopen=()=>{l(`Peer connected: ${t}`,"#8cf");w.send(JSON.stringify({list:true}));};d.onclose=()=>l(`Peer connection closed with ${t}`);d.onerror=e=>l(`Peer error: ${e.error.message}`,"red");let m=null,r=[],b=0;d.onmessage=e=>{if(typeof e.data==="string"){try{const j=JSON.parse(e.data);if(j.meta){m=j.meta;r=[];b=0;pr.value=0;pr.max=j.meta.size;l(`Receiving ${m.name} (${(m.size/1024/1024).toFixed(1)} MB)`,"#8cf");document.querySelectorAll('.download').forEach(x=>x.remove());}}catch{}}else{r.push(e.data);b+=e.data.byteLength;pr.value=b;if(b>=m.size){const blob=new Blob(r,{type:m.type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=m.name;a.textContent=`Download '${m.name}'`;a.className="download";document.querySelector(".card").appendChild(a);l("File received successfully!","#4CAF50");}}};}async function ho(m){t=m.from;c=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});c.onicecandidate=e=>{if(e.candidate)w.send(JSON.stringify({to:m.from,ice:e.candidate}));};c.ondatachannel=e=>{d=e.channel;sd();};await c.setRemoteDescription(m.offer);const ans=await c.createAnswer();await c.setLocalDescription(ans);w.send(JSON.stringify({to:m.from,answer:ans}));l(`Accepted connection from ${m.from}`,"#8cf");}const fih=e=>{const f=e.target.files[0];e.target.value='';if(f)sf(f);};document.getElementById("file").onchange=fih;document.getElementById("file-camera").onchange=fih;cb.onclick=()=>{si=0;s();};const dcnt=document.getElementById("drop-container");dcnt.ondragover=e=>{e.preventDefault();dcnt.style.opacity=0.8};dcnt.ondragleave=e=>{dcnt.style.opacity=1};dcnt.ondrop=e=>{e.preventDefault();dcnt.style.opacity=1;const f=e.dataTransfer.files[0];if(f)sf(f);};async function sf(f){if(!d||d.readyState!=="open"){l("Connection required to send file. Please connect to a device.","#FFC107");return;}l(`Sending ${f.name} to ${t}...`,"#8cf");pr.max=f.size;pr.value=0;d.send(JSON.stringify({meta:{name:f.name,size:f.size,type:f.type}}));const stream=f.stream();const reader=stream.getReader();while(true){const{done:x,value:v}=await reader.read();if(x)break;d.send(v);pr.value+=v.byteLength;if(d.bufferedAmount>512000)await new Promise(y=>setTimeout(y,50));}l("File sent successfully!","#4CAF50");}window.onload=()=>{const x=g();ni.value=x;dn.textContent=x;ni.addEventListener('input',()=>{dn.textContent=ni.value.trim()||g();});};})();
+</script>
+</body>
+</html>
+
+
