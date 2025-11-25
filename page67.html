@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortis Cloud: Complete Nebula Skull (Final)</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000000;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            transition: opacity 0.5s;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(138, 43, 226, 0.3);
+            border-top-color: #8a2be2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #loading p {
+            color: #8a2be2;
+            margin-top: 20px;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+        
+        /* UI Styles */
+        #ui-help {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            text-shadow: 0 0 5px #000;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 101;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
+        }
+
+        #speedValue {
+            color: #00bfff;
+            font-weight: bold;
+            align-self: flex-end;
+        }
+
+        input[type=range] {
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loader"></div>
+        <p>INITIALIZING MORTIS CLOUD...</p>
+    </div>
+    
+    <div id="controls">
+        <label for="speedSlider">Transition Speed:</label>
+        <input type="range" id="speedSlider" min="0.1" max="5.0" step="0.1" value="1.0">
+        <span id="speedValue">1.0x</span>
+    </div>
+
+    <div id="ui-help">
+        Drag mouse/touch to rotate view.
+    </div>
+
+    <script>
+        // --- CORE CONSTANTS & SETTINGS ---
+        const Y_OFFSET = 0.0;               
+        const MAX_CLOUD_RADIUS = 10.0;      
+        const TRANSITION_DURATION = 20.0; // Base time (in seconds) for the skull to fully form (0 to 1)
+
+        // --- SKULL BINDING / PULL ---
+        const SKULL_PULL_RADIUS = 7.0;      
+        const SKULL_PULL_STRENGTH = 0.03;   
+        const DUST_RATIO = 0.2;             
+        const SKULL_CHAOS_DAMPING = 20.0;   
+
+        // --- COLORS ---
+        const COLOR_LEFT = new THREE.Color(0x00bfff);    // Cyan/Blue (Nebula)
+        const COLOR_RIGHT = new THREE.Color(0xff0080);  // Magenta/Pink (Nebula)
+        
+        // Base color for the skull structure itself (a mix of the nebula colors)
+        const SKULL_BASE_COLOR = new THREE.Color().lerpColors(COLOR_LEFT, COLOR_RIGHT, 0.5).multiplyScalar(1.2); 
+
+        // --- ANIMATION SPEED CONTROL ---
+        let animationSpeed = 1.0; 
+
+        // --- 1. SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000); 
+        scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 15);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        renderer.sortObjects = true;
+
+        // --- 2. CONTROLS (Rotation UI) ---
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = false;
+        controls.autoRotate = true; 
+        controls.autoRotateSpeed = 1.0; 
+        controls.enablePan = false;
+
+        // --- 3. LIGHTING ---
+        scene.add(new THREE.AmbientLight(0x050010, 1.5)); 
+        const lightIntensity = 800; 
+        const lightDistance = 40;
+
+        const purpleLight = new THREE.PointLight(0x8a2be2, lightIntensity, lightDistance);
+        purpleLight.position.set(20, 10, 30);
+        scene.add(purpleLight);
+
+        const magentaLight = new THREE.PointLight(0xff0080, lightIntensity, lightDistance);
+        magentaLight.position.set(-20, -10, -30);
+        scene.add(magentaLight);
+
+        const cyanLight = new THREE.PointLight(0x00bfff, lightIntensity, lightDistance);
+        cyanLight.position.set(30, -5, -10);
+        scene.add(cyanLight);
+        
+        // --- 4. PARTICLE MATERIALS ---
+        const nebulaParticleMaterial = new THREE.PointsMaterial({
+            size: 0.1,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            sizeAttenuation: true,
+            opacity: 0.4 
+        });
+
+        const nebulaLineMaterial = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            opacity: 0.05, 
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+
+
+        // --- 5. STARFIELD (Background) ---
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 8000;
+        const starPosArray = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount * 3; i++) {
+            starPosArray[i] = (Math.random() - 0.5) * 200; 
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPosArray, 3));
+        const starMaterial = new THREE.PointsMaterial({
+            size: 0.25,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8,
+            sizeAttenuation: true 
+        });
+        const starMesh = new THREE.Points(starGeometry, starMaterial);
+        starMesh.renderOrder = 0;
+        scene.add(starMesh);
+        
+        // --- 6. NEBULA PARTICLE SYSTEM VARIABLES ---
+        let nebulaParticles = null;
+        let nebulaLines = null; 
+        let nebulaParticleGeometry = new THREE.BufferGeometry();
+        
+        let skullTargetPositionsArray = null;    
+        let skullVertexCount = 0;
+        let TOTAL_PARTICLE_COUNT = 0;
+        const SKULL_CENTER = new THREE.Vector3(0, Y_OFFSET, 0); 
+
+        // Helper function for initial nebula distribution
+        function generateCloudPosition(radius) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const distortion = 0.7 + Math.sin(theta * 2) * 0.2 + Math.cos(phi * 3) * 0.15;
+            const r = (0.3 + Math.pow(Math.random(), 0.6) * 0.7) * radius * distortion;
+            return new THREE.Vector3(
+                r * Math.sin(phi) * Math.cos(theta),
+                r * Math.sin(phi) * Math.sin(theta),
+                r * Math.cos(phi)
+            );
+        }
+
+        // --- 7. LOAD SKULL MODEL & PARTICLE SETUP (Ensures full skull is loaded) ---
+        let skullLoaded = false;
+        const loadingElement = document.getElementById('loading');
+        
+        new THREE.MTLLoader()
+            .load('skull.mtl', 
+                function (materials) {
+                    materials.preload();
+
+                    new THREE.OBJLoader()
+                        .setMaterials(materials)
+                        .load('skull.obj', 
+                            function (object) {
+                                
+                                let allSkullPositions = [];
+
+                                // 7a. ROBUST AGGREGATION OF ALL MESHES (SKULL, JAW, TEETH, etc.)
+                                object.traverse(child => {
+                                    if (child instanceof THREE.Mesh) {
+                                        let geometry = child.geometry;
+                                        
+                                        // 1. Ensure geometry is non-indexed for stable particle array
+                                        if (geometry.index) {
+                                            geometry = geometry.toNonIndexed();
+                                        }
+
+                                        // 2. Center the geometry positions
+                                        geometry.computeBoundingBox();
+                                        const center = new THREE.Vector3();
+                                        geometry.boundingBox.getCenter(center);
+                                        geometry.translate(-center.x, -center.y, -center.z);
+                                        
+                                        // 3. Collect vertices from ALL meshes
+                                        const positions = geometry.attributes.position.array;
+                                        allSkullPositions.push(...positions);
+                                    }
+                                });
+
+                                if (allSkullPositions.length === 0) {
+                                    console.error("OBJ loaded but contained no vertices.");
+                                    loadingElement.querySelector('p').textContent = 'ERROR: MODEL EMPTY';
+                                    return;
+                                }
+
+                                skullTargetPositionsArray = allSkullPositions;
+                                skullVertexCount = allSkullPositions.length / 3;
+
+                                // 7b. CALCULATE 100% SKULL / 20% DUST RATIO
+                                const V = skullVertexCount;
+                                const otherDustCount = Math.ceil(V * DUST_RATIO);
+                                TOTAL_PARTICLE_COUNT = V + otherDustCount;
+                                
+                                console.log(`Skull Vertices: ${V}, Total Particles: ${TOTAL_PARTICLE_COUNT}, Dust: ${otherDustCount}`);
+
+                                // 7c. INITIALIZE PARTICLE ARRAYS BASED ON NEW TOTAL COUNT
+                                let nebulaPositions = new Float32Array(TOTAL_PARTICLE_COUNT * 3);
+                                let nebulaColors = new Float32Array(TOTAL_PARTICLE_COUNT * 3);
+                                let nebulaParticleRandoms = new Float32Array(TOTAL_PARTICLE_COUNT);
+                                let nebulaInitialPositions = new Float32Array(TOTAL_PARTICLE_COUNT * 3); 
+                                
+                                for (let i = 0; i < TOTAL_PARTICLE_COUNT; i++) {
+                                    const i3 = i * 3;
+                                    const r = nebulaParticleRandoms[i] = Math.random();
+
+                                    let pos;
+                                    
+                                    if (i < skullVertexCount) {
+                                        // A. Particles forming the complete skull (100% of vertices)
+                                        pos = generateCloudPosition(MAX_CLOUD_RADIUS * 0.8);
+                                    } else {
+                                        // B. Free-floating dust particles (20% extra)
+                                        pos = generateCloudPosition(MAX_CLOUD_RADIUS * 1.5);
+                                    }
+
+                                    // Store initial position and set starting position for ALL particles
+                                    nebulaInitialPositions[i3] = pos.x;
+                                    nebulaInitialPositions[i3 + 1] = pos.y + Y_OFFSET;
+                                    nebulaInitialPositions[i3 + 2] = pos.z;
+                                    
+                                    nebulaPositions[i3] = pos.x;
+                                    nebulaPositions[i3 + 1] = pos.y + Y_OFFSET; 
+                                    nebulaPositions[i3 + 2] = pos.z;
+
+                                    // Initial Color setup for the cloud
+                                    const xNormalized = (pos.x / MAX_CLOUD_RADIUS) * 0.5 + 0.5; 
+                                    let particleColor = new THREE.Color().lerpColors(COLOR_LEFT, COLOR_RIGHT, xNormalized);
+
+                                    nebulaColors[i3] = particleColor.r;
+                                    nebulaColors[i3 + 1] = particleColor.g;
+                                    nebulaColors[i3 + 2] = particleColor.b;
+                                }
+
+                                nebulaParticleGeometry.setAttribute('position', new THREE.BufferAttribute(nebulaPositions, 3));
+                                nebulaParticleGeometry.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
+                                // Store these arrays in the geometry for easy access in the loop
+                                nebulaParticleGeometry.attributes.nebulaInitialPositions = new THREE.BufferAttribute(nebulaInitialPositions, 3);
+                                nebulaParticleGeometry.attributes.nebulaParticleRandoms = new THREE.BufferAttribute(nebulaParticleRandoms, 1);
+
+
+                                // Add Points to the scene 
+                                nebulaParticles = new THREE.Points(nebulaParticleGeometry, nebulaParticleMaterial);
+                                nebulaParticles.renderOrder = 2; 
+                                scene.add(nebulaParticles);
+
+                                // Add Lines for visual density (Nebula look)
+                                nebulaLines = new THREE.LineSegments(nebulaParticleGeometry, nebulaLineMaterial);
+                                nebulaLines.renderOrder = 1; 
+                                scene.add(nebulaLines);
+
+                                skullLoaded = true;
+                                loadingElement.classList.add('hidden');
+                            },
+                            function (xhr) {
+                                const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                                loadingElement.querySelector('p').textContent = 
+                                    `LOADING MORTIS CLOUD... ${percent}%`;
+                            },
+                            function (error) { 
+                                console.error('Error loading OBJ:', error);
+                                loadingElement.querySelector('p').textContent = 'ERROR: FAILED TO LOAD OBJ';
+                            }
+                        );
+                },
+                function (xhr) {},
+                function (error) { 
+                    console.error('Error loading MTL:', error);
+                    loadingElement.querySelector('p').textContent = 'ERROR: FAILED TO LOAD MTL';
+                }
+            );
+
+        // --- 8. ANIMATION LOOP ---
+        let time = 0;
+        let skullTransitionTime = 0;
+        const lightOrbitRadius = 30; 
+        const lightOrbitSpeed = 0.4; 
+        const tempPos = new THREE.Vector3(); 
+        const tempColor = new THREE.Color(); 
+
+        // Smoothstep easing function
+        function smoothstep(min, max, value) {
+            var x = Math.max(0, Math.min(1, (value-min)/(max-min)));
+            return x*x*(3 - 2*x);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+
+            // Apply animation speed to time for chaotic flow and light movement
+            time += 0.01 * animationSpeed; 
+
+            if (skullLoaded) {
+                
+                // --- UPDATE TRANSITION FACTOR (Controlled by slider) ---
+                const deltaSpeed = 0.01 * animationSpeed;
+                skullTransitionTime = Math.min(TRANSITION_DURATION, skullTransitionTime + deltaSpeed);
+                const easedFactor = smoothstep(0, 1, skullTransitionTime / TRANSITION_DURATION);
+                
+                
+                // --- PARTICLE MOVEMENT LOOP ---
+                const n_positions = nebulaParticleGeometry.attributes.position.array;
+                const n_colors = nebulaParticleGeometry.attributes.color.array;
+                const n_initialPositions = nebulaParticleGeometry.attributes.nebulaInitialPositions.array;
+                const n_randoms = nebulaParticleGeometry.attributes.nebulaParticleRandoms.array;
+
+                const maxCloudRadius = MAX_CLOUD_RADIUS * 1.5; 
+                
+                for (let i = 0; i < TOTAL_PARTICLE_COUNT; i++) {
+                    const i3 = i * 3;
+                    const r = n_randoms[i];
+                    
+                    const ix_init = n_initialPositions[i3]; 
+                    
+                    let currentX = n_positions[i3];
+                    let currentY = n_positions[i3 + 1];
+                    let currentZ = n_positions[i3 + 2];
+                    
+                    // 1. Base Chaotic Flow
+                    const scale = 0.05; 
+                    const t_flow = time * 0.1; 
+                    const flowStrength = 0.02; 
+                    
+                    let flowX = Math.sin(currentX * scale + t_flow) * flowStrength * r;
+                    let flowY = Math.cos(currentY * scale + t_flow * 0.9) * flowStrength * r;
+                    let flowZ = Math.sin(currentZ * scale + t_flow * 0.8) * flowStrength * r;
+                    
+                    // 2. Center-of-Mass Pull (Boundary check)
+                    const distanceFromCenter = Math.sqrt(currentX*currentX + currentY*currentY + currentZ*currentZ);
+                    let pullFactor = 0;
+                    
+                    if (distanceFromCenter > maxCloudRadius) {
+                        pullFactor = (distanceFromCenter - maxCloudRadius) * 0.01;
+                    }
+
+                    
+                    // --- POSITION CALCULATION & INTERPOLATION ---
+                    if (i < skullVertexCount) {
+                        // THIS PARTICLE IS FORMING THE COMPLETE SKULL (100%)
+                        const i_target = i * 3;
+                        const ix_target = skullTargetPositionsArray[i_target];
+                        const iy_target = skullTargetPositionsArray[i_target + 1];
+                        const iz_target = skullTargetPositionsArray[i_target + 2];
+                        
+                        // Use SKULL_CHAOS_DAMPING to ensure the influence of flow fades rapidly (fixes drift)
+                        const chaoticInfluence = 1.0 - easedFactor; 
+                        
+                        // Start position is flow-affected initial position
+                        const flowStartPos = new THREE.Vector3(
+                            n_initialPositions[i3],
+                            n_initialPositions[i3 + 1],
+                            n_initialPositions[i3 + 2]
+                        ).add(new THREE.Vector3(flowX * SKULL_CHAOS_DAMPING, flowY * SKULL_CHAOS_DAMPING, flowZ * SKULL_CHAOS_DAMPING).multiplyScalar(chaoticInfluence));
+
+                        
+                        // Interpolate from flowStartPos to stable target (Skull Position)
+                        currentX = flowStartPos.x + (ix_target - flowStartPos.x) * easedFactor;
+                        currentY = flowStartPos.y + (iy_target - flowStartPos.y) * easedFactor;
+                        currentZ = flowStartPos.z + (iz_target - flowStartPos.z) * easedFactor;
+                        
+                        // Apply final forces
+                        currentX -= currentX * pullFactor;
+                        currentY -= currentY * pullFactor;
+                        currentZ -= currentZ * pullFactor;
+                        
+                        // --- GLOW COLOR (STAYS NEBULA COLOR + PULSE + GLOW) ---
+                        
+                        // Base pulse effect
+                        const pulse = 1.0 + Math.sin(time * 5 + r * 5) * 0.15; 
+                        
+                        // Glow factor: increases significantly as the particle locks into place
+                        // This factor creates the glow effect when it joins the skull
+                        const glowFactor = easedFactor * 1.5; 
+                        
+                        // Final color is based on the skull base color, amplified by pulse and glow
+                        tempColor.copy(SKULL_BASE_COLOR).multiplyScalar(pulse + glowFactor);
+                        
+                        // Clamp colors to a reasonable maximum if they become too bright
+                        tempColor.r = Math.min(1.5, tempColor.r);
+                        tempColor.g = Math.min(1.5, tempColor.g);
+                        tempColor.b = Math.min(1.5, tempColor.b);
+
+
+                        n_colors[i3] = tempColor.r;
+                        n_colors[i3 + 1] = tempColor.g;
+                        n_colors[i3 + 2] = tempColor.b;
+
+                    } else {
+                        // THIS PARTICLE IS FREE-FLOATING DUST (20% extra)
+                        
+                        currentX += flowX;
+                        currentY += flowY;
+                        currentZ += flowZ;
+                        
+                        // 4. Skull Gravity Pull (Binding Force) - PULLS DUST TOWARD CENTER
+                        tempPos.set(currentX, currentY, currentZ);
+                        const distToSkullCenter = distanceFromCenter;
+                        
+                        // Apply strong gravity if skull is forming and dust is within pull radius
+                        if (distToSkullCenter < SKULL_PULL_RADIUS && easedFactor > 0.05) {
+                            const pullDirection = SKULL_CENTER.clone().sub(tempPos).normalize();
+                            // Strength increases as skull forms (easedFactor)
+                            const pullStrength = SKULL_PULL_STRENGTH * easedFactor * (1 - distToSkullCenter / SKULL_PULL_RADIUS);
+                            
+                            currentX += pullDirection.x * pullStrength;
+                            currentY += pullDirection.y * pullStrength;
+                            currentZ += pullDirection.z * pullStrength;
+                        }
+
+                        // Apply final forces
+                        currentX -= currentX * pullFactor;
+                        currentY -= currentY * pullFactor;
+                        currentZ -= currentZ * pullFactor;
+                        
+                        
+                        // --- DUST PARTICLE COLOR (Colorful and pulsing) ---
+                        const xNormalized = (ix_init / MAX_CLOUD_RADIUS) * 0.5 + 0.5;
+                        tempColor.lerpColors(COLOR_LEFT, COLOR_RIGHT, Math.min(1, Math.max(0, xNormalized)));
+                        const brightness = 0.9 + Math.sin(time + r * 5) * 0.1;
+                        tempColor.multiplyScalar(brightness);
+
+                        n_colors[i3] = tempColor.r;
+                        n_colors[i3 + 1] = tempColor.g;
+                        n_colors[i3 + 2] = tempColor.b;
+                    }
+                    
+                    // Update the Nebula Particle Array for both skull points and dust
+                    n_positions[i3] = currentX;
+                    n_positions[i3 + 1] = currentY;
+                    n_positions[i3 + 2] = currentZ;
+                }
+                
+                nebulaParticleGeometry.attributes.position.needsUpdate = true;
+                nebulaParticleGeometry.attributes.color.needsUpdate = true;
+                
+                // --- EXTERNAL LIGHT MOVEMENT ---
+                purpleLight.position.x = Math.cos(time * lightOrbitSpeed) * lightOrbitRadius;
+                purpleLight.position.z = Math.sin(time * lightOrbitSpeed) * lightOrbitRadius;
+
+                magentaLight.position.x = Math.cos(time * lightOrbitSpeed + Math.PI) * lightOrbitRadius * 0.7;
+                magentaLight.position.z = Math.sin(time * lightOrbitSpeed + Math.PI) * lightOrbitRadius * 0.7;
+                
+                cyanLight.position.y = Math.cos(time * lightOrbitSpeed * 0.8) * lightOrbitRadius * 0.5;
+                cyanLight.position.x = Math.sin(time * lightOrbitSpeed * 0.8) * lightOrbitRadius * 0.5;
+
+                starMesh.rotation.y += 0.0001;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- 9. UI and RESIZE ---
+
+        // Setup the speed slider functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const slider = document.getElementById('speedSlider');
+            const valueDisplay = document.getElementById('speedValue');
+
+            slider.addEventListener('input', (event) => {
+                animationSpeed = parseFloat(event.target.value);
+                valueDisplay.textContent = `${animationSpeed.toFixed(1)}x`;
+            });
+        });
+
+        // Handle window resizing
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
+</body>
+</html>
