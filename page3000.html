@@ -195,7 +195,8 @@
         let currentPubIndex = 0;
         let geolocationAttempts = 0;
         const MAX_GEOLOCATION_ATTEMPTS = 3;
-        const PUB_SEARCH_RADIUS = 2500; // Search within 2.5km
+        // UPDATED: 20 miles (32,187 meters)
+        const PUB_SEARCH_RADIUS = 32187; 
 
 
         // --- Utility Functions (Geospatial - from geo pub compass.html) ---
@@ -322,8 +323,7 @@
             prevPubBtn.disabled = currentPubIndex === 0;
             nextPubBtn.disabled = currentPubIndex === allNearbyPubs.length - 1;
             
-            // Force compass arrow update
-            // We need a reliable current heading for this, let's use the one from the display
+            // Force the compass arrow to update immediately with the new pub bearing
             const currentHeading = parseFloat(headingDisplay.textContent) || 0; 
             updateUI(currentHeading, 0); // Re-run UI update to refresh arrow rotation
         }
@@ -421,7 +421,7 @@
                 return;
             }
 
-            showStatus(`Searching for pubs within ${PUB_SEARCH_RADIUS/1000}km radius...`);
+            showStatus(`Searching for pubs within ${Math.round(PUB_SEARCH_RADIUS/1609.34)} miles...`);
             
             // Query for up to 25 pubs/bars within the radius
             const query = `
