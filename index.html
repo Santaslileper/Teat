@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Adaptive App Launcher</title>
+  <title>Santaslileper Adaptive App Launcher</title>
   <style>
     /* ----------------------------------------------------------------
        BASE STYLES (Applies to all screens)
@@ -22,6 +22,7 @@
       min-height: 100vh;
       padding: 20px;
     }
+    /* Status Bar and Phone Shell Styles (Unchanged) */
     .status-bar {
       height: 44px;
       background: rgba(0,0,0,0.3);
@@ -35,6 +36,63 @@
       font-weight: 600;
       z-index: 5;
     }
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 5px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 3px;
+    }
+    
+    /* ----------------------------------------------------------------
+       LAUNCHER VIEWPORT (New App Display Area)
+    ---------------------------------------------------------------- */
+    .app-display {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      z-index: 20; /* Above the home screen */
+      display: none; /* Hidden by default */
+      flex-direction: column;
+    }
+    .app-iframe {
+      flex-grow: 1;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background-color: white; /* Default background */
+    }
+    .close-bar {
+      height: 40px;
+      background: rgba(40, 40, 40, 0.9);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      flex-shrink: 0;
+    }
+    .close-btn {
+      color: #fff;
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 5px 10px;
+      border-radius: 5px;
+      transition: background 0.2s;
+    }
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    /* ----------------------------------------------------------------
+       HOME SCREEN STYLES (Unchanged)
+    ---------------------------------------------------------------- */
     .home-screen {
       flex: 1;
       padding: 60px 20px 20px 20px;
@@ -44,8 +102,10 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 20px;
     }
-    
-    /* App Icon Styling */
+    .app-icon-wrapper {
+        text-align: center;
+        text-decoration: none; /* Remove link underline */
+    }
     .app-icon {
       width: 100%;
       aspect-ratio: 1;
@@ -58,11 +118,12 @@
       cursor: pointer;
       font-size: 32px;
       transition: transform 0.1s;
+      color: #fff; /* Ensure icon is white */
     }
     .app-icon:active {
       transform: scale(0.9);
     }
-    /* Custom App Icon Gradients */
+    /* Custom App Icon Gradients (Unchanged) */
     .app-icon.camera { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .app-icon.mic { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     .app-icon.motion { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -76,120 +137,47 @@
       margin-top: 4px;
       text-align: center;
     }
-    .home-indicator {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 140px;
-      height: 5px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 3px;
-    }
 
     /* ----------------------------------------------------------------
-       PC/LARGE SCREEN STYLES (MIN-WIDTH 768px) - Show Phone Frame
+       RESPONSIVENESS (Unchanged)
     ---------------------------------------------------------------- */
     @media (min-width: 768px) {
+        /* ... Phone Frame Styles (Unchanged) ... */
         .phone {
-            /* Define the physical phone shell size and style */
-            width: 375px;
-            height: 812px;
-            background: #1d1d1f;
-            border-radius: 50px;
-            position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-            border: 12px solid #2c2c2e;
-            overflow: hidden;
-            /* Ensure phone elements are visible */
+            width: 375px; height: 812px; background: #1d1d1f; border-radius: 50px; position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 12px solid #2c2c2e; overflow: hidden;
             display: block; 
         }
         .notch {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 180px;
-            height: 30px;
-            background: #000;
-            border-radius: 0 0 20px 20px;
-            z-index: 10;
-            display: block;
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px;
+            height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 10; display: block;
         }
         .camera {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            background: #1a1a1a;
-            border-radius: 50%;
-            top: 9px;
-            left: 50%;
-            transform: translateX(-30px);
-            border: 1px solid #333;
+            position: absolute; width: 12px; height: 12px; background: #1a1a1a; border-radius: 50%;
+            top: 9px; left: 50%; transform: translateX(-30px); border: 1px solid #333;
         }
         .speaker {
-            position: absolute;
-            width: 60px;
-            height: 6px;
-            background: #1a1a1a;
-            border-radius: 3px;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: absolute; width: 60px; height: 6px; background: #1a1a1a; border-radius: 3px;
+            top: 12px; left: 50%; transform: translateX(-50%);
         }
         .screen {
-            width: 100%;
-            height: 100%;
-            background: #000;
-            border-radius: 38px;
-            overflow: hidden;
-            position: relative;
-            display: flex;
-            flex-direction: column;
+            width: 100%; height: 100%; background: #000; border-radius: 38px; overflow: hidden;
+            position: relative; display: flex; flex-direction: column;
         }
-        /* Physical Buttons (Visible) */
         .vol-up, .vol-down, .silent-switch {
-            position: absolute;
-            left: -2px;
-            width: 4px;
-            height: 50px;
-            background: #2c2c2e;
-            border-radius: 2px 0 0 2px;
-            display: block; 
+            position: absolute; left: -2px; width: 4px; height: 50px; background: #2c2c2e;
+            border-radius: 2px 0 0 2px; display: block; 
         }
         .vol-up { top: 150px; }
         .vol-down { top: 220px; }
         .silent-switch { top: 100px; height: 30px; }
     }
-
-
-    /* ----------------------------------------------------------------
-       MOBILE/SMALL SCREEN STYLES (MAX-WIDTH 767px) - Hide Phone Frame
-    ---------------------------------------------------------------- */
     @media (max-width: 767px) {
-        .phone {
-            /* Full screen size */
-            width: 100%;
-            height: 100vh;
-            border-radius: 0;
-            border: none;
-            box-shadow: none;
-            padding: 0;
-        }
-        .screen {
-            width: 100%;
-            height: 100vh;
-            border-radius: 0;
-        }
-        /* HIDE ALL PHYSICAL SHELL ELEMENTS */
-        .notch, .vol-up, .vol-down, .silent-switch {
-            display: none !important; 
-        }
-        .status-bar {
-            /* Adjust status bar padding for full-screen view */
-            padding-top: 50px; 
-            padding-bottom: 12px;
-        }
+        /* ... Full Screen Mobile Styles (Unchanged) ... */
+        .phone { width: 100%; height: 100vh; border-radius: 0; border: none; box-shadow: none; padding: 0; }
+        .screen { width: 100%; height: 100vh; border-radius: 0; }
+        .notch, .vol-up, .vol-down, .silent-switch { display: none !important; }
+        .status-bar { padding-top: 50px; padding-bottom: 12px; }
     }
   </style>
 </head>
@@ -197,7 +185,6 @@
   
   <div class="phone">
     
-    <!-- Phone shell elements (Conditionally visible by CSS) -->
     <div class="notch">
       <div class="camera"></div>
       <div class="speaker"></div>
@@ -205,49 +192,72 @@
     <div class="vol-up" title="Volume Up"></div>
     <div class="vol-down" title="Volume Down"></div>
     <div class="silent-switch" title="Silent Switch"></div>
-    <!-- End Phone shell elements -->
-
     <div class="screen">
       <div class="status-bar">
         <span id="time">9:41</span>
         <span>⚡︎ 📶 100%</span>
       </div>
       
-      <!-- App Launcher Content -->
       <div class="home-screen" id="homeScreen">
         <div class="app-grid" id="appGrid">
-          <!-- Apps listed here -->
-        </div>
+          </div>
       </div>
       
       <div class="home-indicator"></div>
-    </div>
+
+      <div class="app-display" id="appDisplay">
+        <div class="close-bar">
+            <span id="app-title-display" style="flex-grow: 1; font-weight: bold;"></span>
+            <button class="close-btn" id="closeAppBtn">Close</button>
+        </div>
+        <iframe 
+            class="app-iframe" 
+            id="appIframe" 
+            src=""
+            allow="fullscreen" 
+            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
+            title="Application Viewport">
+        </iframe>
+      </div>
+      </div>
   </div>
 
   <script>
-    // App data (Define the apps and their target paths)
+    // ----------------------------------------------------------------
+    // UPDATED APP DATA (Reflecting known functionality)
+    // ----------------------------------------------------------------
     const appData = [
-        { id: 1, title: "iPhone Tester", icon: "📱", path: "iphone_tester.html", class: "camera" },
-        { id: 2, title: "Config Tool", icon: "🛠️", path: "page2.html", class: "mic" },
-        { id: 3, title: "Dashboard", icon: "📊", path: "page3.html", class: "motion" },
-        { id: 4, title: "Text Editor", icon: "📝", path: "page4.html", class: "torch" },
-        { id: 5, title: "Image Gallery", icon: "🖼️", path: "page5.html", class: "touch" },
-        { id: 6, title: "Product List", icon: "🛒", path: "page6.html", class: "speaker" },
-        { id: 7, title: "Search Results", icon: "🔍", path: "page7.html", class: "camera" },
-        { id: 8, title: "Cloud Status", icon: "☁️", path: "page8.html", class: "mic" },
-        { id: 9, title: "Contact Form", icon: "📧", path: "page9.html", class: "motion" },
-        { id: 10, title: "Map View", icon: "🌐", path: "page10.html", class: "torch" },
-        { id: 11, title: "Notifications", icon: "🔔", path: "page11.html", class: "touch" },
-        { id: 13, title: "Backup & Export", icon: "💾", path: "page13.html", class: "speaker" },
-        { id: 67, title: "Admin Login", icon: "🔒", path: "page67.html", class: "camera" }
+        // CONFIRMED FUNCTIONAL APPS
+        { id: 1, title: "Project File Organizer", icon: "📂", path: "page1.html", class: "camera" },
+        { id: 13, title: "Theme Switch Demo", icon: "🎨", path: "page13.html", class: "speaker" },
+        { id: 67, title: "3D Nebula Viewer", icon: "🌌", path: "page67.html", class: "camera" },
+        
+        // OTHER PAGES (Renamed to be more descriptive)
+        { id: 2, title: "System Config Tool", icon: "⚙️", path: "page2.html", class: "mic" },
+        { id: 3, title: "Analytics Dashboard", icon: "📈", path: "page3.html", class: "motion" },
+        { id: 4, title: "Code & Text Editor", icon: "💻", path: "page4.html", class: "torch" },
+        { id: 5, title: "Dynamic Gallery", icon: "🖼️", path: "page5.html", class: "touch" },
+        { id: 6, title: "Product Catalog", icon: "🛍️", path: "page6.html", class: "speaker" },
+        { id: 7, title: "Search History", icon: "🔍", path: "page7.html", class: "camera" },
+        { id: 8, title: "Cloud Status Monitor", icon: "☁️", path: "page8.html", class: "mic" },
+        { id: 9, title: "User Feedback Form", icon: "📧", path: "page9.html", class="motion" },
+        { id: 10, title: "Geo-Location Map", icon: "🗺️", path: "page10.html", class: "torch" },
+        { id: 11, title: "Notification History", icon: "🔔", path: "page11.html", class: "touch" }
+        // ... You can add page12, page14, etc., here if they are confirmed
     ];
 
     const appGrid = document.getElementById('appGrid');
+    const appDisplay = document.getElementById('appDisplay');
+    const appIframe = document.getElementById('appIframe');
+    const appTitleDisplay = document.getElementById('app-title-display');
+    const closeAppBtn = document.getElementById('closeAppBtn');
 
     function createAppIcon(app) {
-        const wrapper = document.createElement('a');
-        wrapper.href = app.path;
+        const wrapper = document.createElement('div'); // Use div instead of <a>
         wrapper.className = 'app-icon-wrapper block text-center cursor-pointer';
+        wrapper.title = app.title;
+        wrapper.dataset.path = app.path;
+        wrapper.dataset.title = app.title; // Store title for display
 
         const iconDiv = document.createElement('div');
         iconDiv.className = `app-icon ${app.class || 'camera'}`;
@@ -256,20 +266,35 @@
         const labelDiv = document.createElement('div');
         labelDiv.className = 'app-label';
         labelDiv.textContent = app.title;
-        wrapper.title = app.title;
 
         wrapper.appendChild(iconDiv);
         wrapper.appendChild(labelDiv);
+        
+        // NEW: Add click listener to launch app
+        wrapper.addEventListener('click', () => launchApp(app.path, app.title));
 
         return wrapper;
     }
+
+    // NEW: Function to handle app launch
+    function launchApp(path, title) {
+        appTitleDisplay.textContent = title;
+        appIframe.src = path;
+        appDisplay.style.display = 'flex'; // Show the app viewport
+    }
+
+    // NEW: Function to close app
+    closeAppBtn.addEventListener('click', () => {
+        appDisplay.style.display = 'none'; // Hide the app viewport
+        appIframe.src = 'about:blank'; // Stop the app from running (especially important for 3D/heavy apps)
+    });
 
     // Render all icons
     appData.forEach(app => {
         appGrid.appendChild(createAppIcon(app));
     });
 
-    // Update time function for the status bar
+    // Update time function for the status bar (Unchanged)
     function updateTime() {
       const now = new Date();
       const hours = now.getHours() % 12 || 12; 
@@ -282,4 +307,3 @@
 
 </body>
 </html>
-
