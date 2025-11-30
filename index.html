@@ -23,7 +23,7 @@
       padding: 20px;
     }
     
-    /* Status Bar and Phone Shell Styles (Unchanged) */
+    /* Status Bar and Phone Shell Styles */
     .status-bar {
       height: 44px;
       background: rgba(0,0,0,0.3);
@@ -49,7 +49,7 @@
     }
     
     /* ----------------------------------------------------------------
-       LAUNCHER VIEWPORT (New App Display Area - For isolation)
+       LAUNCHER VIEWPORT 
     ---------------------------------------------------------------- */
     .app-display {
       position: absolute;
@@ -58,8 +58,8 @@
       width: 100%;
       height: 100%;
       background: #000;
-      z-index: 20; /* Above the home screen */
-      display: none; /* Hidden by default */
+      z-index: 20; 
+      display: none; 
       flex-direction: column;
     }
     .app-iframe {
@@ -67,7 +67,7 @@
       width: 100%;
       height: 100%;
       border: none;
-      background-color: white; /* Default background */
+      background-color: white; 
     }
     .close-bar {
       height: 40px;
@@ -105,7 +105,7 @@
     }
     .app-icon-wrapper {
         text-align: center;
-        text-decoration: none; /* Remove link underline */
+        text-decoration: none; 
     }
     .app-icon {
       width: 100%;
@@ -119,12 +119,12 @@
       cursor: pointer;
       font-size: 32px;
       transition: transform 0.1s;
-      color: #fff; /* Ensure icon is white */
+      color: #fff; 
     }
     .app-icon:active {
       transform: scale(0.9);
     }
-    /* Custom App Icon Gradients (Unchanged) */
+    /* Custom App Icon Gradients */
     .app-icon.camera { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .app-icon.mic { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     .app-icon.motion { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -225,26 +225,6 @@
   </div>
 
   <script>
-    // ----------------------------------------------------------------
-    // UPDATED APP DATA (Using names from the previous table)
-    // ----------------------------------------------------------------
-    const appData = [
-        // CONFIRMED FUNCTIONAL APPS (Names replaced with stripped versions)
-        { id: 1, title: "📁 Project Organizer", icon: "📂", path: "page1.html", class: "camera" },
-        { id: 2, title: "⚡ Reaction Time Game", icon: "⚡", path: "page2.html", class: "mic" },
-        { id: 3, title: "🎮 Grapple Ascent", icon: "🎮", path: "page3.html", class: "motion" },
-        { id: 4, title: "🧮 Smart Calculator", icon: "🧮", path: "page4.html", class: "torch" },
-        { id: 5, title: "💻 Mobile IDE", icon: "💻", path: "page5.html", class: "touch" },
-        { id: 6, title: "🤖 AI Learning Platform", icon: "🤖", path: "page6.html", class: "speaker" },
-        { id: 7, title: "🗺️ Map Navigator", icon: "🗺️", path: "page7.html", class: "camera" },
-        { id: 8, title: "📍 Offline Maps", icon: "📍", path: "page8.html", class: "mic" },
-        // App 9 not present in the original list
-        { id: 10, title: "📺 LG webOS Remote", icon: "📺", path: "page10.html", class: "torch" },
-        { id: 11, title: "⏱️ Cycle Counter", icon: "⏱️", path: "page11.html", class: "touch" },
-        { id: 13, title: "🎨 Theme Switcher", icon: "🎨", path: "page13.html", class: "speaker" },
-        { id: 67, title: "☠️ Mortis Cloud", icon: "☠️", path: "page67.html", class: "camera" }
-    ];
-
     const appGrid = document.getElementById('appGrid');
     const appDisplay = document.getElementById('appDisplay');
     const appIframe = document.getElementById('appIframe');
@@ -261,13 +241,16 @@
         const iconDiv = document.createElement('div');
         iconDiv.className = `app-icon ${app.class || 'camera'}`;
         
-        // --- THIS LINE FIXES THE MISSING ICONS AND USES THE UPDATED ICON ---
-        iconDiv.textContent = app.icon.replace(/[^A-Za-z0-9\s]/g, '').trim().substring(0, 1) || app.icon; // Use the full emoji/icon from data
-        // ----------------------------------------
+        // Logic to correctly display emojis as icons
+        iconDiv.textContent = app.icon.replace(/\s/g, '').replace(/[^A-Za-z0-9\s]/g, ''); 
+        if (iconDiv.textContent.length === 0 && app.icon) {
+            iconDiv.textContent = app.icon; 
+        }
 
         const labelDiv = document.createElement('div');
         labelDiv.className = 'app-label';
-        labelDiv.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim(); // Remove emoji from label for cleaner look
+        // Remove emoji from label for cleaner look
+        labelDiv.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim(); 
 
         wrapper.appendChild(iconDiv);
         wrapper.appendChild(labelDiv);
@@ -280,7 +263,7 @@
 
     // Function to handle app launch (opens the iframe)
     function launchApp(path, title) {
-        appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim(); // Clean title in display bar
+        appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim(); 
         appIframe.src = path;
         appDisplay.style.display = 'flex'; // Show the app viewport
     }
@@ -291,10 +274,33 @@
         appIframe.src = 'about:blank'; // Stop the app from running (saves resources)
     });
 
-    // Render all icons
-    appData.forEach(app => {
-        appGrid.appendChild(createAppIcon(app));
-    });
+    // --- DYNAMIC APP LOADING FUNCTION ---
+    async function fetchAndRenderApps() {
+        try {
+            // Fetch the apps.json file
+            const response = await fetch('./apps.json');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            // Parse the JSON data
+            const appData = await response.json();
+            
+            // Render all icons
+            appData.forEach(app => {
+                appGrid.appendChild(createAppIcon(app));
+            });
+
+        } catch (error) {
+            console.error("Could not load app data:", error);
+            appGrid.innerHTML = '<div style="color: #ff3b30; grid-column: 1 / -1; margin-top: 50px; text-align: center;">⚠️ Error: Could not load app manifest. Check console for details.</div>';
+        }
+    }
+
+    // Call the function to start the process
+    fetchAndRenderApps();
+
 
     // Update time function for the status bar
     function updateTime() {
