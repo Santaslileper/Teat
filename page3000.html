@@ -7,7 +7,7 @@
     <title>Pub Seeker Compass</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Styles from Pro Compass (north.html) */
+        /* Base Styles */
         body {
             overscroll-behavior: none;
             touch-action: none;
@@ -20,6 +20,7 @@
             overflow: hidden; /* Lock the viewport */
         }
 
+        /* Compass Dial Styling (for North.html visual style) */
         .compass-dial {
             transition: transform 0.1s cubic-bezier(0.4, 2.08, 0.55, 0.44);
             will-change: transform;
@@ -28,6 +29,7 @@
                 0 0 10px rgba(0,0,0,0.3);
         }
 
+        /* Tick Marks */
         .tick {
             position: absolute;
             left: 50%;
@@ -122,7 +124,8 @@
 
             <div id="pub-arrow-container" class="pub-arrow w-8 h-8 -mt-4" style="transform: translate(-50%, -50%) rotate(0deg);">
                 <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 0 L70 25 L50 40 L30 25 Z" fill="#FFC107"/> <rect x="45" y="40" width="10" height="60" fill="#FFC107"/>
+                    <path d="M50 0 L70 25 L50 40 L30 25 Z" fill="#FFC107"/>
+                    <rect x="45" y="40" width="10" height="60" fill="#FFC107"/>
                 </svg>
             </div>
 
@@ -130,11 +133,11 @@
             <div class="absolute inset-0 m-auto w-3 h-3 bg-red-600 rounded-full center-point z-20"></div>
         </div>
         
-        <div class="w-full max-w-xl flex flex-col items-center p-4 bg-neutral-800 rounded-xl shadow-2xl border border-neutral-700">
+        <div class="w-full flex flex-col items-center p-4 bg-neutral-800 rounded-xl shadow-2xl border border-neutral-700">
             <h2 class="text-xl font-semibold text-neutral-300 mb-2">Target Pub 🍺</h2>
             
             <div id="pub-info-container" class="text-center w-full mb-4">
-                <p id="pub-name" class="text-3xl font-bold text-white mb-1 truncate">Searching...</p>
+                <p id="pub-name" class="text-2xl font-bold text-white mb-1 leading-snug h-16 flex items-center justify-center overflow-hidden">Searching...</p>
                 <p class="text-lg text-neutral-400">
                     <span id="pub-distance" class="text-yellow-400 font-extrabold">--</span> 
                     <span class="text-neutral-500"> | Bearing: </span>
@@ -157,7 +160,7 @@
             </div>
         </div>
 
-        <div class="w-full max-w-xl mt-4 p-3 bg-neutral-800/70 rounded-lg text-center shadow-inner">
+        <div class="w-full mt-4 p-3 bg-neutral-800/70 rounded-lg text-center shadow-inner">
             <p id="status-message" class="text-sm text-neutral-400">Tap "Start Pub Seeker" to begin.</p>
         </div>
         
@@ -195,11 +198,11 @@
         let currentPubIndex = 0;
         let geolocationAttempts = 0;
         const MAX_GEOLOCATION_ATTEMPTS = 3;
-        // UPDATED: 20 miles (32,187 meters)
+        // Search radius: 20 miles = 32,187 meters (Confirmed as per request)
         const PUB_SEARCH_RADIUS = 32187; 
 
 
-        // --- Utility Functions (Geospatial - from geo pub compass.html) ---
+        // --- Utility Functions (Geospatial) ---
 
         function toRad(degrees) { return degrees * Math.PI / 180; }
 
@@ -233,7 +236,7 @@
             return (bearing + 360) % 360; 
         }
 
-        // --- Utility Functions (UI/Status - from both) ---
+        // --- Utility Functions (UI/Status) ---
 
         function showError(msg) {
             errorToast.textContent = msg;
@@ -260,7 +263,7 @@
             return directions[index];
         }
 
-        // Generate ticks dynamically (from north.html)
+        // Generate ticks dynamically
         function generateTicks() {
             for (let i = 0; i < 360; i += 2) {
                 if (i % 30 === 0) { 
@@ -278,7 +281,7 @@
         }
         generateTicks();
 
-        // Haptic Feedback Logic (from north.html)
+        // Haptic Feedback Logic
         function handleHaptics(heading) {
             const isNorth = heading > 357 || heading < 3;
             if (isNorth && !isFacingNorth) {
@@ -319,13 +322,14 @@
             pubIndexDisplay.classList.remove('invisible');
             pubArrowContainer.style.opacity = 1;
 
-            // Update button states
-            prevPubBtn.disabled = currentPubIndex === 0;
-            nextPubBtn.disabled = currentPubIndex === allNearbyPubs.length - 1;
+            // Update button states: Enable if more than one pub exists, disable if at the start/end
+            const multiplePubs = allNearbyPubs.length > 1;
+            prevPubBtn.disabled = !multiplePubs || currentPubIndex === 0;
+            nextPubBtn.disabled = !multiplePubs || currentPubIndex === allNearbyPubs.length - 1;
             
-            // Force the compass arrow to update immediately with the new pub bearing
+            // Force compass arrow to update
             const currentHeading = parseFloat(headingDisplay.textContent) || 0; 
-            updateUI(currentHeading, 0); // Re-run UI update to refresh arrow rotation
+            updateUI(currentHeading, 0); 
         }
 
         function cyclePub(direction) {
@@ -344,7 +348,7 @@
         // --- Main Compass UI Update (Merged) ---
 
         function updateUI(heading, tiltX = 0) {
-            // 1. Update the Main Compass Dial (Pro Compass Style)
+            // 1. Update the Main Compass Dial 
             compassWheel.style.transform = `rotate(${-heading}deg)`;
             
             // 2. Update Text Readouts
@@ -357,16 +361,12 @@
                 const targetPub = allNearbyPubs[currentPubIndex];
                 const pubBearing = calculateBearing(userLat, userLon, targetPub.lat, targetPub.lon);
 
-                // Relative Bearing: The difference between where the pub is (pubBearing) 
-                // and where the user is facing (heading).
                 let relativeBearing = pubBearing - heading;
                 
-                // Normalize relative bearing to -180 to 180 (shortest rotation)
+                // Normalize relative bearing to -180 to 180 
                 if (relativeBearing > 180) relativeBearing -= 360;
                 if (relativeBearing < -180) relativeBearing += 360;
 
-                // Rotate the arrow container to point in the direction of the pub
-                // (0 degrees means the pub is straight ahead)
                 pubArrowContainer.style.transform = `translate(-50%, -50%) rotate(${relativeBearing}deg)`;
             }
 
@@ -374,26 +374,22 @@
             handleHaptics(heading);
         }
 
-        // --- Sensor Handlers (from both) ---
+        // --- Sensor Handlers ---
 
         function handleOrientation(event) {
             let heading = 0;
 
-            // iOS WebKit
             if (event.webkitCompassHeading) {
                 heading = event.webkitCompassHeading;
             } 
-            // Android / Standard
             else if (event.alpha !== null) {
                 heading = 360 - event.alpha;
             } else {
-                return; // No usable data
+                return; 
             }
 
-            // Normalize heading
             heading = (heading % 360 + 360) % 360;
 
-            // Tilt calculation (gamma is left/right tilt, not used in the final UI but good to pass)
             const tilt = event.gamma || 0; 
 
             requestAnimationFrame(() => updateUI(heading, tilt));
@@ -413,7 +409,7 @@
             }
         }
         
-        // --- Pub Search Logic (Enhanced from geo pub compass.html) ---
+        // --- Pub Search Logic ---
 
         function searchForPubs() {
             if (userLat === null || userLon === null) {
@@ -455,7 +451,7 @@
                         }
                     });
 
-                    // 2. Filter out non-nodes (ways/relations) and sort by distance
+                    // 2. Filter out non-nodes and SORT by DISTANCE (Closest First)
                     allNearbyPubs = data.elements
                         .filter(e => e.type === 'node')
                         .sort((a, b) => a.distance - b.distance);
@@ -474,7 +470,7 @@
         }
 
 
-        // --- Geolocation Logic (from geo pub compass.html) ---
+        // --- Geolocation Logic ---
 
         function handleGeolocationSuccess(position) {
             geolocationAttempts = 0; 
@@ -531,10 +527,11 @@
             );
         }
 
-        // --- Core Startup Logic (from both) ---
+        // --- Core Startup Logic ---
 
         function requestPermissions() {
-            permissionOverlay.classList.add('fade-enter');
+            // Fades out the overlay and removes pointer events
+            permissionOverlay.classList.add('fade-enter'); 
             showStatus('Requesting sensor and location permissions...');
 
 
