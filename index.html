@@ -1,244 +1,212 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>App Collection</title>
+    <title>Mini App Dashboard</title>
+    
     <style>
-        * {
+        /* General Reset and Body Styling */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-```
-    body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: #0a0a0a;
-        min-height: 100vh;
-        color: #ffffff;
-        padding: 40px 20px;
-    }
-
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    header {
-        text-align: center;
-        margin-bottom: 60px;
-        padding-bottom: 30px;
-        border-bottom: 1px solid #222;
-    }
-
-    h1 {
-        font-size: 3em;
-        font-weight: 400;
-        margin-bottom: 15px;
-        letter-spacing: -1px;
-    }
-
-    .subtitle {
-        font-size: 0.9em;
-        color: #666;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-    }
-
-    .category {
-        margin-bottom: 50px;
-    }
-
-    .category h2 {
-        font-size: 1.2em;
-        font-weight: 400;
-        color: #666;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-bottom: 25px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid #222;
-    }
-
-    .app-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 20px;
-    }
-
-    .app-card {
-        border: 1px solid #222;
-        padding: 25px;
-        text-decoration: none;
-        color: #ffffff;
-        display: block;
-        transition: all 0.2s;
-        background: #0a0a0a;
-        position: relative;
-    }
-
-    .app-card:hover {
-        background: #111;
-        border-color: #444;
-        transform: translateY(-2px);
-    }
-
-    .app-number {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        font-size: 1.5em;
-        color: #222;
-        font-weight: 400;
-    }
-
-    .app-card h3 {
-        font-size: 1.1em;
-        font-weight: 400;
-        margin-bottom: 12px;
-        letter-spacing: 0.5px;
-    }
-
-    .app-card p {
-        font-size: 0.85em;
-        color: #666;
-        line-height: 1.6;
-        letter-spacing: 0.3px;
-    }
-
-    footer {
-        margin-top: 80px;
-        padding-top: 30px;
-        border-top: 1px solid #222;
-        text-align: center;
-        font-size: 0.8em;
-        color: #666;
-        letter-spacing: 1px;
-    }
-
-    @media (max-width: 768px) {
-        h1 {
-            font-size: 2em;
+            background-color: #f4f7f9;
         }
         
-        .app-grid {
-            grid-template-columns: 1fr;
-        }
-        
+        /* Header for the Dashboard */
         header {
-            margin-bottom: 40px;
+            background-color: #3f51b5;
+            color: white;
+            padding: 20px 40px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-    }
-</style>
-```
+        
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
 
+        /* --- MINI APP VIEWER STYLES (Grid Layout) --- */
+        .mini-app-viewer {
+            display: grid;
+            /* Creates columns that are at least 300px wide, and as many as possible */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px; /* Space between the cards */
+            padding: 40px;
+            max-width: 1300px;
+            margin: 40px auto; /* Center the grid */
+        }
+
+        /* Style for each clickable card */
+        .app-card {
+            text-decoration: none; /* Remove underline from the link */
+            color: #333; 
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex; 
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Hover effect for interactivity */
+        .app-card:hover {
+            transform: translateY(-8px); /* Lift the card slightly */
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+            border-color: #3f51b5;
+        }
+
+        /* The preview area */
+        .app-preview {
+            background-color: #f9f9f9;
+            height: 120px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #555;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Title styling */
+        .app-title {
+            padding: 15px 20px 5px;
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #3f51b5;
+        }
+
+        /* Link/button styling */
+        .app-link {
+            padding: 5px 20px 15px;
+            color: #555; 
+            font-size: 0.9em;
+            margin-top: auto; 
+        }
+
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>App Collection</h1>
-            <p class="subtitle">Tools & Utilities</p>
-        </header>
 
-```
-    <div class="category">
-        <h2>Games & Entertainment</h2>
-        <div class="app-grid">
-            <a href="page2.html" class="app-card">
-                <span class="app-number">02</span>
-                <h3>Reaction Timer</h3>
-                <p>Test your reflexes with this reaction time game</p>
-            </a>
-            <a href="page3.html" class="app-card">
-                <span class="app-number">03</span>
-                <h3>Grapple Ascent</h3>
-                <p>Swing and climb using grappling mechanics</p>
-            </a>
-        </div>
-    </div>
-    
-    <div class="category">
-        <h2>Productivity Tools</h2>
-        <div class="app-grid">
-            <a href="page1.html" class="app-card">
-                <span class="app-number">01</span>
-                <h3>Project Organizer</h3>
-                <p>Organize and manage your project files</p>
-            </a>
-            <a href="page4.html" class="app-card">
-                <span class="app-number">04</span>
-                <h3>Calculator & Notepad</h3>
-                <p>Smart calculator with integrated note-taking</p>
-            </a>
-            <a href="page11.html" class="app-card">
-                <span class="app-number">11</span>
-                <h3>Cycle Counter</h3>
-                <p>Track time cycles and elapsed periods</p>
-            </a>
-        </div>
-    </div>
-    
-    <div class="category">
-        <h2>Development Tools</h2>
-        <div class="app-grid">
-            <a href="page5.html" class="app-card">
-                <span class="app-number">05</span>
-                <h3>Mobile IDE</h3>
-                <p>Code editor for on-the-go development</p>
-            </a>
-            <a href="page6.html" class="app-card">
-                <span class="app-number">06</span>
-                <h3>AI Learning</h3>
-                <p>Train and export AI models</p>
-            </a>
-        </div>
-    </div>
-    
-    <div class="category">
-        <h2>Navigation & Maps</h2>
-        <div class="app-grid">
-            <a href="page7.html" class="app-card">
-                <span class="app-number">07</span>
-                <h3>Map Navigator</h3>
-                <p>Find nearby places and navigate</p>
-            </a>
-            <a href="page8.html" class="app-card">
-                <span class="app-number">08</span>
-                <h3>Offline Map Navigator</h3>
-                <p>Map navigation with offline support</p>
-            </a>
-        </div>
-    </div>
-    
-    <div class="category">
-        <h2>Smart Home & Media</h2>
-        <div class="app-grid">
-            <a href="page10.html" class="app-card">
-                <span class="app-number">10</span>
-                <h3>LG webOS Remote</h3>
-                <p>Control your LG Smart TV from your device</p>
-            </a>
-        </div>
-    </div>
-    
-    <div class="category">
-        <h2>Customization</h2>
-        <div class="app-grid">
-            <a href="page13.html" class="app-card">
-                <span class="app-number">13</span>
-                <h3>Theme Switcher</h3>
-                <p>Dynamic theme customization tool</p>
-            </a>
-        </div>
-    </div>
+    <header>
+        <h1>My Web App Collection</h1>
+        <p>A Dashboard of all Mini Apps</p>
+    </header>
 
-    <footer>
-        App Collection • Built with care
-    </footer>
-</div>
-```
+    <div class="mini-app-viewer">
+
+        <a href="page1.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #1
+            </div>
+            <h3 class="app-title">Page 1: The Initial App</h3>
+            <p class="app-link">Click to view page1.html</p>
+        </a>
+
+        <a href="page2.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #2
+            </div>
+            <h3 class="app-title">Page 2: Second Functionality</h3>
+            <p class="app-link">Click to view page2.html</p>
+        </a>
+        
+        <a href="page3.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #3
+            </div>
+            <h3 class="app-title">Page 3: Feature X</h3>
+            <p class="app-link">Click to view page3.html</p>
+        </a>
+        
+        <a href="page4.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #4
+            </div>
+            <h3 class="app-title">Page 4: Feature Y</h3>
+            <p class="app-link">Click to view page4.html</p>
+        </a>
+
+        <a href="page5.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #5
+            </div>
+            <h3 class="app-title">Page 5: Latest Update</h3>
+            <p class="app-link">Click to view page5.html</p>
+        </a>
+
+        <a href="page6.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #6
+            </div>
+            <h3 class="app-title">Page 6: Demo</h3>
+            <p class="app-link">Click to view page6.html</p>
+        </a>
+        
+        <a href="page7.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #7
+            </div>
+            <h3 class="app-title">Page 7: Utility Tool</h3>
+            <p class="app-link">Click to view page7.html</p>
+        </a>
+        
+        <a href="page8.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #8
+            </div>
+            <h3 class="app-title">Page 8: Test Page</h3>
+            <p class="app-link">Click to view page8.html</p>
+        </a>
+
+        <a href="page9.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #9
+            </div>
+            <h3 class="app-title">Page 9: Beta Release</h3>
+            <p class="app-link">Click to view page9.html</p>
+        </a>
+        
+        <a href="page10.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #10
+            </div>
+            <h3 class="app-title">Page 10: New Feature</h3>
+            <p class="app-link">Click to view page10.html</p>
+        </a>
+
+        <a href="page11.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #11
+            </div>
+            <h3 class="app-title">Page 11: Final Draft</h3>
+            <p class="app-link">Click to view page11.html</p>
+        </a>
+
+        <a href="page13.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #13
+            </div>
+            <h3 class="app-title">Page 13: Backup Content</h3>
+            <p class="app-link">Click to view page13.html</p>
+        </a>
+        
+        <a href="page67.html" class="app-card">
+            <div class="app-preview">
+                Preview for Mini App #67
+            </div>
+            <h3 class="app-title">Page 67: Special Page</h3>
+            <p class="app-link">Click to view page67.html</p>
+        </a>
+
+    </div>
 
 </body>
 </html>
