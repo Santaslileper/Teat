@@ -3,210 +3,254 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini App Dashboard</title>
+    <title>Santaslileper App Dashboard (One File)</title>
     
     <style>
-        /* General Reset and Body Styling */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f4f7f9;
+            color: #333;
+            scroll-behavior: smooth; /* Smooth scrolling for internal links */
         }
         
-        /* Header for the Dashboard */
-        header {
+        /* Fixed Navigation Menu */
+        nav {
+            position: sticky;
+            top: 0;
             background-color: #3f51b5;
+            padding: 10px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        nav ul li {
+            margin: 0 15px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
             color: white;
-            padding: 20px 40px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        nav ul li a:hover {
+            background-color: #536dfe;
+        }
+
+        /* Main Content Sections */
+        .app-section {
+            padding: 60px 5%;
+            margin-bottom: 20px;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
         }
         
-        header h1 {
-            margin: 0;
-            font-size: 1.8em;
-        }
-
-        /* --- MINI APP VIEWER STYLES (Grid Layout) --- */
-        .mini-app-viewer {
-            display: grid;
-            /* Creates columns that are at least 300px wide, and as many as possible */
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px; /* Space between the cards */
-            padding: 40px;
-            max-width: 1300px;
-            margin: 40px auto; /* Center the grid */
-        }
-
-        /* Style for each clickable card */
-        .app-card {
-            text-decoration: none; /* Remove underline from the link */
-            color: #333; 
-            background-color: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex; 
-            flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Hover effect for interactivity */
-        .app-card:hover {
-            transform: translateY(-8px); /* Lift the card slightly */
-            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
-            border-color: #3f51b5;
-        }
-
-        /* The preview area */
-        .app-preview {
+        /* Alternating background color for visual separation */
+        .app-section:nth-child(even) {
             background-color: #f9f9f9;
-            height: 120px; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1em;
-            font-weight: 500;
-            color: #555;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
         }
 
-        /* Title styling */
-        .app-title {
-            padding: 15px 20px 5px;
-            margin: 0;
-            font-size: 1.2em;
-            font-weight: 700;
+        .app-section h2 {
             color: #3f51b5;
+            border-bottom: 2px solid #3f51b5;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 2em;
         }
 
-        /* Link/button styling */
-        .app-link {
-            padding: 5px 20px 15px;
-            color: #555; 
-            font-size: 0.9em;
-            margin-top: auto; 
+        .description {
+            font-style: italic;
+            color: #666;
+            margin-bottom: 20px;
         }
 
+        .content-placeholder {
+            min-height: 150px;
+            background-color: #e6e9f0;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>My Web App Collection</h1>
-        <p>A Dashboard of all Mini Apps</p>
-    </header>
+    <nav>
+        <ul>
+            <li><a href="#page1">App 1</a></li>
+            <li><a href="#page2">App 2</a></li>
+            <li><a href="#page3">App 3</a></li>
+            <li><a href="#page4">App 4</a></li>
+            <li><a href="#page5">App 5</a></li>
+            <li><a href="#page6">App 6</a></li>
+            <li><a href="#page7">App 7</a></li>
+            <li><a href="#page8">App 8</a></li>
+            <li><a href="#page9">App 9</a></li>
+            <li><a href="#page10">App 10</a></li>
+            <li><a href="#page11">App 11</a></li>
+            <li><a href="#page13">App 13</a></li>
+            <li><a href="#page67">App 67</a></li>
+        </ul>
+    </nav>
+    
+    <section class="app-section" id="page1">
+        <h2>🚀 Mini App 1: The Initialization Module</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** This is the primary landing page or initialization screen for the application. It handles user authentication and initial setup.
+        </p>
+        <div class="content-placeholder">
+            [A brief snippet of the page1.html visual content or key feature description goes here.]
+        </div>
+        <p><a href="page1.html" target="_blank">View **page1.html** in a new tab →</a></p>
+    </section>
 
-    <div class="mini-app-viewer">
+    <section class="app-section" id="page2">
+        <h2>🛠️ Mini App 2: Configuration Tool</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** This page allows users to adjust settings, preferences, and permissions for the core services. It features several input forms and toggle switches.
+        </p>
+        <div class="content-placeholder">
+            [Describe the main configuration panel or feature.]
+        </div>
+        <p><a href="page2.html" target="_blank">View **page2.html** in a new tab →</a></p>
+    </section>
+    
+    <section class="app-section" id="page3">
+        <h2>📊 Mini App 3: Dashboard View</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A simple dashboard displaying critical metrics using charts and graphs. This is the main data visualization page.
+        </p>
+        <div class="content-placeholder">
+            [Describe the types of charts or data shown.]
+        </div>
+        <p><a href="page3.html" target="_blank">View **page3.html** in a new tab →</a></p>
+    </section>
+    
+    <section class="app-section" id="page4">
+        <h2>📝 Mini App 4: Text Editor</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** Contains a basic WYSIWYG or plain text editor component for creating and saving notes.
+        </p>
+        <div class="content-placeholder">
+            [Describe the editor features or UI elements.]
+        </div>
+        <p><a href="page4.html" target="_blank">View **page4.html** in a new tab →</a></p>
+    </section>
+    
+    <section class="app-section" id="page5">
+        <h2>🖼️ Mini App 5: Image Gallery</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A photo gallery or media viewer with simple navigation controls.
+        </p>
+        <div class="content-placeholder">
+            [Describe the gallery layout or type of images.]
+        </div>
+        <p><a href="page5.html" target="_blank">View **page5.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page1.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #1
-            </div>
-            <h3 class="app-title">Page 1: The Initial App</h3>
-            <p class="app-link">Click to view page1.html</p>
-        </a>
+    <section class="app-section" id="page6">
+        <h2>🛒 Mini App 6: Product Listing</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** Displays a grid of items, possibly using cards or a tabular format, useful for product catalogs.
+        </p>
+        <div class="content-placeholder">
+            [Describe the product card layout.]
+        </div>
+        <p><a href="page6.html" target="_blank">View **page6.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page2.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #2
-            </div>
-            <h3 class="app-title">Page 2: Second Functionality</h3>
-            <p class="app-link">Click to view page2.html</p>
-        </a>
-        
-        <a href="page3.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #3
-            </div>
-            <h3 class="app-title">Page 3: Feature X</h3>
-            <p class="app-link">Click to view page3.html</p>
-        </a>
-        
-        <a href="page4.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #4
-            </div>
-            <h3 class="app-title">Page 4: Feature Y</h3>
-            <p class="app-link">Click to view page4.html</p>
-        </a>
+    <section class="app-section" id="page7">
+        <h2>🔍 Mini App 7: Search Results Page</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A page dedicated to displaying results after a search query, with filtering options.
+        </p>
+        <div class="content-placeholder">
+            [Describe the filters and result snippets.]
+        </div>
+        <p><a href="page7.html" target="_blank">View **page7.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page5.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #5
-            </div>
-            <h3 class="app-title">Page 5: Latest Update</h3>
-            <p class="app-link">Click to view page5.html</p>
-        </a>
+    <section class="app-section" id="page8">
+        <h2>☁️ Mini App 8: Cloud Status Checker</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** Shows the uptime or status of various external services with color-coded indicators (Green/Red).
+        </p>
+        <div class="content-placeholder">
+            [Describe the status monitoring elements.]
+        </div>
+        <p><a href="page8.html" target="_blank">View **page8.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page6.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #6
-            </div>
-            <h3 class="app-title">Page 6: Demo</h3>
-            <p class="app-link">Click to view page6.html</p>
-        </a>
-        
-        <a href="page7.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #7
-            </div>
-            <h3 class="app-title">Page 7: Utility Tool</h3>
-            <p class="app-link">Click to view page7.html</p>
-        </a>
-        
-        <a href="page8.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #8
-            </div>
-            <h3 class="app-title">Page 8: Test Page</h3>
-            <p class="app-link">Click to view page8.html</p>
-        </a>
+    <section class="app-section" id="page9">
+        <h2>📧 Mini App 9: Contact Form</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A detailed contact form with validation, designed for user feedback submission.
+        </p>
+        <div class="content-placeholder">
+            [Describe the form fields and submission process.]
+        </div>
+        <p><a href="page9.html" target="_blank">View **page9.html** in a new tab →</a></p>
+    </section>
+    
+    <section class="app-section" id="page10">
+        <h2>🌐 Mini App 10: Map Integration</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A page that embeds a map (e.g., Google Maps or Leaflet) and displays markers.
+        </p>
+        <div class="content-placeholder">
+            [Describe the map view and features.]
+        </div>
+        <p><a href="page10.html" target="_blank">View **page10.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page9.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #9
-            </div>
-            <h3 class="app-title">Page 9: Beta Release</h3>
-            <p class="app-link">Click to view page9.html</p>
-        </a>
-        
-        <a href="page10.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #10
-            </div>
-            <h3 class="app-title">Page 10: New Feature</h3>
-            <p class="app-link">Click to view page10.html</p>
-        </a>
+    <section class="app-section" id="page11">
+        <h2>🔔 Mini App 11: Notification Center</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A list or feed showing recent user notifications or system alerts.
+        </p>
+        <div class="content-placeholder">
+            [Describe the list style and notification elements.]
+        </div>
+        <p><a href="page11.html" target="_blank">View **page11.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page11.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #11
-            </div>
-            <h3 class="app-title">Page 11: Final Draft</h3>
-            <p class="app-link">Click to view page11.html</p>
-        </a>
+    <section class="app-section" id="page13">
+        <h2>💾 Mini App 13: Backup & Export</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** Utility page for managing data export and backup options.
+        </p>
+        <div class="content-placeholder">
+            [Describe the buttons and options available for data export.]
+        </div>
+        <p><a href="page13.html" target="_blank">View **page13.html** in a new tab →</a></p>
+    </section>
 
-        <a href="page13.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #13
-            </div>
-            <h3 class="app-title">Page 13: Backup Content</h3>
-            <p class="app-link">Click to view page13.html</p>
-        </a>
-        
-        <a href="page67.html" class="app-card">
-            <div class="app-preview">
-                Preview for Mini App #67
-            </div>
-            <h3 class="app-title">Page 67: Special Page</h3>
-            <p class="app-link">Click to view page67.html</p>
-        </a>
-
-    </div>
+    <section class="app-section" id="page67">
+        <h2>🔒 Mini App 67: Admin Panel Login</h2>
+        <p class="description">
+            **CUSTOM CONTENT HERE:** A dedicated, secure login interface for system administrators.
+        </p>
+        <div class="content-placeholder">
+            [Describe the login form fields and security features.]
+        </div>
+        <p><a href="page67.html" target="_blank">View **page67.html** in a new tab →</a></p>
+    </section>
 
 </body>
 </html>
