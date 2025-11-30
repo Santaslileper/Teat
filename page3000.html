@@ -34,13 +34,13 @@
 
     <div class="relative w-full max-w-md flex flex-col items-center justify-start h-full pt-4">
         
-        <div class="flex flex-col items-center z-10 mb-4">
-            <div class="text-neutral-500 text-sm font-medium tracking-widest uppercase mb-1">Your Heading</div>
+        <div class="flex flex-col items-center z-10">
+            <div class="text-neutral-500 text-xs font-medium tracking-widest uppercase">Your Heading</div>
             <div class="flex items-baseline">
-                <span id="heading-display" class="text-6xl font-bold text-white tabular-nums">0</span>
-                <span class="text-2xl text-red-500 ml-1">°</span>
+                <span id="heading-display" class="text-4xl font-bold text-white tabular-nums">0</span>
+                <span class="text-lg text-red-500 ml-1">°</span>
             </div>
-            <div id="direction-display" class="text-xl font-bold text-red-500 mt-1 tracking-widest">N</div>
+            <div id="direction-display" class="text-base font-bold text-red-500 tracking-widest">N</div>
         </div>
 
         <div class="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center mb-8">
@@ -59,7 +59,6 @@
                 </div>
 
                 <div id="ticks-container" class="absolute inset-0"></div>
-
                 <div class="absolute inset-0 m-auto w-48 h-48 rounded-full border border-neutral-800/50"></div>
             </div>
 
@@ -113,11 +112,9 @@
     <script>
         // Aliases and short names for DOM elements
         const cw=document.getElementById('compass-wheel'),hd=document.getElementById('heading-display'),dd=document.getElementById('direction-display'),po=document.getElementById('permission-overlay'),sb=document.getElementById('start-btn'),et=document.getElementById('error-toast'),tc=document.getElementById('ticks-container'),sm=document.getElementById('status-message'),pn=document.getElementById('pub-name'),pd=document.getElementById('pub-distance'),pb=document.getElementById('pub-bearing-display'),pa=document.getElementById('pub-arrow-container'),pbv=document.getElementById('prev-pub-btn'),nb=document.getElementById('next-pub-btn'),pi=document.getElementById('pub-index-display');
-
         // State variables
         let ifn=false,ul=null,uo=null,ps=[],ci=0,ga=0;
         const MG=3,r=32187; // MG: Max Geo attempts, r: Radius in meters (20 miles)
-
         // Function aliases
         const tr=d=>d*Math.PI/180;
         const cd=(l1,n1,l2,n2)=>{
@@ -144,8 +141,18 @@
         const gt=()=>{
             for(let i=0;i<360;i+=2){
                 const t=document.createElement('div');
-                t.className=i%30===0?'tick major':i%10===0?'tick':'';
-                if(t.className){t.style.transform=`rotate(${i}deg)`;tc.appendChild(t);}
+                let c=i%30===0?'tick major':i%10===0?'tick':'';
+                if(c){
+                    t.className=c;
+                    t.style.transform=`rotate(${i}deg)`;
+                    if(i%30===0 && (i%90!==0)){
+                        const l=document.createElement('span');
+                        l.textContent=i;
+                        l.style.cssText=`font-size:10px;color:#9ca3af;position:absolute;top:20px;left:50%;transform:translateX(-50%) rotate(${-i}deg);`;
+                        t.appendChild(l);
+                    }
+                    tc.appendChild(t);
+                }
             }
         };
         gt();
@@ -160,7 +167,6 @@
                 ifn=false;
             }
         };
-
         const ui=()=>{
             if(ps.length===0){
                 pn.textContent="No Pubs Found 😔";pd.textContent="--";pb.textContent="--°";pi.classList.add('invisible');pa.style.opacity=0;pbv.disabled=true;nb.disabled=true;return;
@@ -171,15 +177,12 @@
             const b=cb(ul,uo,cP.lat,cP.lon);
             pn.textContent=n;pd.textContent=fd(d);pb.textContent=`${Math.round(b)}° ${gcd(b)}`;
             pi.textContent=`(${ci+1} of ${ps.length})`;pi.classList.remove('invisible');pa.style.opacity=1;
-
             const mP=ps.length>1;
             pbv.disabled=!mP||ci===0;
             nb.disabled=!mP||ci===ps.length-1;
-            
             const cH=parseFloat(hd.textContent)||0; 
             uu(cH,0);
         };
-
         const cp=d=>{
             const nI=ci+d;
             if(nI>=0&&nI<ps.length){
@@ -188,16 +191,13 @@
                 ss(`Switched to: ${ps[ci].tags.name||'Unnamed Pub'}`);
             }
         };
-
         pbv.addEventListener('click',()=>cp(-1));
         nb.addEventListener('click',()=>cp(1));
-
         const uu=(h,t=0)=>{
             cw.style.transform=`rotate(${-h}deg)`;
             const rH=Math.round(h);
             hd.textContent=rH;
             dd.textContent=gcd(rH);
-
             if(ps.length>0){
                 const tP=ps[ci];
                 const pB=cb(ul,uo,tP.lat,tP.lon);
@@ -208,35 +208,29 @@
             }
             hh(h);
         };
-
         const ho=e=>{
             let h=e.webkitCompassHeading||(e.alpha!==null?360-e.alpha:null);
             if(h===null)return;
             h=(h%360+360)%360;
             requestAnimationFrame(()=>uu(h,e.gamma||0));
         };
-
         const sc=()=>{
             if(typeof DeviceOrientationEvent!=='undefined'){
                 const eA='ondeviceorientationabsolute' in window?'deviceorientationabsolute':'ondeviceorientation' in window?'deviceorientation':null;
                 if(eA){window.addEventListener(eA,ho,true);}else{console.log('Compass sensors not available.');}
             }else{console.log('Device orientation events not supported.');}
         };
-        
         const sf=()=>{
             if(ul===null||uo===null){se("Location not available for search.");return;}
             ss(`Searching for pubs within ${Math.round(r/1609.34)} miles...`);
-            
             const q=`[out:json][timeout:15];(node["amenity"~"pub|bar"](around:${r},${ul},${uo}););out center 25;`;
             const u=`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
-
             fetch(u).then(res=>{if(!res.ok)throw new Error('API error');return res.json();})
                 .then(d=>{
                     if(!d.elements||d.elements.length===0){
                         ps=[];ci=0;ui();ss('No pubs found nearby! Try moving to a new area.');return;
                     }
                     d.elements.forEach(e=>{if(e.type==='node'){e.distance=cd(ul,uo,e.lat,e.lon);}});
-
                     ps=d.elements.filter(e=>e.type==='node').sort((a,b)=>a.distance-b.distance);
                     ci=0;
                     ui();
@@ -248,7 +242,6 @@
                     ps=[];ci=0;ui();
                 });
         };
-
         const hgs=p=>{
             ga=0;
             ul=p.coords.latitude;
@@ -256,7 +249,6 @@
             ss(`Location found. Now searching for pubs...`);
             sf();
         };
-
         const hge=e=>{
             let m='';
             switch(e.code){
@@ -267,22 +259,17 @@
             }
             ga++;
             ss(`Location error. Retrying... (${ga}/${MG})`);
-
             if(ga<MG){setTimeout(()=>gg(),2000);}else{se(`Failed to get location. Check device settings.`);ss('Could not get location. Check device settings.');}
         };
-        
         const gg=()=>{
             if(ga===0){ss('Waiting for location data...');}
             if(!navigator.geolocation){se('Geolocation is not supported');ss('Geolocation not available');return;}
             navigator.geolocation.getCurrentPosition(hgs,hge,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
         };
-
         const rp=()=>{
             po.classList.add('fade-enter');
             ss('Requesting sensor and location permissions...');
-
             const p=()=>{sc();ga=0;gg();};
-
             if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
                 DeviceOrientationEvent.requestPermission().then(r=>{
                     if(r==='denied'){se('Sensor permission denied. Compass will not function.');}
@@ -290,7 +277,6 @@
                 }).catch(e=>{console.error("Permission failed:",e);se('Error requesting sensor access. Proceeding with location.');p();});
             }else{p();}
         };
-
         sb.addEventListener('click',rp);
     </script>
 </body>
