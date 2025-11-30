@@ -34,16 +34,7 @@
 
     <div class="relative w-full max-w-md flex flex-col items-center justify-start h-full pt-4">
         
-        <div class="flex flex-col items-center z-10">
-            <div class="text-neutral-500 text-xs font-medium tracking-widest uppercase">Your Heading</div>
-            <div class="flex items-baseline">
-                <span id="heading-display" class="text-4xl font-bold text-white tabular-nums">0</span>
-                <span class="text-lg text-red-500 ml-1">°</span>
-            </div>
-            <div id="direction-display" class="text-base font-bold text-red-500 tracking-widest">N</div>
-        </div>
-
-        <div class="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center mb-8">
+        <div class="relative w-80 h-80 flex items-center justify-center mb-4">
             
             <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20">
                 <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[20px] border-b-red-600 filter drop-shadow-lg"></div>
@@ -62,45 +53,53 @@
                 <div class="absolute inset-0 m-auto w-48 h-48 rounded-full border border-neutral-800/50"></div>
             </div>
 
-            <div id="pub-arrow-container" class="pub-arrow w-8 h-8 -mt-4" style="transform: translate(-50%, -50%) rotate(0deg);">
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 0 L70 25 L50 40 L30 25 Z" fill="#FFC107"/>
-                    <rect x="45" y="40" width="10" height="60" fill="#FFC107"/>
-                </svg>
+            <!-- Yellow pub arrow on outside (like red arrow) -->
+            <div id="pub-arrow-outer" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20" style="opacity: 0;">
+                <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[20px] border-b-yellow-400 filter drop-shadow-lg"></div>
+            </div>
+
+            <!-- Heading display inside compass -->
+            <div class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                <div class="flex flex-col items-center bg-neutral-900/80 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    <div class="flex items-baseline">
+                        <span id="heading-display" class="text-3xl font-bold text-white tabular-nums">0</span>
+                        <span class="text-sm text-red-500 ml-1">°</span>
+                    </div>
+                    <div id="direction-display" class="text-xs font-bold text-red-500 tracking-widest">N</div>
+                    <div id="bearing-display-center" class="text-xs text-yellow-400 font-semibold mt-1 opacity-0">→ 0°</div>
+                </div>
             </div>
 
             <div class="absolute inset-0 m-auto w-3 h-3 bg-red-600 rounded-full center-point z-20"></div>
         </div>
         
-        <div class="w-full flex flex-col items-center p-4 bg-neutral-800 rounded-xl shadow-2xl border border-neutral-700">
-            <h2 class="text-xl font-semibold text-neutral-300 mb-2">Target Pub 🍺</h2>
+        <div class="w-full flex flex-col items-center p-3 bg-neutral-800 rounded-xl shadow-2xl border border-neutral-700">
+            <h2 class="text-lg font-semibold text-neutral-300 mb-1">Target Pub 🍺</h2>
             
-            <div id="pub-info-container" class="text-center w-full mb-4">
-                <p id="pub-name" class="text-2xl font-bold text-white mb-1 leading-snug h-16 flex items-center justify-center overflow-hidden">Searching...</p>
-                <p class="text-lg text-neutral-400">
-                    <span id="pub-distance" class="text-yellow-400 font-extrabold">--</span> 
-                    <span class="text-neutral-500"> | Bearing: </span>
-                    <span id="pub-bearing-display" class="text-yellow-400 font-extrabold">--°</span>
+            <div id="pub-info-container" class="text-center w-full mb-2">
+                <p id="pub-name" class="text-xl font-bold text-white mb-1 leading-snug h-14 flex items-center justify-center overflow-hidden">Searching...</p>
+                <p class="text-base text-neutral-400">
+                    <span id="pub-distance" class="text-yellow-400 font-extrabold">--</span>
                 </p>
-                <p id="pub-index-display" class="text-sm text-neutral-500 mt-1 invisible">(1 of 10)</p>
+                <p id="pub-index-display" class="text-xs text-neutral-500 mt-1 invisible">(1 of 10)</p>
             </div>
 
-            <div class="flex space-x-6">
-                 <button id="prev-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-3 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <div class="flex space-x-4">
+                 <button id="prev-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-2 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
                     </svg>
                 </button>
-                <button id="next-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-3 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <button id="next-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-2 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 9l3 3m0 0l-3 3m3-3H5m11 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </button>
             </div>
         </div>
 
-        <div class="w-full mt-4 p-3 bg-neutral-800/70 rounded-lg text-center shadow-inner">
-            <p id="status-message" class="text-sm text-neutral-400">Tap "Start Pub Seeker" to begin.</p>
+        <div class="w-full mt-3 p-2 bg-neutral-800/70 rounded-lg text-center shadow-inner">
+            <p id="status-message" class="text-xs text-neutral-400">Tap "Start Pub Seeker" to begin.</p>
         </div>
         
     </div>
@@ -111,7 +110,7 @@
 
     <script>
         // Aliases and short names for DOM elements
-        const cw=document.getElementById('compass-wheel'),hd=document.getElementById('heading-display'),dd=document.getElementById('direction-display'),po=document.getElementById('permission-overlay'),sb=document.getElementById('start-btn'),et=document.getElementById('error-toast'),tc=document.getElementById('ticks-container'),sm=document.getElementById('status-message'),pn=document.getElementById('pub-name'),pd=document.getElementById('pub-distance'),pb=document.getElementById('pub-bearing-display'),pa=document.getElementById('pub-arrow-container'),pbv=document.getElementById('prev-pub-btn'),nb=document.getElementById('next-pub-btn'),pi=document.getElementById('pub-index-display');
+        const cw=document.getElementById('compass-wheel'),hd=document.getElementById('heading-display'),dd=document.getElementById('direction-display'),po=document.getElementById('permission-overlay'),sb=document.getElementById('start-btn'),et=document.getElementById('error-toast'),tc=document.getElementById('ticks-container'),sm=document.getElementById('status-message'),pn=document.getElementById('pub-name'),pd=document.getElementById('pub-distance'),pb=document.getElementById('pub-bearing-display'),pa=document.getElementById('pub-arrow-container'),pbv=document.getElementById('prev-pub-btn'),nb=document.getElementById('next-pub-btn'),pi=document.getElementById('pub-index-display'),pao=document.getElementById('pub-arrow-outer'),bdc=document.getElementById('bearing-display-center');
         // State variables
         let ifn=false,ul=null,uo=null,ps=[],ci=0,ga=0;
         const MG=3,r=32187; // MG: Max Geo attempts, r: Radius in meters (20 miles)
@@ -169,14 +168,16 @@
         };
         const ui=()=>{
             if(ps.length===0){
-                pn.textContent="No Pubs Found 😔";pd.textContent="--";pb.textContent="--°";pi.classList.add('invisible');pa.style.opacity=0;pbv.disabled=true;nb.disabled=true;return;
+                pn.textContent="No Pubs Found 😔";pd.textContent="--";bdc.style.opacity=0;pi.classList.add('invisible');pao.style.opacity=0;pbv.disabled=true;nb.disabled=true;return;
             }
             const cP=ps[ci];
             const n=cP.tags.name||'Unnamed Pub/Bar';
             const d=cd(ul,uo,cP.lat,cP.lon);
             const b=cb(ul,uo,cP.lat,cP.lon);
-            pn.textContent=n;pd.textContent=fd(d);pb.textContent=`${Math.round(b)}° ${gcd(b)}`;
-            pi.textContent=`(${ci+1} of ${ps.length})`;pi.classList.remove('invisible');pa.style.opacity=1;
+            pn.textContent=n;pd.textContent=fd(d);
+            bdc.textContent=`→ ${Math.round(b)}°`;
+            bdc.style.opacity=1;
+            pi.textContent=`(${ci+1} of ${ps.length})`;pi.classList.remove('invisible');pao.style.opacity=1;
             const mP=ps.length>1;
             pbv.disabled=!mP||ci===0;
             nb.disabled=!mP||ci===ps.length-1;
@@ -204,7 +205,8 @@
                 let rB=pB-h;
                 if(rB>180)rB-=360;
                 if(rB<-180)rB+=360;
-                pa.style.transform=`translate(-50%, -50%) rotate(${rB}deg)`;
+                // Rotate outer yellow arrow
+                pao.style.transform=`rotate(${pB}deg)`;
             }
             hh(h);
         };
@@ -281,4 +283,3 @@
     </script>
 </body>
 </html>
-
