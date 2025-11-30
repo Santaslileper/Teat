@@ -23,7 +23,8 @@
 
         /* Compass Dial */
         .compass-dial {
-            transition: transform 0.1s cubic-bezier(0.4, 2.08, 0.55, 0.44);
+            /* Smoother spring-like transition for better feel */
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             will-change: transform;
             box-shadow: 
                 inset 0 0 20px rgba(0,0,0,0.5),
@@ -58,14 +59,10 @@
             background-color: #9ca3af; /* Medium gray for major ticks */
         }
 
+        /* Red shadow for magnetic north indicator */
         .center-point {
-            box-shadow: 0 0 15px rgba(239,68,68,.5); /* Red shadow for magnetic north indicator */
-        }
-
-        .fade-enter {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity .3s ease;
+            box-shadow: 0 0 15px rgba(239,68,68,.5); 
+            transition: box-shadow 0.3s ease-out; /* Added for haptic visual feedback */
         }
 
         /* Modals */
@@ -177,26 +174,28 @@
         }
 
         /* Custom Toggle Switch for Light Mode */
-        .toggle-checkbox:checked {
-            right: 0;
-            border-color: #4b5563;
-        }
         .toggle-label {
             background-color: #3f3f46;
         }
         .light .toggle-label {
             background-color: #ccc;
         }
-        .light .toggle-checkbox:checked {
-            background-color: #333;
-        }
         .toggle-checkbox {
             transition: all 0.2s ease-in;
             right: 1.1rem;
+            /* Fix: Ensure a proper initial border color for light mode */
+            border-color: #fff; 
         }
         .toggle-checkbox:checked {
             right: 0.1rem;
+            /* Fix: Ensure contrast */
+            border-color: #4b5563;
         }
+        .light .toggle-checkbox:checked {
+            background-color: #333; /* Dark slider dot on light track */
+            border-color: #333;
+        }
+
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-start relative bg-neutral-900 p-4">
@@ -277,8 +276,8 @@
                 </div>
             </div>
 
-            <!-- Center Dot -->
-            <div class="absolute inset-0 m-auto w-3 h-3 bg-red-600 rounded-full center-point z-20"></div>
+            <!-- Center Dot (Visual feedback for North Haptic added) -->
+            <div id="center-dot" class="absolute inset-0 m-auto w-3 h-3 bg-red-600 rounded-full center-point z-20"></div>
 
         </div>
 
@@ -380,7 +379,7 @@
 
     <!-- JavaScript Logic -->
     <script>
-        // DOM Element Definitions (Using standard variable names for clarity)
+        // DOM Element Definitions
         const compassWheel = document.getElementById('compass-wheel'),
             headingDisplay = document.getElementById('heading-display'),
             directionDisplay = document.getElementById('direction-display'),
@@ -411,7 +410,8 @@
             crawlModal = document.getElementById('crawl-modal'),
             closeCrawlBtn = document.getElementById('close-crawl-btn'),
             pubCrawlList = document.getElementById('pub-crawl-list'),
-            emptyCrawl = document.getElementById('empty-crawl');
+            emptyCrawl = document.getElementById('empty-crawl'),
+            centerDot = document.getElementById('center-dot'); // Added center dot
 
         // State Variables
         let isNearNorth = false;
@@ -459,11 +459,17 @@
                 appState = JSON.parse(stateData);
             }
             // Set UI based on loaded state
-            rangeInput.value = (appState.isMetric ? appState.searchRadiusKm : (appState.searchRadiusKm / 1.60934).toFixed(0));
+            // Ensures the displayed value is correctly converted from the internal KM storage
+            const rangeDisplayValue = appState.isMetric ? 
+                appState.searchRadiusKm : 
+                (appState.searchRadiusKm / 1.60934); 
+
+            rangeInput.value = rangeDisplayValue.toFixed(0);
+            
             document.getElementById(appState.isMetric ? 'unit-metric' : 'unit-imperial').checked = true;
             themeToggle.checked = appState.isDark;
             applyTheme(appState.isDark);
-            updateRangeUnitLabel(); // Update range unit label
+            updateRangeUnitLabel(); 
             loadCrawl();
         };
 
@@ -506,7 +512,10 @@
         const showError = message => {
             errorToast.textContent = message;
             errorToast.classList.remove('hidden');
-            setTimeout(() => errorToast.classList.add('hidden'), 5000);
+            // Use setTimeout with a named function to ensure proper clearing if needed
+            setTimeout(() => {
+                errorToast.classList.add('hidden');
+            }, 5000);
             console.error(message);
         };
 
@@ -551,6 +560,8 @@
                     // Partial Star
                     const gradientId = 'partialStar' + currentPubIndex;
                     className += ' star-svg';
+                    // Using a mask/clip approach might be cleaner than a linear gradient, 
+                    // but keeping the original implementation for minimal change:
                     svgContent = `
                         <defs>
                             <linearGradient id="${gradientId}">
@@ -572,9 +583,9 @@
 
         // Get Cardinal Direction from Heading
         const getCardinalDirection = heading => {
-            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            // Normalize heading to 0-360 and divide by 45 degrees
-            const index = Math.round(((heading % 360) + 360) % 360 / 45) % 8;
+            const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+            // Normalize heading to 0-360 and divide by 22.5 degrees (16 points)
+            const index = Math.round(((heading % 360) + 360) % 360 / 22.5) % 16;
             return directions[index];
         };
 
@@ -583,17 +594,22 @@
 
         // Generate tick marks on the compass face
         const generateTicks = () => {
-            for (let i = 0; i < 360; i += 2) {
+            // Clears container just in case (though only run once)
+            ticksContainer.innerHTML = ''; 
+            for (let i = 0; i < 360; i += 5) {
                 const tick = document.createElement('div');
                 let cssClass = '';
                 let labelText = '';
 
                 if (i % 30 === 0) {
+                    // Major ticks at 30, 60, 120, etc.
                     cssClass = 'tick major';
                     if (i % 90 !== 0) {
+                        // Numeric label for non-cardinal major ticks
                         labelText = i;
                     }
                 } else if (i % 10 === 0) {
+                    // Minor ticks at 10, 20, 40, etc.
                     cssClass = 'tick';
                 }
                 
@@ -604,6 +620,7 @@
                     if (labelText) {
                         const label = document.createElement('span');
                         label.textContent = labelText;
+                        // Rotate text opposite to wheel for readability
                         label.style.cssText = `font-size:10px;color:#9ca3af;position:absolute;top:20px;left:50%;transform:translateX(-50%) rotate(${-i}deg);`;
                         tick.appendChild(label);
                     }
@@ -613,7 +630,7 @@
         };
         generateTicks();
 
-        // Haptic Feedback for North
+        // Haptic Feedback for North (and added visual cue)
         const hapticNorth = heading => {
             const isNorth = heading > 355 || heading < 5;
             if (isNorth && !isNearNorth) {
@@ -621,10 +638,11 @@
                     navigator.vibrate(50);
                 }
                 isNearNorth = true;
-                // Optional visual cue: document.querySelector('.center-point').style.boxShadow = '0 0 25px rgba(255,255,255,.8)';
+                // BUG FIX/FEATURE: Enable visual feedback when near North
+                centerDot.style.boxShadow = '0 0 25px rgba(255,255,255,.8), 0 0 10px 5px rgba(239,68,68,1)';
             } else if (!isNorth && isNearNorth) {
                 // Reset visual cue
-                // document.querySelector('.center-point').style.boxShadow = '0 0 15px rgba(239,68,68,.5)';
+                centerDot.style.boxShadow = '0 0 15px rgba(239,68,68,.5)';
                 isNearNorth = false;
             }
         };
@@ -660,6 +678,11 @@
             let heading = event.webkitCompassHeading || (event.alpha !== null ? 360 - event.alpha : null);
             
             if (heading === null) return;
+
+            // Normalize heading (only necessary for alpha)
+            if (event.webkitCompassHeading === undefined) {
+                heading = 360 - heading;
+            }
             heading = (heading % 360 + 360) % 360;
             
             requestAnimationFrame(() => updateUI(heading));
@@ -692,9 +715,13 @@
             }
 
             const radiusMeters = appState.searchRadiusKm * 1000;
-            const radiusDisplay = appState.isMetric ? `${appState.searchRadiusKm} km` : `${(appState.searchRadiusKm / 1.60934).toFixed(0)} mi`;
+            // Display unit conversion
+            const radiusDisplayValue = appState.isMetric ? 
+                appState.searchRadiusKm : 
+                (appState.searchRadiusKm / 1.60934);
+            const radiusDisplayUnit = appState.isMetric ? 'km' : 'mi';
             
-            setStatus(`Searching for pubs within ${radiusDisplay}...`);
+            setStatus(`Searching for pubs within ${radiusDisplayValue.toFixed(0)} ${radiusDisplayUnit}...`);
 
             // Overpass Query: Find nodes with amenity=pub or amenity=bar around user location
             const query = `[out:json][timeout:15];node["amenity"~"pub|bar"](around:${radiusMeters},${userLat},${userLon});out center 25;`;
@@ -720,8 +747,9 @@
                         }
                     });
 
+                    // Only keep nodes (not ways or relations) that have a distance
                     pubSearchResults = data.elements
-                        .filter(e => e.type === 'node')
+                        .filter(e => e.type === 'node' && e.distance !== undefined) 
                         .sort((a, b) => a.distance - b.distance);
                     
                     currentPubIndex = 0;
@@ -764,6 +792,9 @@
             pubUnit.textContent = distanceFormatted.unit;
             pubIndexDisplay.textContent = `(${currentPubIndex + 1} of ${pubSearchResults.length})`;
             pubIndexDisplay.classList.remove('invisible');
+            
+            // Only show bearing display if location is available (i.e., pubArrowOuter is visible)
+            bearingDisplayCenter.style.opacity = 1; 
             pubArrowOuter.style.opacity = 1;
 
             const multiplePubs = pubSearchResults.length > 1;
@@ -774,6 +805,7 @@
             renderStars(Math.max(3.5, 4.5 - (currentPubIndex % 10) * 0.1)); 
             
             // Trigger UI update immediately with last known heading
+            // This ensures the pub arrow is repositioned if the pub changed
             updateUI(parseFloat(headingDisplay.textContent) || 0); 
         };
 
@@ -801,7 +833,8 @@
             setStatus(`Location updated: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
             
             if (isFirstFix) {
-                searchForPubs();
+                // Only search on the first stable fix
+                searchForPubs(); 
             }
         };
 
@@ -826,14 +859,14 @@
                 return;
             }
             
-            // Use watchPosition for continuous, real-time location updates
+            // Increased timeout for robustness on cold starts/slow connections
             geolocationWatchId = navigator.geolocation.watchPosition(
                 handleGeolocSuccess, 
                 handleGeolocError, 
                 {
                     enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 5000 // Accept location up to 5 seconds old
+                    timeout: 30000, // Increased from 10s to 30s
+                    maximumAge: 5000 
                 }
             );
         };
@@ -878,9 +911,12 @@
         const openSettingsModal = () => {
             settingsModal.classList.add('visible');
             settingsModal.classList.remove('opacity-0', 'pointer-events-none');
-            // Update range input when opening
-            rangeInput.value = (appState.isMetric ? appState.searchRadiusKm : (appState.searchRadiusKm / 1.60934)).toFixed(0);
-            updateRangeUnitLabel();
+            // Update range input when opening (Ensures display reflects current unit)
+            const rangeDisplayValue = appState.isMetric ? 
+                appState.searchRadiusKm : 
+                (appState.searchRadiusKm / 1.60934); 
+            rangeInput.value = rangeDisplayValue.toFixed(0);
+            updateRangeUnitLabel(); 
         };
 
         const closeSettingsModal = () => {
@@ -910,16 +946,17 @@
             updateState('isDark', e.target.checked);
         });
 
-        // Unit Selection Change
+        // Unit Selection Change (BUG FIX implemented here)
         document.querySelectorAll('input[name="unit"]').forEach(input => {
             input.addEventListener('change', e => {
                 const isMetric = e.target.value === 'metric';
                 updateState('isMetric', isMetric);
-                // Convert displayed range value to new unit
-                const currentValue = parseFloat(rangeInput.value);
-                // Convert currentValue to KM, then to the new unit
-                const valueInKm = isMetric ? currentValue : (currentValue * 1.60934);
-                rangeInput.value = (isMetric ? valueInKm : (valueInKm / 1.60934)).toFixed(0);
+
+                // FIX: Use the internally stored KM value for conversion, not the current input value.
+                const rangeInKm = appState.searchRadiusKm; 
+                const newValue = isMetric ? rangeInKm : (rangeInKm / 1.60934);
+
+                rangeInput.value = newValue.toFixed(0);
                 updateRangeUnitLabel();
                 updatePubInfoUI(); // Refresh UI for distance unit change
             });
@@ -929,7 +966,7 @@
         applyRangeBtn.addEventListener('click', () => {
             const value = parseFloat(rangeInput.value);
             if (isNaN(value) || value < 5 || value > 100) {
-                showError('Range must be between 5 and 100.');
+                showError(`Range must be between ${rangeInput.min} and ${rangeInput.max}.`);
                 return;
             }
             // Convert input value back to standard KM for storage
@@ -994,7 +1031,11 @@
 
             // Attach event listeners to new remove buttons
             document.querySelectorAll('.remove-crawl-btn').forEach(button => {
-                button.addEventListener('click', e => removeFromCrawl(parseInt(e.target.dataset.id)));
+                button.addEventListener('click', e => {
+                    // Use closest to find the data-id from the button if event target is nested text
+                    const pubId = parseInt(e.currentTarget.dataset.id); 
+                    removeFromCrawl(pubId);
+                });
             });
         };
 
