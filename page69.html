@@ -14,7 +14,7 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #1a1a1a;
             color: #e5e5e5;
             overflow: hidden;
@@ -28,6 +28,7 @@
             box-shadow: 
                 inset 0 0 20px rgba(0,0,0,0.5),
                 0 0 10px rgba(0,0,0,0.3);
+            border-color: #3f3f46;
         }
 
         /* Ticks */
@@ -80,38 +81,58 @@
             justify-content: center;
             z-index: 100;
             backdrop-filter: blur(3px);
+            transition: opacity 0.3s;
         }
-
+        
         .modal-content {
             background-color: #333;
-            padding: 20px;
-            border-radius: 12px;
+            padding: 24px;
+            border-radius: 16px;
             width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 25px rgba(0,0,0,.5);
+            max-width: 440px;
+            box-shadow: 0 10px 30px rgba(0,0,0,.6);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-container.visible .modal-content {
+            transform: scale(1);
         }
 
         /* Pub Crawl List */
         .pub-crawl-list {
             max-height: 300px;
             overflow-y: auto;
+            border-radius: 8px;
+            padding-right: 4px;
         }
 
         .pub-crawl-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
+            padding: 10px 8px;
             border-bottom: 1px solid #444;
+            transition: background-color 0.2s;
+        }
+        .pub-crawl-item:last-child {
+            border-bottom: none;
+        }
+        .pub-crawl-item:hover {
+            background-color: #444;
         }
 
         /* Light Mode Overrides */
         .light .modal-content {
             background-color: #fff;
             color: #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,.2);
         }
         .light .pub-crawl-item {
-            border-bottom: 1px solid #ccc;
+            border-bottom: 1px solid #ddd;
+        }
+        .light .pub-crawl-item:hover {
+            background-color: #f0f0f0;
         }
         .light .pub-crawl-list .text-neutral-400 {
             color: #666;
@@ -123,6 +144,7 @@
         .light .compass-dial {
             box-shadow: inset 0 0 10px rgba(0,0,0,.1),0 0 5px rgba(0,0,0,.1);
             border-color: #ccc;
+            background-color: #fff;
         }
         .light .tick::before {
             background-color: #ccc;
@@ -153,15 +175,37 @@
         .light .star-svg {
             color: #d97706; /* Darker Orange/Yellow for contrast on white background */
         }
+
+        /* Custom Toggle Switch for Light Mode */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #4b5563;
+        }
+        .toggle-label {
+            background-color: #3f3f46;
+        }
+        .light .toggle-label {
+            background-color: #ccc;
+        }
+        .light .toggle-checkbox:checked {
+            background-color: #333;
+        }
+        .toggle-checkbox {
+            transition: all 0.2s ease-in;
+            right: 1.1rem;
+        }
+        .toggle-checkbox:checked {
+            right: 0.1rem;
+        }
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col items-center justify-start relative bg-neutral-900 p-6">
+<body class="h-screen w-screen flex flex-col items-center justify-start relative bg-neutral-900 p-4">
 
     <!-- Permission Overlay -->
-    <div id="permission-overlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-neutral-900/95 backdrop-blur-sm p-6 text-center">
+    <div id="permission-overlay" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-neutral-900/95 backdrop-blur-sm p-6 text-center transition-opacity duration-500">
         <div class="mb-6 text-neutral-400">
             <!-- Icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.727A8 8 0 016.343 5.273M17.657 16.727L12 22 6.343 16.727M12 10a2 2 0 100 4 2 2 0 000-4z" />
             </svg>
             <h2 class="text-2xl font-bold text-white mb-2">Pub Seeker Access</h2>
@@ -179,7 +223,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2m-9 0V3h4v2m-4 0h4m-9 6h16m-7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         </button>
         <!-- Settings Button -->
-        <button id="settings-btn" class="bg-neutral-800/80 text-white p-3 rounded-full shadow-lg hover:bg-neutral-700 transition-colors">
+        <button id="settings-btn" class="bg-neutral-800/80 text-white p-3 rounded-full shadow-lg hover:bg-neutral-700 transition-colors light:bg-gray-300 light:text-gray-800">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.82 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.82 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.82-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.82-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z" />
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -191,7 +235,7 @@
     <div class="relative w-full max-w-md flex flex-col items-center justify-start h-full pt-4">
 
         <!-- Compass and Arrows -->
-        <div class="relative w-80 h-80 flex items-center justify-center mb-4">
+        <div class="relative w-80 h-80 flex items-center justify-center mb-6">
             
             <!-- Magnetic North Indicator (Red Arrow) -->
             <div id="red-indicator" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-20">
@@ -199,18 +243,18 @@
             </div>
 
             <!-- Compass Wheel (Rotates based on heading) -->
-            <div id="compass-wheel" class="compass-dial w-full h-full rounded-full border-4 border-neutral-800 bg-neutral-900 relative">
+            <div id="compass-wheel" class="compass-dial w-full h-full rounded-full border-4 bg-neutral-900 relative">
                 <!-- Cardinal Points -->
                 <div class="absolute inset-0 flex items-center justify-center">
                     <span class="absolute top-8 left-1/2 -translate-x-1/2 text-2xl font-black text-red-500">N</span>
-                    <span class="absolute bottom-8 left-1/2 -translate-x-1/2 text-2xl font-bold text-white">S</span>
-                    <span class="absolute right-8 top-1/2 -translate-y-1/2 text-2xl font-bold text-white">E</span>
-                    <span class="absolute left-8 top-1/2 -translate-y-1/2 text-2xl font-bold text-white">W</span>
+                    <span class="absolute bottom-8 left-1/2 -translate-x-1/2 text-2xl font-bold text-white light:text-gray-900">S</span>
+                    <span class="absolute right-8 top-1/2 -translate-y-1/2 text-2xl font-bold text-white light:text-gray-900">E</span>
+                    <span class="absolute left-8 top-1/2 -translate-y-1/2 text-2xl font-bold text-white light:text-gray-900">W</span>
                 </div>
                 <!-- Ticks injected by JavaScript -->
                 <div id="ticks-container" class="absolute inset-0"></div>
                 <!-- Inner circle -->
-                <div class="absolute inset-0 m-auto w-48 h-48 rounded-full border border-neutral-800/50"></div>
+                <div class="absolute inset-0 m-auto w-48 h-48 rounded-full border border-neutral-800/50 light:border-gray-300/50"></div>
             </div>
 
             <!-- Pub Arrow (Rotates around center based on bearing) -->
@@ -223,13 +267,13 @@
 
             <!-- Heading & Bearing Display -->
             <div class="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                <div class="flex flex-col items-center bg-neutral-900/80 px-4 py-2 rounded-lg backdrop-blur-sm">
+                <div class="flex flex-col items-center bg-neutral-900/80 px-4 py-2 rounded-xl backdrop-blur-sm border border-neutral-700/50 light:bg-white/80 light:border-gray-300">
                     <div class="flex items-baseline">
-                        <span id="heading-display" class="text-3xl font-bold text-white tabular-nums">0</span>
+                        <span id="heading-display" class="text-3xl font-bold text-white tabular-nums light:text-gray-900">0</span>
                         <span class="text-sm text-red-500 ml-1">°</span>
                     </div>
                     <div id="direction-display" class="text-xs font-bold text-red-500 tracking-widest">N</div>
-                    <div id="bearing-display-center" class="text-xs font-semibold mt-1 opacity-0 star-svg">→ 0°</div>
+                    <div id="bearing-display-center" class="text-xs font-semibold mt-1 opacity-0 star-svg transition-opacity">→ 0°</div>
                 </div>
             </div>
 
@@ -239,19 +283,19 @@
         </div>
 
         <!-- Pub Info Card -->
-        <div class="w-full flex flex-col items-center p-3 bg-neutral-800 rounded-xl shadow-2xl border border-neutral-700">
-            <h2 class="text-lg font-semibold text-neutral-300 mb-2">Target Pub 🍺</h2>
+        <div class="w-full flex flex-col items-center p-3 bg-neutral-800 rounded-xl shadow-2xl border border-neutral-700 light:bg-white light:border-gray-200">
+            <h2 class="text-lg font-semibold text-neutral-300 light:text-gray-700 mb-2">Target Pub 🍺</h2>
             
             <div class="w-full flex items-center justify-between px-2">
                 <!-- Previous Pub Button -->
-                <button id="prev-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-2 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all flex-shrink-0">
+                <button id="prev-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-2 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all flex-shrink-0 light:bg-gray-300 light:text-gray-700 light:hover:bg-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg>
                 </button>
 
                 <div id="pub-info-container" class="text-center flex-grow mx-2 min-w-0">
                     <!-- Pub Name -->
-                    <p id="pub-name" class="text-xl font-bold text-white leading-snug h-14 flex items-center justify-center overflow-hidden w-full text-ellipsis">
-                        Searching...
+                    <p id="pub-name" class="text-xl font-bold text-white leading-snug h-14 flex items-center justify-center overflow-hidden w-full text-ellipsis light:text-gray-900">
+                        Awaiting Location...
                     </p>
                     
                     <!-- Star Rating -->
@@ -260,13 +304,13 @@
                     <!-- Distance & Index -->
                     <p id="pub-index-distance-container" class="text-base text-neutral-400 mt-1 flex justify-center items-baseline">
                         <span id="pub-distance" class="font-extrabold mr-1 star-svg">--</span>
-                        <span id="pub-unit" class="font-extrabold mr-2 star-svg">mi</span>
-                        <span id="pub-index-display" class="text-xs text-neutral-500 invisible">(1 of 10)</span>
+                        <span id="pub-unit" class="font-extrabold mr-2 star-svg">km</span>
+                        <span id="pub-index-display" class="text-xs text-neutral-500 invisible light:text-gray-500">(1 of 10)</span>
                     </p>
                 </div>
 
                 <!-- Next Pub Button -->
-                <button id="next-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-2 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all flex-shrink-0">
+                <button id="next-pub-btn" class="bg-neutral-700 hover:bg-neutral-600 active:bg-neutral-700 text-white p-2 rounded-full disabled:opacity-30 disabled:pointer-events-none transition-all flex-shrink-0 light:bg-gray-300 light:text-gray-700 light:hover:bg-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 9l3 3m0 0l-3 3m3-3H5m11 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </button>
             </div>
@@ -278,147 +322,148 @@
         </div>
 
         <!-- Status Message -->
-        <div class="w-full mt-3 p-2 bg-neutral-800/70 rounded-lg text-center shadow-inner">
-            <p id="status-message" class="text-xs text-neutral-400">Tap "Start Pub Seeker" to begin.</p>
+        <div class="w-full mt-3 p-2 bg-neutral-800/70 rounded-lg text-center shadow-inner light:bg-gray-200/70">
+            <p id="status-message" class="text-xs text-neutral-400 light:text-gray-600">Tap "Start Pub Seeker" to begin.</p>
         </div>
     </div>
 
     <!-- Error Toast -->
-    <div id="error-toast" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-900/90 text-red-100 px-4 py-2 rounded-lg text-sm hidden max-w-[90%] text-center">
+    <div id="error-toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 bg-red-800/90 text-red-100 px-4 py-2 rounded-lg text-sm hidden max-w-[90%] text-center z-50 transition-opacity duration-300">
         Error message
     </div>
 
     <!-- Settings Modal -->
-    <div id="settings-modal" class="modal-container hidden">
+    <div id="settings-modal" class="modal-container opacity-0 pointer-events-none">
         <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4">Settings</h3>
+            <h3 class="text-xl font-bold mb-6 border-b border-neutral-600 pb-2 light:border-gray-300">Settings</h3>
             <div class="space-y-4">
                 <!-- Unit System Toggle -->
-                <div class="flex justify-between items-center">
-                    <span class="font-semibold">Unit System</span>
-                    <div class="flex items-center space-x-2">
-                        <label><input type="radio" name="unit" value="imperial" id="unit-imperial" class="mr-1">Imperial</label>
-                        <label><input type="radio" name="unit" value="metric" id="unit-metric" class="mr-1" checked>Metric</label>
+                <div class="flex justify-between items-center bg-neutral-700/50 p-3 rounded-lg light:bg-gray-100">
+                    <span class="font-semibold light:text-gray-800">Unit System</span>
+                    <div class="flex items-center space-x-4 text-sm">
+                        <label class="flex items-center"><input type="radio" name="unit" value="imperial" id="unit-imperial" class="mr-1 accent-red-500">Imperial</label>
+                        <label class="flex items-center"><input type="radio" name="unit" value="metric" id="unit-metric" class="mr-1 accent-red-500" checked>Metric</label>
                     </div>
                 </div>
                 <!-- Search Range Input -->
-                <div class="flex justify-between items-center">
-                    <span class="font-semibold">Search Range (<span id="range-unit-label">km</span>)</span>
+                <div class="flex justify-between items-center bg-neutral-700/50 p-3 rounded-lg light:bg-gray-100">
+                    <span class="font-semibold light:text-gray-800">Search Range (<span id="range-unit-label">km</span>)</span>
                     <div class="flex items-center">
-                        <input type="number" id="range-input" min="5" max="100" value="80" class="w-20 bg-neutral-700 text-white text-center rounded-lg p-1 mr-2 light:bg-gray-200 light:text-gray-800" />
-                        <button id="apply-range-btn" class="bg-red-600 text-white text-sm py-1 px-3 rounded-lg hover:bg-red-700">Apply</button>
+                        <input type="number" id="range-input" min="5" max="100" value="80" class="w-16 bg-neutral-800 text-white text-center rounded-lg p-1 mr-2 light:bg-white light:text-gray-800 border border-neutral-600 light:border-gray-300" />
+                        <button id="apply-range-btn" class="bg-red-600 text-white text-sm py-1 px-3 rounded-lg hover:bg-red-700 transition-colors">Apply</button>
                     </div>
                 </div>
                 <!-- Theme Toggle -->
-                <div class="flex justify-between items-center">
-                    <span class="font-semibold">Theme (Dark/Light)</span>
-                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                        <input type="checkbox" name="theme" id="theme-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer checked:bg-gray-900" />
-                        <label for="theme-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-neutral-700 cursor-pointer light:bg-gray-300"></label>
+                <div class="flex justify-between items-center bg-neutral-700/50 p-3 rounded-lg light:bg-gray-100">
+                    <span class="font-semibold light:text-gray-800">Theme: <span id="current-theme">Dark</span></span>
+                    <div class="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="theme" id="theme-toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                        <label for="theme-toggle" class="toggle-label block overflow-hidden h-6 rounded-full cursor-pointer"></label>
                     </div>
                 </div>
             </div>
-            <button id="close-settings-btn" class="mt-6 w-full bg-neutral-700 hover:bg-neutral-600 text-white font-semibold py-2 rounded-lg light:bg-gray-200 light:text-gray-800 light:hover:bg-gray-300">Close</button>
+            <button id="close-settings-btn" class="mt-6 w-full bg-neutral-700 hover:bg-neutral-600 text-white font-semibold py-2 rounded-lg light:bg-gray-300 light:text-gray-800 light:hover:bg-gray-400 transition-colors">Close</button>
         </div>
     </div>
 
     <!-- Pub Crawl Modal -->
-    <div id="crawl-modal" class="modal-container hidden">
+    <div id="crawl-modal" class="modal-container opacity-0 pointer-events-none">
         <div class="modal-content">
-            <h3 class="text-xl font-bold mb-4">My Pub Crawl 🍻</h3>
-            <div id="pub-crawl-list" class="pub-crawl-list text-left">
+            <h3 class="text-xl font-bold mb-6 border-b border-neutral-600 pb-2 light:border-gray-300">My Pub Crawl 🍻</h3>
+            <div id="pub-crawl-list" class="pub-crawl-list text-left bg-neutral-700/50 p-2 rounded-lg light:bg-gray-100">
                 <!-- Pub list generated here -->
             </div>
             <p id="empty-crawl" class="text-neutral-400 text-center my-4 hidden">Your pub crawl list is empty. Add a pub to start planning!</p>
-            <button id="close-crawl-btn" class="mt-6 w-full bg-neutral-700 hover:bg-neutral-600 text-white font-semibold py-2 rounded-lg light:bg-gray-200 light:text-gray-800 light:hover:bg-gray-300">Close</button>
+            <button id="close-crawl-btn" class="mt-6 w-full bg-neutral-700 hover:bg-neutral-600 text-white font-semibold py-2 rounded-lg light:bg-gray-300 light:text-gray-800 light:hover:bg-gray-400 transition-colors">Close</button>
         </div>
     </div>
 
     <!-- JavaScript Logic -->
     <script>
-        // DOM Element Definitions (Minified for variable economy, but easy to read)
-        const cw = document.getElementById('compass-wheel'),
-            hd = document.getElementById('heading-display'),
-            dd = document.getElementById('direction-display'),
-            po = document.getElementById('permission-overlay'),
-            sb = document.getElementById('start-btn'),
-            et = document.getElementById('error-toast'),
-            tc = document.getElementById('ticks-container'),
-            sm = document.getElementById('status-message'),
-            pn = document.getElementById('pub-name'),
-            pd = document.getElementById('pub-distance'),
-            pu = document.getElementById('pub-unit'),
-            pr = document.getElementById('pub-rating'),
-            pbv = document.getElementById('prev-pub-btn'),
-            nb = document.getElementById('next-pub-btn'),
-            pi = document.getElementById('pub-index-display'),
-            pao = document.getElementById('pub-arrow-outer'),
-            bdc = document.getElementById('bearing-display-center'),
-            sM = document.getElementById('settings-modal'),
-            sB = document.getElementById('settings-btn'),
-            cSB = document.getElementById('close-settings-btn'),
-            rI = document.getElementById('range-input'),
-            aRB = document.getElementById('apply-range-btn'),
-            rUL = document.getElementById('range-unit-label'),
-            tT = document.getElementById('theme-toggle'),
-            aTCB = document.getElementById('add-to-crawl-btn'),
-            vCB = document.getElementById('view-crawl-btn'),
-            cM = document.getElementById('crawl-modal'),
-            cCMB = document.getElementById('close-crawl-btn'),
-            pCL = document.getElementById('pub-crawl-list'),
-            eC = document.getElementById('empty-crawl');
+        // DOM Element Definitions (Using standard variable names for clarity)
+        const compassWheel = document.getElementById('compass-wheel'),
+            headingDisplay = document.getElementById('heading-display'),
+            directionDisplay = document.getElementById('direction-display'),
+            permissionOverlay = document.getElementById('permission-overlay'),
+            startBtn = document.getElementById('start-btn'),
+            errorToast = document.getElementById('error-toast'),
+            ticksContainer = document.getElementById('ticks-container'),
+            statusMessage = document.getElementById('status-message'),
+            pubName = document.getElementById('pub-name'),
+            pubDistance = document.getElementById('pub-distance'),
+            pubUnit = document.getElementById('pub-unit'),
+            pubRating = document.getElementById('pub-rating'),
+            prevPubBtn = document.getElementById('prev-pub-btn'),
+            nextPubBtn = document.getElementById('next-pub-btn'),
+            pubIndexDisplay = document.getElementById('pub-index-display'),
+            pubArrowOuter = document.getElementById('pub-arrow-outer'),
+            bearingDisplayCenter = document.getElementById('bearing-display-center'),
+            settingsModal = document.getElementById('settings-modal'),
+            settingsBtn = document.getElementById('settings-btn'),
+            closeSettingsBtn = document.getElementById('close-settings-btn'),
+            rangeInput = document.getElementById('range-input'),
+            applyRangeBtn = document.getElementById('apply-range-btn'),
+            rangeUnitLabel = document.getElementById('range-unit-label'),
+            themeToggle = document.getElementById('theme-toggle'),
+            currentThemeSpan = document.getElementById('current-theme'),
+            addToCrawlBtn = document.getElementById('add-to-crawl-btn'),
+            viewCrawlBtn = document.getElementById('view-crawl-btn'),
+            crawlModal = document.getElementById('crawl-modal'),
+            closeCrawlBtn = document.getElementById('close-crawl-btn'),
+            pubCrawlList = document.getElementById('pub-crawl-list'),
+            emptyCrawl = document.getElementById('empty-crawl');
 
         // State Variables
-        let ifn = false,  // Is near North flag (for vibration feedback)
-            ul = null,    // User Latitude
-            uo = null,    // User Longitude
-            ps = [],      // Pub Search results
-            ci = 0,       // Current Pub Index
-            ga = 0,       // Geolocation attempt counter
-            pubCrawl = []; // Saved Pub Crawl list
+        let isNearNorth = false;
+        let userLat = null;
+        let userLon = null;
+        let pubSearchResults = [];
+        let currentPubIndex = 0;
+        let geolocationWatchId = null;
+        let pubCrawl = [];
 
-        const MG = 3; // Max Geolocation attempts
-        
-        let state = {
+        let appState = {
             isMetric: true,
-            searchRadiusKm: 80.467, // Default is ~50 miles
-            isDark: false
+            searchRadiusKm: 80, // Default to 80km (~50 miles)
+            isDark: true
         };
 
         // --- Persistence (localStorage) ---
-        const updateState = (k, v) => {
-            state[k] = v;
-            localStorage.setItem('pubSeekerState', JSON.stringify(state));
+        const updateState = (key, value) => {
+            appState[key] = value;
+            localStorage.setItem('pubSeekerState', JSON.stringify(appState));
         };
 
         const loadCrawl = () => {
-            const c = localStorage.getItem('pubCrawl');
-            if (c) {
-                pubCrawl = JSON.parse(c);
-                vCB.classList.remove('hidden');
+            const crawlData = localStorage.getItem('pubCrawl');
+            if (crawlData) {
+                pubCrawl = JSON.parse(crawlData);
+                if (pubCrawl.length > 0) {
+                    viewCrawlBtn.classList.remove('hidden');
+                }
             }
         };
 
         const saveCrawl = () => {
             localStorage.setItem('pubCrawl', JSON.stringify(pubCrawl));
             if (pubCrawl.length > 0) {
-                vCB.classList.remove('hidden');
+                viewCrawlBtn.classList.remove('hidden');
             } else {
-                vCB.classList.add('hidden');
+                viewCrawlBtn.classList.add('hidden');
             }
         };
 
         const loadState = () => {
-            const s = localStorage.getItem('pubSeekerState');
-            if (s) {
-                state = JSON.parse(s);
+            const stateData = localStorage.getItem('pubSeekerState');
+            if (stateData) {
+                appState = JSON.parse(stateData);
             }
             // Set UI based on loaded state
-            rI.value = (state.isMetric ? state.searchRadiusKm : (state.searchRadiusKm / 1.60934)).toFixed(0);
-            document.getElementById(state.isMetric ? 'unit-metric' : 'unit-imperial').checked = true;
-            tT.checked = state.isDark;
-            asT(state.isDark);
-            uRL(); // Update range unit label
+            rangeInput.value = (appState.isMetric ? appState.searchRadiusKm : (appState.searchRadiusKm / 1.60934).toFixed(0));
+            document.getElementById(appState.isMetric ? 'unit-metric' : 'unit-imperial').checked = true;
+            themeToggle.checked = appState.isDark;
+            applyTheme(appState.isDark);
+            updateRangeUnitLabel(); // Update range unit label
             loadCrawl();
         };
 
@@ -426,521 +471,548 @@
 
 
         // --- Geographic Calculations ---
-        const tr = d => d * Math.PI / 180; // Degrees to Radians
+        const toRadians = degrees => degrees * Math.PI / 180;
 
         // Calculate distance (Haversine formula) in meters
-        const cd = (l1, n1, l2, n2) => {
+        const calculateDistance = (lat1, lon1, lat2, lon2) => {
             const R = 6371e3; // Earth radius in meters
-            const f1 = tr(l1), f2 = tr(l2);
-            const df = tr(l2 - l1);
-            const dl = tr(n2 - n1);
+            const phi1 = toRadians(lat1), phi2 = toRadians(lat2);
+            const deltaPhi = toRadians(lat2 - lat1);
+            const deltaLambda = toRadians(lon2 - lon1);
 
-            const a = Math.sin(df / 2) * Math.sin(df / 2) +
-                Math.cos(f1) * Math.cos(f2) *
-                Math.sin(dl / 2) * Math.sin(dl / 2);
+            const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+                Math.cos(phi1) * Math.cos(phi2) *
+                Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
             return R * c; // Distance in meters
         };
 
         // Calculate initial bearing in degrees (0-360)
-        const cb = (l1, n1, l2, n2) => {
-            const f1 = tr(l1), f2 = tr(l2);
-            const L1 = tr(n1), L2 = tr(n2);
+        const calculateBearing = (lat1, lon1, lat2, lon2) => {
+            const phi1 = toRadians(lat1), phi2 = toRadians(lat2);
+            const lambda1 = toRadians(lon1), lambda2 = toRadians(lon2);
 
-            const y = Math.sin(L2 - L1) * Math.cos(f2);
-            const x = Math.cos(f1) * Math.sin(f2) -
-                Math.sin(f1) * Math.cos(f2) * Math.cos(L2 - L1);
-            let b = Math.atan2(y, x) * 180 / Math.PI;
-            return (b + 360) % 360; // Normalize to 0-360
+            const y = Math.sin(lambda2 - lambda1) * Math.cos(phi2);
+            const x = Math.cos(phi1) * Math.sin(phi2) -
+                Math.sin(phi1) * Math.cos(phi2) * Math.cos(lambda2 - lambda1);
+            let bearing = Math.atan2(y, x) * 180 / Math.PI;
+            return (bearing + 360) % 360; // Normalize to 0-360
         };
 
 
         // --- UI Feedback Functions ---
 
         // Show error toast
-        const se = m => {
-            et.textContent = m;
-            et.classList.remove('hidden');
-            setTimeout(() => et.classList.add('hidden'), 5000);
-            console.error(m);
+        const showError = message => {
+            errorToast.textContent = message;
+            errorToast.classList.remove('hidden');
+            setTimeout(() => errorToast.classList.add('hidden'), 5000);
+            console.error(message);
         };
 
         // Show status message
-        const ss = m => {
-            sm.textContent = m;
+        const setStatus = message => {
+            statusMessage.textContent = message;
         };
 
         // Format distance (m) to appropriate units (km/m or mi/ft)
-        const fd = m => {
-            if (state.isMetric) {
-                if (m < 100) {
-                    return { dist: Math.round(m), unit: 'm' };
+        const formatDistance = meters => {
+            if (appState.isMetric) {
+                if (meters < 1000) {
+                    return { dist: Math.round(meters), unit: 'm' };
                 } else {
-                    return { dist: (m / 1000).toFixed(1), unit: 'km' };
+                    return { dist: (meters / 1000).toFixed(1), unit: 'km' };
                 }
             } else {
-                const mi = m / 1609.34;
-                if (mi < 0.1) {
-                    return { dist: Math.round(m * 3.28084), unit: 'ft' };
+                const miles = meters / 1609.34;
+                if (miles < 0.2) {
+                    return { dist: Math.round(meters * 3.28084), unit: 'ft' };
                 } else {
-                    return { dist: mi.toFixed(1), unit: 'mi' };
+                    return { dist: miles.toFixed(1), unit: 'mi' };
                 }
             }
         };
 
         // Render Star Rating
-        const rs = r => {
-            pr.innerHTML = '';
-            const f = Math.floor(r);
-            const p = r - f;
+        const renderStars = rating => {
+            pubRating.innerHTML = '';
+            const fullStars = Math.floor(rating);
+            const partialStar = rating - fullStars;
 
             for (let i = 0; i < 5; i++) {
-                const isFull = i < f;
-                const isPartial = i === f && p > 0;
+                let svgContent = '';
+                let className = 'h-5 w-5';
 
-                if (isFull) {
+                if (i < fullStars) {
                     // Full Star
-                    pr.innerHTML += '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 star-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
-                } else if (isPartial) {
-                    // Partial Star using SVG Gradient
-                    const gradientId = 'partialStar' + ci;
-                    pr.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 star-svg" viewBox="0 0 24 24" fill="currentColor">
+                    className += ' star-svg';
+                    svgContent = '<path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>';
+                } else if (i === fullStars && partialStar > 0) {
+                    // Partial Star
+                    const gradientId = 'partialStar' + currentPubIndex;
+                    className += ' star-svg';
+                    svgContent = `
                         <defs>
                             <linearGradient id="${gradientId}">
-                                <stop offset="${p * 100}%" style="stop-color:currentColor;stop-opacity:1"/>
-                                <stop offset="${p * 100}%" style="stop-color:transparent;stop-opacity:1"/>
+                                <stop offset="${partialStar * 100}%" style="stop-color:currentColor;stop-opacity:1"/>
+                                <stop offset="${partialStar * 100}%" style="stop-color:transparent;stop-opacity:1"/>
                             </linearGradient>
                         </defs>
                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="url(#${gradientId})"/>
-                    </svg>`;
+                    `;
                 } else {
                     // Empty Star Outline
-                    pr.innerHTML += '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.152l.967 2.956L15.918 5.72l-2.433 2.115.65 3.125-2.617-1.424-2.617 1.424.65-3.125-2.433-2.115 3.902-.612.967-2.956z"/></svg>';
+                    className += ' text-gray-400/80';
+                    svgContent = '<path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.152l.967 2.956L15.918 5.72l-2.433 2.115.65 3.125-2.617-1.424-2.617 1.424.65-3.125-2.433-2.115 3.902-.612.967-2.956z"/>';
                 }
+
+                pubRating.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="currentColor" stroke-width="2">${svgContent}</svg>`;
             }
         };
 
         // Get Cardinal Direction from Heading
-        const gcd = h => {
-            const d = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            const i = Math.round(((h %= 360) < 0 ? h + 360 : h) / 45) % 8;
-            return d[i];
+        const getCardinalDirection = heading => {
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            // Normalize heading to 0-360 and divide by 45 degrees
+            const index = Math.round(((heading % 360) + 360) % 360 / 45) % 8;
+            return directions[index];
         };
 
 
         // --- Compass Setup ---
 
         // Generate tick marks on the compass face
-        const gt = () => {
+        const generateTicks = () => {
             for (let i = 0; i < 360; i += 2) {
-                const t = document.createElement('div');
-                let c = i % 30 === 0 ? 'tick major' : i % 10 === 0 ? 'tick' : '';
-                if (c) {
-                    t.className = c;
-                    t.style.transform = `rotate(${i}deg)`;
+                const tick = document.createElement('div');
+                let cssClass = '';
+                let labelText = '';
 
-                    if (i % 30 === 0 && (i % 90 !== 0)) {
-                        // Add number labels (30, 60, 120, etc.)
-                        const l = document.createElement('span');
-                        l.textContent = i;
-                        l.style.cssText = `font-size:10px;color:#9ca3af;position:absolute;top:20px;left:50%;transform:translateX(-50%) rotate(${-i}deg);`;
-                        t.appendChild(l);
+                if (i % 30 === 0) {
+                    cssClass = 'tick major';
+                    if (i % 90 !== 0) {
+                        labelText = i;
                     }
-                    tc.appendChild(t);
+                } else if (i % 10 === 0) {
+                    cssClass = 'tick';
+                }
+                
+                if (cssClass) {
+                    tick.className = cssClass;
+                    tick.style.transform = `rotate(${i}deg)`;
+
+                    if (labelText) {
+                        const label = document.createElement('span');
+                        label.textContent = labelText;
+                        label.style.cssText = `font-size:10px;color:#9ca3af;position:absolute;top:20px;left:50%;transform:translateX(-50%) rotate(${-i}deg);`;
+                        tick.appendChild(label);
+                    }
+                    ticksContainer.appendChild(tick);
                 }
             }
         };
-        gt();
+        generateTicks();
 
         // Haptic Feedback for North
-        const hh = h => {
-            const iN = h > 357 || h < 3;
-            if (iN && !ifn) {
+        const hapticNorth = heading => {
+            const isNorth = heading > 355 || heading < 5;
+            if (isNorth && !isNearNorth) {
                 if (navigator.vibrate) {
                     navigator.vibrate(50);
                 }
-            } else if (!iN && ifn) {
-                document.querySelector('.center-point').style.boxShadow = '0 0 15px rgba(239,68,68,.5)';
-                ifn = false;
+                isNearNorth = true;
+                // Optional visual cue: document.querySelector('.center-point').style.boxShadow = '0 0 25px rgba(255,255,255,.8)';
+            } else if (!isNorth && isNearNorth) {
+                // Reset visual cue
+                // document.querySelector('.center-point').style.boxShadow = '0 0 15px rgba(239,68,68,.5)';
+                isNearNorth = false;
             }
         };
-
-        // Update Pub Info UI
-        const ui = () => {
-            if (ps.length === 0) {
-                pn.textContent = "No Pubs Found 😔";
-                pd.textContent = "--";
-                pu.textContent = "";
-                bdc.style.opacity = 0;
-                pi.classList.add('invisible');
-                pao.style.opacity = 0;
-                pbv.disabled = true;
-                nb.disabled = true;
-                pr.innerHTML = '';
-                aTCB.disabled = true;
-                return;
-            }
-            aTCB.disabled = false;
-            const cP = ps[ci];
-            const n = cP.tags.name || 'Unnamed Pub/Bar';
-            const dM = cd(ul, uo, cP.lat, cP.lon);
-            const dF = fd(dM);
-            const b = cb(ul, uo, cP.lat, cP.lon);
-
-            pn.textContent = n;
-            pd.textContent = dF.dist;
-            pu.textContent = dF.unit;
-            bdc.textContent = `→ ${Math.round(b)}°`;
-            bdc.style.opacity = 1;
-            pi.textContent = `(${ci + 1} of ${ps.length})`;
-            pi.classList.remove('invisible');
-            pao.style.opacity = 1;
-
-            const mP = ps.length > 1;
-            pbv.disabled = !mP || ci === 0;
-            nb.disabled = !mP || ci === ps.length - 1;
-
-            const cH = parseFloat(hd.textContent) || 0;
-
-            // Mock star rating (4.5 to 3.5, based on index)
-            rs(4.5 - (ci % 10) * 0.1); 
-            uu(cH, 0); // Update compass immediately
-        };
-
-        // Change Pub Index
-        const cp = d => {
-            const nI = ci + d;
-            if (nI >= 0 && nI < ps.length) {
-                ci = nI;
-                ui();
-                ss(`Switched to: ${ps[ci].tags.name || 'Unnamed Pub'}`);
-            }
-        };
-        pbv.addEventListener('click', () => cp(-1));
-        nb.addEventListener('click', () => cp(1));
 
         // Update Compass and Pub Arrow rotation
-        const uu = (h, t = 0) => {
+        const updateUI = heading => {
             // Rotate Compass Wheel (opposite of heading)
-            cw.style.transform = `rotate(${-h}deg)`;
+            compassWheel.style.transform = `rotate(${-heading}deg)`;
 
-            const rH = Math.round(h);
-            hd.textContent = rH;
-            dd.textContent = gcd(rH);
+            const roundedHeading = Math.round(heading);
+            headingDisplay.textContent = roundedHeading;
+            directionDisplay.textContent = getCardinalDirection(roundedHeading);
 
-            if (ps.length > 0) {
-                const tP = ps[ci];
-                const pB = cb(ul, uo, tP.lat, tP.lon); // Pub Bearing
+            if (pubSearchResults.length > 0) {
+                const targetPub = pubSearchResults[currentPubIndex];
+                const pubBearing = calculateBearing(userLat, userLon, targetPub.lat, targetPub.lon);
 
                 // Calculate Relative Bearing (Pub Bearing - Current Heading)
-                let rB = pB - h;
-                if (rB > 180) rB -= 360;
-                if (rB < -180) rB += 360;
+                let relativeBearing = pubBearing - heading;
+                if (relativeBearing > 180) relativeBearing -= 360;
+                if (relativeBearing < -180) relativeBearing += 360;
 
                 // Rotate Pub Arrow around center
-                pao.style.transform = `rotate(${rB}deg)`;
-                bdc.textContent = `→ ${Math.round(pB)}°`; // Display True Pub Bearing
+                pubArrowOuter.style.transform = `rotate(${relativeBearing}deg)`;
+                bearingDisplayCenter.textContent = `→ ${Math.round(pubBearing)}°`; // Display True Pub Bearing
             }
-            hh(h); // Check for North haptics
+            hapticNorth(heading); // Check for North haptics
         };
 
         // Handle Device Orientation Event
-        const ho = e => {
-            let h = e.webkitCompassHeading || (e.alpha !== null ? 360 - e.alpha : null);
-            if (h === null) return;
-            h = (h % 360 + 360) % 360;
-            requestAnimationFrame(() => uu(h, e.gamma || 0));
+        const handleOrientation = event => {
+            // Use webkitCompassHeading for iOS, otherwise use alpha adjusted for magnetic north
+            let heading = event.webkitCompassHeading || (event.alpha !== null ? 360 - event.alpha : null);
+            
+            if (heading === null) return;
+            heading = (heading % 360 + 360) % 360;
+            
+            requestAnimationFrame(() => updateUI(heading));
         };
 
         // Start Sensor Listening
-        const sc = () => {
+        const startCompass = () => {
+            setStatus('Sensors activated. Waiting for location...');
             if (typeof DeviceOrientationEvent !== 'undefined') {
-                const eA = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' :
+                const eventType = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' :
                     'ondeviceorientation' in window ? 'deviceorientation' : null;
 
-                if (eA) {
-                    window.addEventListener(eA, ho, true);
+                if (eventType) {
+                    window.addEventListener(eventType, handleOrientation, true);
                 } else {
-                    console.log('Compass sensors not available.');
+                    showError('Compass sensors not fully supported on this device.');
                 }
             } else {
-                console.log('Device orientation events not supported.');
+                showError('Device orientation events not supported.');
             }
         };
 
 
         // --- Pub Data Fetching (Overpass API) ---
 
-        const sf = () => {
-            if (ul === null || uo === null) {
-                se("Location not available for search.");
+        const searchForPubs = () => {
+            if (userLat === null || userLon === null) {
+                setStatus("Location not stable, delaying search...");
                 return;
             }
 
-            const rM = state.searchRadiusKm * 1000; // Radius in meters
-            ss(`Searching for pubs within ${state.isMetric ? state.searchRadiusKm.toFixed(0) + ' km' : (state.searchRadiusKm / 1.60934).toFixed(0) + ' mi'}...`);
+            const radiusMeters = appState.searchRadiusKm * 1000;
+            const radiusDisplay = appState.isMetric ? `${appState.searchRadiusKm} km` : `${(appState.searchRadiusKm / 1.60934).toFixed(0)} mi`;
+            
+            setStatus(`Searching for pubs within ${radiusDisplay}...`);
 
             // Overpass Query: Find nodes with amenity=pub or amenity=bar around user location
-            const q = `[out:json][timeout:15];(node["amenity"~"pub|bar"](around:${rM},${ul},${uo}););out center 25;`;
-            const u = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
+            const query = `[out:json][timeout:15];node["amenity"~"pub|bar"](around:${radiusMeters},${userLat},${userLon});out center 25;`;
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
-            fetch(u)
+            fetch(url)
                 .then(res => {
-                    if (!res.ok) throw new Error('API error');
+                    if (!res.ok) throw new Error(`API error: ${res.status}`);
                     return res.json();
                 })
-                .then(d => {
-                    if (!d.elements || d.elements.length === 0) {
-                        ps = [];
-                        ci = 0;
-                        ui();
-                        ss('No pubs found nearby! Try moving to a new area.');
+                .then(data => {
+                    if (!data.elements || data.elements.length === 0) {
+                        pubSearchResults = [];
+                        currentPubIndex = 0;
+                        updatePubInfoUI();
+                        setStatus('No pubs found nearby! Try changing the search radius in settings.');
                         return;
                     }
-                    // Calculate distance for each pub
-                    d.elements.forEach(e => {
-                        if (e.type === 'node') {
-                            e.distance = cd(ul, uo, e.lat, e.lon);
+                    
+                    data.elements.forEach(element => {
+                        if (element.type === 'node') {
+                            element.distance = calculateDistance(userLat, userLon, element.lat, element.lon);
                         }
                     });
 
-                    // Filter and sort by distance
-                    ps = d.elements
+                    pubSearchResults = data.elements
                         .filter(e => e.type === 'node')
                         .sort((a, b) => a.distance - b.distance);
                     
-                    ci = 0;
-                    ui();
-                    ss(`Found ${ps.length} pubs! Now guiding you to the closest one.`);
+                    currentPubIndex = 0;
+                    updatePubInfoUI();
+                    setStatus(`Found ${pubSearchResults.length} pubs! Guiding to the closest one.`);
                 })
-                .catch(e => {
-                    console.error('Error fetching pubs:', e);
-                    ss('Failed to load local pub data. (API Error)');
-                    ps = [];
-                    ci = 0;
-                    ui();
+                .catch(error => {
+                    console.error('Error fetching pubs:', error);
+                    setStatus('Failed to load local pub data. (API Error)');
+                    pubSearchResults = [];
+                    currentPubIndex = 0;
+                    updatePubInfoUI();
                 });
         };
+
+        // Update Pub Info UI
+        const updatePubInfoUI = () => {
+            if (pubSearchResults.length === 0) {
+                pubName.textContent = "No Pubs Found 😔";
+                pubDistance.textContent = "--";
+                pubUnit.textContent = appState.isMetric ? "km" : "mi";
+                bearingDisplayCenter.style.opacity = 0;
+                pubIndexDisplay.classList.add('invisible');
+                pubArrowOuter.style.opacity = 0;
+                prevPubBtn.disabled = true;
+                nextPubBtn.disabled = true;
+                pubRating.innerHTML = '';
+                addToCrawlBtn.disabled = true;
+                return;
+            }
+            
+            addToCrawlBtn.disabled = false;
+            const currentPub = pubSearchResults[currentPubIndex];
+            const name = currentPub.tags.name || 'Unnamed Pub/Bar';
+            const distanceMeters = currentPub.distance;
+            const distanceFormatted = formatDistance(distanceMeters);
+
+            pubName.textContent = name;
+            pubDistance.textContent = distanceFormatted.dist;
+            pubUnit.textContent = distanceFormatted.unit;
+            pubIndexDisplay.textContent = `(${currentPubIndex + 1} of ${pubSearchResults.length})`;
+            pubIndexDisplay.classList.remove('invisible');
+            pubArrowOuter.style.opacity = 1;
+
+            const multiplePubs = pubSearchResults.length > 1;
+            prevPubBtn.disabled = !multiplePubs || currentPubIndex === 0;
+            nextPubBtn.disabled = !multiplePubs || currentPubIndex === pubSearchResults.length - 1;
+
+            // Mock rating (4.5 to 3.5, based on index, for demo)
+            renderStars(Math.max(3.5, 4.5 - (currentPubIndex % 10) * 0.1)); 
+            
+            // Trigger UI update immediately with last known heading
+            updateUI(parseFloat(headingDisplay.textContent) || 0); 
+        };
+
+        // Change Pub Index
+        const changePub = delta => {
+            const newIndex = currentPubIndex + delta;
+            if (newIndex >= 0 && newIndex < pubSearchResults.length) {
+                currentPubIndex = newIndex;
+                updatePubInfoUI();
+                setStatus(`Switched to: ${pubSearchResults[currentPubIndex].tags.name || 'Unnamed Pub'}`);
+            }
+        };
+        prevPubBtn.addEventListener('click', () => changePub(-1));
+        nextPubBtn.addEventListener('click', () => changePub(1));
 
 
         // --- Geolocation and Permissions ---
 
-        const hgs = p => {
-            ga = 0;
-            ul = p.coords.latitude;
-            uo = p.coords.longitude;
-            ss(`Location found. Now searching for pubs...`);
-            sf();
+        const handleGeolocSuccess = position => {
+            const { latitude, longitude } = position.coords;
+            const isFirstFix = userLat === null;
+            userLat = latitude;
+            userLon = longitude;
+
+            setStatus(`Location updated: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+            
+            if (isFirstFix) {
+                searchForPubs();
+            }
         };
 
-        const hge = e => {
-            let m = '';
-            switch (e.code) {
-                case e.PERMISSION_DENIED:
-                    m = "Location permission denied. Cannot find pubs.";
-                    se(m);
-                    ss('Location access denied. Please refresh and try again.');
-                    return;
-                case e.POSITION_UNAVAILABLE:
-                    m = "Location information unavailable.";
-                    break;
-                case e.TIMEOUT:
-                    m = "Location request timed out.";
-                    break;
-                default:
-                    m = "Unknown location error occurred.";
-            }
-            ga++;
-            ss(`Location error. Retrying... (${ga}/${MG})`);
-            if (ga < MG) {
-                setTimeout(() => gg(), 2000);
+        const handleGeolocError = error => {
+            if (error.code === error.PERMISSION_DENIED) {
+                const msg = "Location permission denied. Cannot find pubs.";
+                showError(msg);
+                setStatus('Location access denied.');
+                if (geolocationWatchId) navigator.geolocation.clearWatch(geolocationWatchId);
             } else {
-                se(`Failed to get location. Check device settings.`);
-                ss('Could not get location. Check device settings.');
+                setStatus("Location error. Waiting for signal...");
             }
+            console.error("Geolocation Error:", error.message);
         };
 
-        const gg = () => {
-            if (ga === 0) {
-                ss('Waiting for location data...');
-            }
+        const startGeolocation = () => {
+            if (geolocationWatchId) return; // Already running
+
             if (!navigator.geolocation) {
-                se('Geolocation is not supported');
-                ss('Geolocation not available');
+                showError('Geolocation is not supported by your browser.');
+                setStatus('Geolocation not available.');
                 return;
             }
-            navigator.geolocation.getCurrentPosition(hgs, hge, {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
-            });
+            
+            // Use watchPosition for continuous, real-time location updates
+            geolocationWatchId = navigator.geolocation.watchPosition(
+                handleGeolocSuccess, 
+                handleGeolocError, 
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 5000 // Accept location up to 5 seconds old
+                }
+            );
         };
 
         // Request Permissions (Sensor + Location)
-        const rp = () => {
-            po.classList.add('fade-enter');
-            ss('Requesting sensor and location permissions...');
-
-            const p = () => {
-                sc(); // Start compass sensor
-                ga = 0;
-                gg(); // Get location
+        const requestPermissions = () => {
+            setStatus('Requesting sensor and location permissions...');
+            
+            // 1. Start Compass
+            const startAll = () => {
+                permissionOverlay.style.opacity = 0;
+                permissionOverlay.style.pointerEvents = 'none';
+                
+                startCompass(); // Starts device orientation listener
+                startGeolocation(); // Starts continuous location listener
             };
 
             // iOS 13+ permission request for DeviceMotion/Orientation
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
-                    .then(r => {
-                        if (r === 'denied') {
-                            se('Sensor permission denied. Compass will not function.');
+                    .then(response => {
+                        if (response === 'denied') {
+                            showError('Sensor permission denied. Compass will not function (North indicator is disabled).');
                         }
-                        p();
+                        startAll();
                     })
                     .catch(e => {
-                        console.error("Permission failed:", e);
-                        se('Error requesting sensor access. Proceeding with location.');
-                        p();
+                        console.error("Sensor Permission Error:", e);
+                        showError('Error requesting sensor access. Proceeding with location.');
+                        startAll();
                     });
             } else {
-                p();
+                // Non-iOS 13+ devices (Android/Desktop)
+                startAll();
             }
         };
-        sb.addEventListener('click', rp);
+        startBtn.addEventListener('click', requestPermissions);
 
 
         // --- Settings Modal Logic ---
 
-        const oSM = () => {
-            sM.classList.remove('hidden');
+        const openSettingsModal = () => {
+            settingsModal.classList.add('visible');
+            settingsModal.classList.remove('opacity-0', 'pointer-events-none');
             // Update range input when opening
-            rI.value = (state.isMetric ? state.searchRadiusKm : (state.searchRadiusKm / 1.60934)).toFixed(0);
-            uRL();
+            rangeInput.value = (appState.isMetric ? appState.searchRadiusKm : (appState.searchRadiusKm / 1.60934)).toFixed(0);
+            updateRangeUnitLabel();
         };
 
-        const cSM = () => {
-            sM.classList.add('hidden');
+        const closeSettingsModal = () => {
+            settingsModal.classList.remove('visible');
+            settingsModal.classList.add('opacity-0', 'pointer-events-none');
         };
-        sB.addEventListener('click', oSM);
-        cSB.addEventListener('click', cSM);
+        settingsBtn.addEventListener('click', openSettingsModal);
+        closeSettingsBtn.addEventListener('click', closeSettingsModal);
 
         // Update Range Unit Label
-        const uRL = () => {
-            rUL.textContent = state.isMetric ? 'km' : 'mi';
+        const updateRangeUnitLabel = () => {
+            rangeUnitLabel.textContent = appState.isMetric ? 'km' : 'mi';
         };
 
         // Apply Theme
-        const asT = isDark => {
-            state.isDark = isDark;
+        const applyTheme = isDark => {
+            appState.isDark = isDark;
+            currentThemeSpan.textContent = isDark ? 'Dark' : 'Light';
             if (!isDark) {
                 document.body.classList.add('light');
             } else {
                 document.body.classList.remove('light');
             }
         };
-        tT.addEventListener('change', e => {
-            asT(e.target.checked);
+        themeToggle.addEventListener('change', e => {
+            applyTheme(e.target.checked);
             updateState('isDark', e.target.checked);
         });
 
         // Unit Selection Change
-        document.querySelectorAll('input[name="unit"]').forEach(i => {
-            i.addEventListener('change', e => {
-                const iM = e.target.value === 'metric';
-                updateState('isMetric', iM);
+        document.querySelectorAll('input[name="unit"]').forEach(input => {
+            input.addEventListener('change', e => {
+                const isMetric = e.target.value === 'metric';
+                updateState('isMetric', isMetric);
                 // Convert displayed range value to new unit
-                rI.value = (iM ? state.searchRadiusKm : (state.searchRadiusKm / 1.60934)).toFixed(0);
-                uRL();
-                ui(); // Refresh UI for distance unit change
+                const currentValue = parseFloat(rangeInput.value);
+                // Convert currentValue to KM, then to the new unit
+                const valueInKm = isMetric ? currentValue : (currentValue * 1.60934);
+                rangeInput.value = (isMetric ? valueInKm : (valueInKm / 1.60934)).toFixed(0);
+                updateRangeUnitLabel();
+                updatePubInfoUI(); // Refresh UI for distance unit change
             });
         });
 
         // Apply Range Button
-        aRB.addEventListener('click', () => {
-            const v = parseFloat(rI.value);
-            if (isNaN(v) || v < 5 || v > 100) {
-                se('Range must be between 5 and 100.');
+        applyRangeBtn.addEventListener('click', () => {
+            const value = parseFloat(rangeInput.value);
+            if (isNaN(value) || value < 5 || value > 100) {
+                showError('Range must be between 5 and 100.');
                 return;
             }
             // Convert input value back to standard KM for storage
-            const nKM = state.isMetric ? v : (v * 1.60934);
-            updateState('searchRadiusKm', nKM);
-            cSM();
-            sf(); // Re-search with new radius
-            ss(`Search range set to ${state.isMetric ? v + ' km' : v + ' mi'}. Searching again...`);
+            const newRangeKm = appState.isMetric ? value : (value * 1.60934);
+            updateState('searchRadiusKm', newRangeKm);
+            closeSettingsModal();
+            searchForPubs(); // Re-search with new radius
         });
 
 
         // --- Pub Crawl Logic ---
 
         // Add current pub to crawl list
-        const aTC = () => {
-            if (ps.length === 0) return;
+        const addToCrawl = () => {
+            if (pubSearchResults.length === 0) return;
 
-            const cP = ps[ci];
-            const pubName = cP.tags.name || 'Unnamed Pub';
+            const currentPub = pubSearchResults[currentPubIndex];
+            const pubData = {
+                id: currentPub.id,
+                name: currentPub.tags.name || 'Unnamed Pub',
+                lat: currentPub.lat,
+                lon: currentPub.lon
+            };
 
-            if (pubCrawl.some(p => p.lat === cP.lat && p.lon === cP.lon)) {
-                ss(`${pubName} is already on your crawl list.`);
+            if (pubCrawl.some(p => p.id === pubData.id)) {
+                setStatus(`${pubData.name} is already on your crawl list.`);
                 return;
             }
 
-            pubCrawl.push({
-                id: cP.id,
-                name: pubName,
-                lat: cP.lat,
-                lon: cP.lon
-            });
+            pubCrawl.push(pubData);
             saveCrawl();
-            ss(`${pubName} added to the Pub Crawl!`);
+            setStatus(`${pubData.name} added to the Pub Crawl!`);
         };
-        aTCB.addEventListener('click', aTC);
+        addToCrawlBtn.addEventListener('click', addToCrawl);
 
         // Remove from crawl list
-        const rFC = (id) => {
+        const removeFromCrawl = (id) => {
             pubCrawl = pubCrawl.filter(p => p.id !== id);
             saveCrawl();
-            rCL(); // Re-render the list
-            ss('Pub removed from crawl.');
+            renderCrawlList(); // Re-render the list
+            setStatus('Pub removed from crawl.');
         };
 
         // Render Crawl List
-        const rCL = () => {
-            pCL.innerHTML = '';
+        const renderCrawlList = () => {
+            pubCrawlList.innerHTML = '';
             if (pubCrawl.length === 0) {
-                eC.classList.remove('hidden');
-                vCB.classList.add('hidden');
+                emptyCrawl.classList.remove('hidden');
+                viewCrawlBtn.classList.add('hidden');
                 return;
             }
-            eC.classList.add('hidden');
-            pubCrawl.forEach((p, i) => {
-                const d = document.createElement('div');
-                d.className = 'pub-crawl-item';
-                d.innerHTML = `
-                    <span class="font-semibold">${i + 1}. ${p.name}</span>
-                    <button data-id="${p.id}" class="remove-crawl-btn bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-3 rounded-lg">Remove</button>
+            emptyCrawl.classList.add('hidden');
+            pubCrawl.forEach((pub, index) => {
+                const container = document.createElement('div');
+                container.className = 'pub-crawl-item';
+                container.innerHTML = `
+                    <span class="font-semibold text-white light:text-gray-900">${index + 1}. ${pub.name}</span>
+                    <button data-id="${pub.id}" class="remove-crawl-btn bg-red-600 hover:bg-red-700 text-white text-xs py-1 px-3 rounded-full transition-colors active:scale-95">Remove</button>
                 `;
-                pCL.appendChild(d);
+                pubCrawlList.appendChild(container);
             });
 
             // Attach event listeners to new remove buttons
-            document.querySelectorAll('.remove-crawl-btn').forEach(b => {
-                b.addEventListener('click', e => rFC(parseInt(e.target.dataset.id)));
+            document.querySelectorAll('.remove-crawl-btn').forEach(button => {
+                button.addEventListener('click', e => removeFromCrawl(parseInt(e.target.dataset.id)));
             });
         };
 
         // Open Crawl Modal
-        const oCM = () => {
-            rCL();
-            cM.classList.remove('hidden');
+        const openCrawlModal = () => {
+            renderCrawlList();
+            crawlModal.classList.add('visible');
+            crawlModal.classList.remove('opacity-0', 'pointer-events-none');
         };
 
         // Close Crawl Modal
-        const cCM = () => {
-            cM.classList.add('hidden');
+        const closeCrawlModal = () => {
+            crawlModal.classList.remove('visible');
+            crawlModal.classList.add('opacity-0', 'pointer-events-none');
         };
 
-        vCB.addEventListener('click', oCM);
-        cCMB.addEventListener('click', cCM);
+        viewCrawlBtn.addEventListener('click', openCrawlModal);
+        closeCrawlBtn.addEventListener('click', closeCrawlModal);
     </script>
 </body>
 </html>
