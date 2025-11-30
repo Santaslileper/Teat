@@ -7,73 +7,14 @@
     <title>Pub Seeker Compass</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Base Styles */
-        body {
-            overscroll-behavior: none;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: #e5e5e5;
-            overflow: hidden; /* Lock the viewport */
-        }
-
-        /* Compass Dial Styling (for North.html visual style) */
-        .compass-dial {
-            transition: transform 0.1s cubic-bezier(0.4, 2.08, 0.55, 0.44);
-            will-change: transform;
-            box-shadow: 
-                inset 0 0 20px rgba(0,0,0,0.5),
-                0 0 10px rgba(0,0,0,0.3);
-        }
-
-        /* Tick Marks */
-        .tick {
-            position: absolute;
-            left: 50%;
-            top: 0;
-            width: 2px;
-            height: 100%;
-            transform-origin: center;
-        }
-        .tick::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: -1px;
-            width: 2px;
-            height: 10px;
-            background-color: #4b5563;
-        }
-        .tick.major::before {
-            height: 15px;
-            width: 3px;
-            left: -1.5px;
-            background-color: #9ca3af;
-        }
-
-        .center-point {
-            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
-        }
-        
-        .fade-enter {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-        
-        /* Pub Arrow styling for better visibility on the dial */
-        .pub-arrow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: center;
-            transition: transform 0.2s ease-out; /* Smooth rotation */
-            z-index: 30;
-        }
-
+        body{overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background-color:#1a1a1a;color:#e5e5e5;overflow:hidden;}
+        .compass-dial{transition:transform .1s cubic-bezier(.4,2.08,.55,.44);will-change:transform;box-shadow:inset 0 0 20px rgba(0,0,0,.5),0 0 10px rgba(0,0,0,.3);}
+        .tick{position:absolute;left:50%;top:0;width:2px;height:100%;transform-origin:center}
+        .tick::before{content:'';position:absolute;top:10px;left:-1px;width:2px;height:10px;background-color:#4b5563}
+        .tick.major::before{height:15px;width:3px;left:-1.5px;background-color:#9ca3af}
+        .center-point{box-shadow:0 0 15px rgba(239,68,68,.5)}
+        .fade-enter{opacity:0;pointer-events:none;transition:opacity .3s ease}
+        .pub-arrow{position:absolute;top:50%;left:50%;transform-origin:center;transition:transform .2s ease-out;z-index:30}
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col items-center justify-start relative bg-neutral-900 p-6">
@@ -129,7 +70,6 @@
                 </svg>
             </div>
 
-
             <div class="absolute inset-0 m-auto w-3 h-3 bg-red-600 rounded-full center-point z-20"></div>
         </div>
         
@@ -171,398 +111,188 @@
     </div>
 
     <script>
-        // --- DOM Elements & Constants ---
-        const compassWheel = document.getElementById('compass-wheel');
-        const headingDisplay = document.getElementById('heading-display');
-        const directionDisplay = document.getElementById('direction-display');
-        const permissionOverlay = document.getElementById('permission-overlay');
-        const startBtn = document.getElementById('start-btn');
-        const errorToast = document.getElementById('error-toast');
-        const ticksContainer = document.getElementById('ticks-container');
-        const statusMessage = document.getElementById('status-message');
+        // Aliases and short names for DOM elements
+        const cw=document.getElementById('compass-wheel'),hd=document.getElementById('heading-display'),dd=document.getElementById('direction-display'),po=document.getElementById('permission-overlay'),sb=document.getElementById('start-btn'),et=document.getElementById('error-toast'),tc=document.getElementById('ticks-container'),sm=document.getElementById('status-message'),pn=document.getElementById('pub-name'),pd=document.getElementById('pub-distance'),pb=document.getElementById('pub-bearing-display'),pa=document.getElementById('pub-arrow-container'),pbv=document.getElementById('prev-pub-btn'),nb=document.getElementById('next-pub-btn'),pi=document.getElementById('pub-index-display');
+
+        // State variables
+        let ifn=false,ul=null,uo=null,ps=[],ci=0,ga=0;
+        const MG=3,r=32187; // MG: Max Geo attempts, r: Radius in meters (20 miles)
+
+        // Function aliases
+        const tr=d=>d*Math.PI/180;
+        const cd=(l1,n1,l2,n2)=>{
+            const R=6371e3,f1=tr(l1),f2=tr(l2),df=tr(l2-l1),dl=tr(n2-n1);
+            const a=Math.sin(df/2)*Math.sin(df/2)+Math.cos(f1)*Math.cos(f2)*Math.sin(dl/2)*Math.sin(dl/2);
+            const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+            return R*c;
+        };
+        const cb=(l1,n1,l2,n2)=>{
+            const f1=tr(l1),f2=tr(l2),L1=tr(n1),L2=tr(n2);
+            const y=Math.sin(L2-L1)*Math.cos(f2);
+            const x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(L2-L1);
+            let b=Math.atan2(y,x)*180/Math.PI;
+            return(b+360)%360;
+        };
+        const se=m=>{et.textContent=m;et.classList.remove('hidden');setTimeout(()=>et.classList.add('hidden'),5000);console.error(m);};
+        const ss=m=>{sm.textContent=m;};
+        const fd=m=>m<1000?`${Math.round(m)} m`:`${(m/1000).toFixed(1)} km`;
+        const gcd=h=>{
+            const d=['N','NE','E','SE','S','SW','W','NW'];
+            const i=Math.round(((h%=360)<0?h+360:h)/45)%8;
+            return d[i];
+        };
+        const gt=()=>{
+            for(let i=0;i<360;i+=2){
+                const t=document.createElement('div');
+                t.className=i%30===0?'tick major':i%10===0?'tick':'';
+                if(t.className){t.style.transform=`rotate(${i}deg)`;tc.appendChild(t);}
+            }
+        };
+        gt();
+        const hh=h=>{
+            const iN=h>357||h<3;
+            if(iN&&!ifn){
+                if(navigator.vibrate){navigator.vibrate(50);}
+                document.querySelector('.center-point').style.boxShadow='0 0 25px rgba(239,68,68,.9)';
+                ifn=true;
+            }else if(!iN&&ifn){
+                document.querySelector('.center-point').style.boxShadow='0 0 15px rgba(239,68,68,.5)';
+                ifn=false;
+            }
+        };
+
+        const ui=()=>{
+            if(ps.length===0){
+                pn.textContent="No Pubs Found 😔";pd.textContent="--";pb.textContent="--°";pi.classList.add('invisible');pa.style.opacity=0;pbv.disabled=true;nb.disabled=true;return;
+            }
+            const cP=ps[ci];
+            const n=cP.tags.name||'Unnamed Pub/Bar';
+            const d=cd(ul,uo,cP.lat,cP.lon);
+            const b=cb(ul,uo,cP.lat,cP.lon);
+            pn.textContent=n;pd.textContent=fd(d);pb.textContent=`${Math.round(b)}° ${gcd(b)}`;
+            pi.textContent=`(${ci+1} of ${ps.length})`;pi.classList.remove('invisible');pa.style.opacity=1;
+
+            const mP=ps.length>1;
+            pbv.disabled=!mP||ci===0;
+            nb.disabled=!mP||ci===ps.length-1;
+            
+            const cH=parseFloat(hd.textContent)||0; 
+            uu(cH,0);
+        };
+
+        const cp=d=>{
+            const nI=ci+d;
+            if(nI>=0&&nI<ps.length){
+                ci=nI;
+                ui();
+                ss(`Switched to: ${ps[ci].tags.name||'Unnamed Pub'}`);
+            }
+        };
+
+        pbv.addEventListener('click',()=>cp(-1));
+        nb.addEventListener('click',()=>cp(1));
+
+        const uu=(h,t=0)=>{
+            cw.style.transform=`rotate(${-h}deg)`;
+            const rH=Math.round(h);
+            hd.textContent=rH;
+            dd.textContent=gcd(rH);
+
+            if(ps.length>0){
+                const tP=ps[ci];
+                const pB=cb(ul,uo,tP.lat,tP.lon);
+                let rB=pB-h;
+                if(rB>180)rB-=360;
+                if(rB<-180)rB+=360;
+                pa.style.transform=`translate(-50%, -50%) rotate(${rB}deg)`;
+            }
+            hh(h);
+        };
+
+        const ho=e=>{
+            let h=e.webkitCompassHeading||(e.alpha!==null?360-e.alpha:null);
+            if(h===null)return;
+            h=(h%360+360)%360;
+            requestAnimationFrame(()=>uu(h,e.gamma||0));
+        };
+
+        const sc=()=>{
+            if(typeof DeviceOrientationEvent!=='undefined'){
+                const eA='ondeviceorientationabsolute' in window?'deviceorientationabsolute':'ondeviceorientation' in window?'deviceorientation':null;
+                if(eA){window.addEventListener(eA,ho,true);}else{console.log('Compass sensors not available.');}
+            }else{console.log('Device orientation events not supported.');}
+        };
         
-        const pubNameDisplay = document.getElementById('pub-name');
-        const pubDistanceDisplay = document.getElementById('pub-distance');
-        const pubBearingDisplay = document.getElementById('pub-bearing-display');
-        const pubArrowContainer = document.getElementById('pub-arrow-container');
-        const prevPubBtn = document.getElementById('prev-pub-btn');
-        const nextPubBtn = document.getElementById('next-pub-btn');
-        const pubIndexDisplay = document.getElementById('pub-index-display');
-
-
-        // --- State Variables ---
-        let isFacingNorth = false;
-        let userLat = null;
-        let userLon = null;
-        let allNearbyPubs = []; // Array to hold all found pubs
-        let currentPubIndex = 0;
-        let geolocationAttempts = 0;
-        const MAX_GEOLOCATION_ATTEMPTS = 3;
-        // Search radius: 20 miles = 32,187 meters (Confirmed as per request)
-        const PUB_SEARCH_RADIUS = 32187; 
-
-
-        // --- Utility Functions (Geospatial) ---
-
-        function toRad(degrees) { return degrees * Math.PI / 180; }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; 
-            const φ1 = toRad(lat1);
-            const φ2 = toRad(lat2);
-            const Δφ = toRad(lat2 - lat1);
-            const Δλ = toRad(lon2 - lon1);
-
-            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            return R * c; 
-        }
-
-        function calculateBearing(lat1, lon1, lat2, lon2) {
-            const φ1 = toRad(lat1);
-            const φ2 = toRad(lat2);
-            const λ1 = toRad(lon1);
-            const λ2 = toRad(lon2);
-
-            const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
-            const x = Math.cos(φ1) * Math.sin(φ2) -
-                      Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+        const sf=()=>{
+            if(ul===null||uo===null){se("Location not available for search.");return;}
+            ss(`Searching for pubs within ${Math.round(r/1609.34)} miles...`);
             
-            let bearing = Math.atan2(y, x) * 180 / Math.PI;
-            
-            return (bearing + 360) % 360; 
-        }
+            const q=`[out:json][timeout:15];(node["amenity"~"pub|bar"](around:${r},${ul},${uo}););out center 25;`;
+            const u=`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`;
 
-        // --- Utility Functions (UI/Status) ---
-
-        function showError(msg) {
-            errorToast.textContent = msg;
-            errorToast.classList.remove('hidden');
-            setTimeout(() => errorToast.classList.add('hidden'), 5000); 
-            console.error(msg);
-        }
-
-        function showStatus(msg) {
-            statusMessage.textContent = msg;
-        }
-
-        function formatDistance(meters) {
-            if (meters < 1000) {
-                return `${Math.round(meters)} m`;
-            } else {
-                return `${(meters / 1000).toFixed(1)} km`;
-            }
-        }
-
-        function getCardinalDirection(heading) {
-            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            const index = Math.round(((heading %= 360) < 0 ? heading + 360 : heading) / 45) % 8;
-            return directions[index];
-        }
-
-        // Generate ticks dynamically
-        function generateTicks() {
-            for (let i = 0; i < 360; i += 2) {
-                if (i % 30 === 0) { 
-                    const tick = document.createElement('div');
-                    tick.className = `tick major`;
-                    tick.style.transform = `rotate(${i}deg)`;
-                    ticksContainer.appendChild(tick);
-                } else if (i % 10 === 0) { 
-                    const tick = document.createElement('div');
-                    tick.className = 'tick';
-                    tick.style.transform = `rotate(${i}deg)`;
-                    ticksContainer.appendChild(tick);
-                }
-            }
-        }
-        generateTicks();
-
-        // Haptic Feedback Logic
-        function handleHaptics(heading) {
-            const isNorth = heading > 357 || heading < 3;
-            if (isNorth && !isFacingNorth) {
-                if (navigator.vibrate) {
-                    navigator.vibrate(50); 
-                }
-                document.querySelector('.center-point').style.boxShadow = '0 0 25px rgba(239, 68, 68, 0.9)';
-                isFacingNorth = true;
-            } else if (!isNorth && isFacingNorth) {
-                document.querySelector('.center-point').style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.5)';
-                isFacingNorth = false;
-            }
-        }
-
-        // --- Pub Navigation Logic ---
-        
-        function updatePubUI() {
-            if (allNearbyPubs.length === 0) {
-                pubNameDisplay.textContent = "No Pubs Found 😔";
-                pubDistanceDisplay.textContent = "--";
-                pubBearingDisplay.textContent = "--°";
-                pubIndexDisplay.classList.add('invisible');
-                pubArrowContainer.style.opacity = 0;
-                prevPubBtn.disabled = true;
-                nextPubBtn.disabled = true;
-                return;
-            }
-
-            const currentPub = allNearbyPubs[currentPubIndex];
-            const name = currentPub.tags.name || 'Unnamed Pub/Bar';
-            const distance = calculateDistance(userLat, userLon, currentPub.lat, currentPub.lon);
-            const bearing = calculateBearing(userLat, userLon, currentPub.lat, currentPub.lon);
-            
-            pubNameDisplay.textContent = name;
-            pubDistanceDisplay.textContent = formatDistance(distance);
-            pubBearingDisplay.textContent = `${Math.round(bearing)}° ${getCardinalDirection(bearing)}`;
-            pubIndexDisplay.textContent = `(${currentPubIndex + 1} of ${allNearbyPubs.length})`;
-            pubIndexDisplay.classList.remove('invisible');
-            pubArrowContainer.style.opacity = 1;
-
-            // Update button states: Enable if more than one pub exists, disable if at the start/end
-            const multiplePubs = allNearbyPubs.length > 1;
-            prevPubBtn.disabled = !multiplePubs || currentPubIndex === 0;
-            nextPubBtn.disabled = !multiplePubs || currentPubIndex === allNearbyPubs.length - 1;
-            
-            // Force compass arrow to update
-            const currentHeading = parseFloat(headingDisplay.textContent) || 0; 
-            updateUI(currentHeading, 0); 
-        }
-
-        function cyclePub(direction) {
-            const newIndex = currentPubIndex + direction;
-            if (newIndex >= 0 && newIndex < allNearbyPubs.length) {
-                currentPubIndex = newIndex;
-                updatePubUI();
-                showStatus(`Switched to: ${allNearbyPubs[currentPubIndex].tags.name || 'Unnamed Pub'}`);
-            }
-        }
-
-        prevPubBtn.addEventListener('click', () => cyclePub(-1));
-        nextPubBtn.addEventListener('click', () => cyclePub(1));
-
-
-        // --- Main Compass UI Update (Merged) ---
-
-        function updateUI(heading, tiltX = 0) {
-            // 1. Update the Main Compass Dial 
-            compassWheel.style.transform = `rotate(${-heading}deg)`;
-            
-            // 2. Update Text Readouts
-            const roundedHeading = Math.round(heading);
-            headingDisplay.textContent = roundedHeading;
-            directionDisplay.textContent = getCardinalDirection(roundedHeading);
-
-            // 3. Update Pub Direction Arrow
-            if (allNearbyPubs.length > 0) {
-                const targetPub = allNearbyPubs[currentPubIndex];
-                const pubBearing = calculateBearing(userLat, userLon, targetPub.lat, targetPub.lon);
-
-                let relativeBearing = pubBearing - heading;
-                
-                // Normalize relative bearing to -180 to 180 
-                if (relativeBearing > 180) relativeBearing -= 360;
-                if (relativeBearing < -180) relativeBearing += 360;
-
-                pubArrowContainer.style.transform = `translate(-50%, -50%) rotate(${relativeBearing}deg)`;
-            }
-
-            // 4. Haptic Feedback for North
-            handleHaptics(heading);
-        }
-
-        // --- Sensor Handlers ---
-
-        function handleOrientation(event) {
-            let heading = 0;
-
-            if (event.webkitCompassHeading) {
-                heading = event.webkitCompassHeading;
-            } 
-            else if (event.alpha !== null) {
-                heading = 360 - event.alpha;
-            } else {
-                return; 
-            }
-
-            heading = (heading % 360 + 360) % 360;
-
-            const tilt = event.gamma || 0; 
-
-            requestAnimationFrame(() => updateUI(heading, tilt));
-        }
-
-        function startCompass() {
-            if (typeof DeviceOrientationEvent !== 'undefined') {
-                if ('ondeviceorientationabsolute' in window) {
-                    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
-                } else if ('ondeviceorientation' in window) {
-                    window.addEventListener('deviceorientation', handleOrientation, true);
-                } else {
-                    console.log('Compass sensors are not available on this device.');
-                }
-            } else {
-                 console.log('Device orientation events not supported.');
-            }
-        }
-        
-        // --- Pub Search Logic ---
-
-        function searchForPubs() {
-            if (userLat === null || userLon === null) {
-                showError("User location not available for pub search.");
-                return;
-            }
-
-            showStatus(`Searching for pubs within ${Math.round(PUB_SEARCH_RADIUS/1609.34)} miles...`);
-            
-            // Query for up to 25 pubs/bars within the radius
-            const query = `
-                [out:json][timeout:15];
-                (
-                  node["amenity"~"pub|bar"](around:${PUB_SEARCH_RADIUS},${userLat},${userLon});
-                );
-                out center 25;
-            `;
-
-            const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-
-            fetch(overpassUrl)
-                .then(response => {
-                    if (!response.ok) throw new Error('Overpass API network response was not ok');
-                    return response.json();
-                })
-                .then(data => {
-                    if (!data.elements || data.elements.length === 0) {
-                        allNearbyPubs = [];
-                        currentPubIndex = 0;
-                        updatePubUI();
-                        showStatus('No pubs found nearby! Try moving to a new area.');
-                        return;
+            fetch(u).then(res=>{if(!res.ok)throw new Error('API error');return res.json();})
+                .then(d=>{
+                    if(!d.elements||d.elements.length===0){
+                        ps=[];ci=0;ui();ss('No pubs found nearby! Try moving to a new area.');return;
                     }
+                    d.elements.forEach(e=>{if(e.type==='node'){e.distance=cd(ul,uo,e.lat,e.lon);}});
 
-                    // 1. Calculate distance for all found elements
-                    data.elements.forEach(element => {
-                        if (element.type === 'node') {
-                            element.distance = calculateDistance(userLat, userLon, element.lat, element.lon);
-                        }
-                    });
-
-                    // 2. Filter out non-nodes and SORT by DISTANCE (Closest First)
-                    allNearbyPubs = data.elements
-                        .filter(e => e.type === 'node')
-                        .sort((a, b) => a.distance - b.distance);
-                    
-                    currentPubIndex = 0; // Always start at the closest pub
-                    updatePubUI();
-                    showStatus(`Found ${allNearbyPubs.length} pubs! Now guiding you to the closest one.`);
+                    ps=d.elements.filter(e=>e.type==='node').sort((a,b)=>a.distance-b.distance);
+                    ci=0;
+                    ui();
+                    ss(`Found ${ps.length} pubs! Now guiding you to the closest one.`);
                 })
-                .catch(error => {
-                    console.error('Error fetching pubs:', error);
-                    showStatus('Failed to load local pub data. (API Error)');
-                    allNearbyPubs = [];
-                    currentPubIndex = 0;
-                    updatePubUI();
+                .catch(e=>{
+                    console.error('Error fetching pubs:',e);
+                    ss('Failed to load local pub data. (API Error)');
+                    ps=[];ci=0;ui();
                 });
-        }
+        };
 
+        const hgs=p=>{
+            ga=0;
+            ul=p.coords.latitude;
+            uo=p.coords.longitude;
+            ss(`Location found. Now searching for pubs...`);
+            sf();
+        };
 
-        // --- Geolocation Logic ---
-
-        function handleGeolocationSuccess(position) {
-            geolocationAttempts = 0; 
-            userLat = position.coords.latitude;
-            userLon = position.coords.longitude;
-            showStatus(`Location found. Now searching for pubs...`);
-            searchForPubs(); 
-        }
-
-        function handleGeolocationError(error) {
-            let errorMsg = '';
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    errorMsg = "Location permission denied. Cannot find pubs.";
-                    showError(errorMsg);
-                    showStatus('Location access denied. Please refresh and try again.');
-                    return; 
-                case error.POSITION_UNAVAILABLE:
-                    errorMsg = "Location information unavailable.";
-                    break;
-                case error.TIMEOUT:
-                    errorMsg = "Location request timed out.";
-                    break;
-                default:
-                    errorMsg = "Unknown location error occurred.";
+        const hge=e=>{
+            let m='';
+            switch(e.code){
+                case e.PERMISSION_DENIED:m="Location permission denied. Cannot find pubs.";se(m);ss('Location access denied. Please refresh and try again.');return;
+                case e.POSITION_UNAVAILABLE:m="Location information unavailable.";break;
+                case e.TIMEOUT:m="Location request timed out.";break;
+                default:m="Unknown location error occurred.";
             }
-            
-            geolocationAttempts++;
-            showStatus(`Location error. Retrying... (${geolocationAttempts}/${MAX_GEOLOCATION_ATTEMPTS})`);
+            ga++;
+            ss(`Location error. Retrying... (${ga}/${MG})`);
 
-            if (geolocationAttempts < MAX_GEOLOCATION_ATTEMPTS) {
-                setTimeout(() => getGeolocation(), 2000); 
-            } else {
-                showError(`Failed to get location. Check device settings.`);
-                showStatus('Could not get location. Check device settings.');
-            }
-        }
+            if(ga<MG){setTimeout(()=>gg(),2000);}else{se(`Failed to get location. Check device settings.`);ss('Could not get location. Check device settings.');}
+        };
         
-        function getGeolocation() {
-            if (geolocationAttempts === 0) {
-                showStatus('Waiting for location data...');
-            }
-            
-            if (!navigator.geolocation) {
-                showError('Geolocation is not supported by your browser');
-                showStatus('Geolocation not available');
-                return;
-            }
-            
-            navigator.geolocation.getCurrentPosition(
-                handleGeolocationSuccess, 
-                handleGeolocationError, 
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 } 
-            );
-        }
+        const gg=()=>{
+            if(ga===0){ss('Waiting for location data...');}
+            if(!navigator.geolocation){se('Geolocation is not supported');ss('Geolocation not available');return;}
+            navigator.geolocation.getCurrentPosition(hgs,hge,{enableHighAccuracy:true,timeout:15000,maximumAge:0});
+        };
 
-        // --- Core Startup Logic ---
+        const rp=()=>{
+            po.classList.add('fade-enter');
+            ss('Requesting sensor and location permissions...');
 
-        function requestPermissions() {
-            // Fades out the overlay and removes pointer events
-            permissionOverlay.classList.add('fade-enter'); 
-            showStatus('Requesting sensor and location permissions...');
+            const p=()=>{sc();ga=0;gg();};
 
+            if(typeof DeviceOrientationEvent!=='undefined'&&typeof DeviceOrientationEvent.requestPermission==='function'){
+                DeviceOrientationEvent.requestPermission().then(r=>{
+                    if(r==='denied'){se('Sensor permission denied. Compass will not function.');}
+                    p();
+                }).catch(e=>{console.error("Permission failed:",e);se('Error requesting sensor access. Proceeding with location.');p();});
+            }else{p();}
+        };
 
-            const proceed = () => {
-                startCompass();
-                geolocationAttempts = 0; 
-                getGeolocation(); 
-            };
-
-            // Handle explicit Compass Permission request (iOS 13+ requirement)
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(response => {
-                        if (response === 'denied') {
-                            showError('Sensor permission denied. Compass heading will not function.');
-                        }
-                        proceed();
-                    })
-                    .catch(e => {
-                        console.error("Permission request failed:", e);
-                        showError('Error requesting sensor access. Proceeding with location.');
-                        proceed();
-                    });
-            } else {
-                // Fallback for Android/older devices
-                proceed();
-            }
-        }
-
-        // Init
-        startBtn.addEventListener('click', requestPermissions);
+        sb.addEventListener('click',rp);
     </script>
 </body>
 </html>
+
