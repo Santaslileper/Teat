@@ -1,256 +1,434 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Santaslileper App Dashboard (One File)</title>
+    <title>Santaslileper App Dashboard</title>
+
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #333;
+        scroll-behavior: smooth;
+        min-height: 100vh;
+    }
     
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f7f9;
-            color: #333;
-            scroll-behavior: smooth; /* Smooth scrolling for internal links */
-        }
-        
-        /* Fixed Navigation Menu */
-        nav {
-            position: sticky;
-            top: 0;
-            background-color: #3f51b5;
-            padding: 10px 0;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-        }
+    /* Fixed Navigation Menu */
+    nav {
+        position: sticky;
+        top: 0;
+        background: rgba(63, 81, 181, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 15px 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+    }
 
-        nav ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+    nav ul {
+        list-style: none;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 0 20px;
+    }
 
-        nav ul li {
-            margin: 0 15px;
-        }
+    nav ul li a {
+        text-decoration: none;
+        color: white;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.1);
+    }
 
-        nav ul li a {
-            text-decoration: none;
-            color: white;
-            font-weight: 600;
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
+    nav ul li a:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+    }
 
-        nav ul li a:hover {
-            background-color: #536dfe;
-        }
+    /* Header */
+    header {
+        text-align: center;
+        padding: 60px 20px;
+        color: white;
+    }
 
-        /* Main Content Sections */
-        .app-section {
-            padding: 60px 5%;
-            margin-bottom: 20px;
-            background-color: white;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        /* Alternating background color for visual separation */
-        .app-section:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+    header h1 {
+        font-size: 3em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
 
-        .app-section h2 {
-            color: #3f51b5;
-            border-bottom: 2px solid #3f51b5;
-            padding-bottom: 10px;
-            margin-top: 0;
-            margin-bottom: 20px;
+    header p {
+        font-size: 1.2em;
+        opacity: 0.9;
+    }
+
+    /* Main Content Sections */
+    .app-section {
+        padding: 60px 5%;
+        margin: 20px auto;
+        max-width: 1200px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .app-section h2 {
+        color: #3f51b5;
+        border-bottom: 3px solid #3f51b5;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        font-size: 2.2em;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .app-section h2 .emoji {
+        font-size: 1.2em;
+    }
+
+    .description {
+        font-size: 1.1em;
+        color: #555;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .content-box {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-left: 5px solid #3f51b5;
+        padding: 25px;
+        border-radius: 10px;
+        margin: 20px 0;
+        line-height: 1.8;
+    }
+
+    .content-box strong {
+        color: #3f51b5;
+        display: block;
+        margin-bottom: 10px;
+        font-size: 1.1em;
+    }
+
+    .features-list {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .features-list li {
+        padding: 8px 0;
+        padding-left: 30px;
+        position: relative;
+    }
+
+    .features-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #4caf50;
+        font-weight: bold;
+        font-size: 1.3em;
+    }
+
+    .link-button {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .link-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    footer {
+        text-align: center;
+        padding: 40px 20px;
+        color: white;
+        font-size: 0.9em;
+    }
+
+    @media (max-width: 768px) {
+        header h1 {
             font-size: 2em;
         }
 
-        .description {
-            font-style: italic;
-            color: #666;
-            margin-bottom: 20px;
+        .app-section {
+            padding: 40px 20px;
         }
 
-        .content-placeholder {
-            min-height: 150px;
-            background-color: #e6e9f0;
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 8px;
-            line-height: 1.6;
+        .app-section h2 {
+            font-size: 1.6em;
         }
-    </style>
+    }
+</style>
+
+
 </head>
 <body>
 
-    <nav>
-        <ul>
-            <li><a href="#page1">App 1</a></li>
-            <li><a href="#page2">App 2</a></li>
-            <li><a href="#page3">App 3</a></li>
-            <li><a href="#page4">App 4</a></li>
-            <li><a href="#page5">App 5</a></li>
-            <li><a href="#page6">App 6</a></li>
-            <li><a href="#page7">App 7</a></li>
-            <li><a href="#page8">App 8</a></li>
-            <li><a href="#page9">App 9</a></li>
-            <li><a href="#page10">App 10</a></li>
-            <li><a href="#page11">App 11</a></li>
-            <li><a href="#page13">App 13</a></li>
-            <li><a href="#page67">App 67</a></li>
+
+<nav>
+    <ul>
+        <li><a href="#page1">Project Organizer</a></li>
+        <li><a href="#page2">Reaction Game</a></li>
+        <li><a href="#page3">Grapple Game</a></li>
+        <li><a href="#page4">Calculator</a></li>
+        <li><a href="#page5">Mobile IDE</a></li>
+        <li><a href="#page6">AI Learning</a></li>
+        <li><a href="#page7">Map Navigator</a></li>
+        <li><a href="#page8">Offline Maps</a></li>
+        <li><a href="#page10">LG Remote</a></li>
+        <li><a href="#page11">Cycle Counter</a></li>
+        <li><a href="#page13">Theme Switcher</a></li>
+        <li><a href="#page67">Mortis Cloud</a></li>
+    </ul>
+</nav>
+
+<header>
+    <h1>🚀 Santaslileper App Collection</h1>
+    <p>A diverse collection of web applications and interactive tools</p>
+</header>
+
+<section class="app-section" id="page1">
+    <h2><span class="emoji">📁</span>Dark Project Organizer</h2>
+    <p class="description">
+        A sleek file management and project organization tool with a dark-themed interface. Upload and organize multiple files with an intuitive interface.
+    </p>
+    <div class="content-box">
+        <strong>Key Features:</strong>
+        <ul class="features-list">
+            <li>Dark mode interface for comfortable viewing</li>
+            <li>Multi-file upload capability</li>
+            <li>Project organization system</li>
+            <li>Clean, modern UI design</li>
         </ul>
-    </nav>
-    
-    <section class="app-section" id="page1">
-        <h2>🚀 Mini App 1: The Initialization Module</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** This is the primary landing page or initialization screen for the application. It handles user authentication and initial setup.
-        </p>
-        <div class="content-placeholder">
-            [A brief snippet of the page1.html visual content or key feature description goes here.]
-        </div>
-        <p><a href="page1.html" target="_blank">View **page1.html** in a new tab →</a></p>
-    </section>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page1.html" target="_blank" class="link-button">Open Project Organizer →</a>
+</section>
 
-    <section class="app-section" id="page2">
-        <h2>🛠️ Mini App 2: Configuration Tool</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** This page allows users to adjust settings, preferences, and permissions for the core services. It features several input forms and toggle switches.
-        </p>
-        <div class="content-placeholder">
-            [Describe the main configuration panel or feature.]
-        </div>
-        <p><a href="page2.html" target="_blank">View **page2.html** in a new tab →</a></p>
-    </section>
-    
-    <section class="app-section" id="page3">
-        <h2>📊 Mini App 3: Dashboard View</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A simple dashboard displaying critical metrics using charts and graphs. This is the main data visualization page.
-        </p>
-        <div class="content-placeholder">
-            [Describe the types of charts or data shown.]
-        </div>
-        <p><a href="page3.html" target="_blank">View **page3.html** in a new tab →</a></p>
-    </section>
-    
-    <section class="app-section" id="page4">
-        <h2>📝 Mini App 4: Text Editor</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** Contains a basic WYSIWYG or plain text editor component for creating and saving notes.
-        </p>
-        <div class="content-placeholder">
-            [Describe the editor features or UI elements.]
-        </div>
-        <p><a href="page4.html" target="_blank">View **page4.html** in a new tab →</a></p>
-    </section>
-    
-    <section class="app-section" id="page5">
-        <h2>🖼️ Mini App 5: Image Gallery</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A photo gallery or media viewer with simple navigation controls.
-        </p>
-        <div class="content-placeholder">
-            [Describe the gallery layout or type of images.]
-        </div>
-        <p><a href="page5.html" target="_blank">View **page5.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page2">
+    <h2><span class="emoji">⚡</span>Reaction Time Game</h2>
+    <p class="description">
+        Test your reflexes with this competitive reaction time game. Wait for the screen to turn green, then tap as quickly as possible. Features a leaderboard to track your best times.
+    </p>
+    <div class="content-box">
+        <strong>How to Play:</strong>
+        <ul class="features-list">
+            <li>Tap to start the game</li>
+            <li>Wait until the screen turns green</li>
+            <li>Tap anywhere as fast as you can</li>
+            <li>Compete on the leaderboard</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page2.html" target="_blank" class="link-button">Play Reaction Game →</a>
+</section>
 
-    <section class="app-section" id="page6">
-        <h2>🛒 Mini App 6: Product Listing</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** Displays a grid of items, possibly using cards or a tabular format, useful for product catalogs.
-        </p>
-        <div class="content-placeholder">
-            [Describe the product card layout.]
-        </div>
-        <p><a href="page6.html" target="_blank">View **page6.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page3">
+    <h2><span class="emoji">🎮</span>Grapple Ascent Game</h2>
+    <p class="description">
+        An exciting physics-based grappling game where you swing from peg to peg to ascend. Features both desktop and mobile controls for an engaging gameplay experience.
+    </p>
+    <div class="content-box">
+        <strong>Controls:</strong>
+        <ul class="features-list">
+            <li><strong>Desktop:</strong> WASD to move, click to grapple</li>
+            <li><strong>Mobile:</strong> Left joystick for movement, right joystick to aim and grapple</li>
+            <li>Physics-based swinging mechanics</li>
+            <li>Progressive difficulty as you ascend</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page3.html" target="_blank" class="link-button">Play Grapple Game →</a>
+</section>
 
-    <section class="app-section" id="page7">
-        <h2>🔍 Mini App 7: Search Results Page</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A page dedicated to displaying results after a search query, with filtering options.
-        </p>
-        <div class="content-placeholder">
-            [Describe the filters and result snippets.]
-        </div>
-        <p><a href="page7.html" target="_blank">View **page7.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page4">
+    <h2><span class="emoji">🧮</span>Smart Calculator & Notepad</h2>
+    <p class="description">
+        A powerful hybrid app combining a scientific calculator with an intelligent notepad. Write math equations in your notes and solve them instantly, or use the full-screen calculator mode.
+    </p>
+    <div class="content-box">
+        <strong>Features:</strong>
+        <ul class="features-list">
+            <li>Scientific calculator with advanced functions</li>
+            <li>Intelligent notepad that solves equations inline</li>
+            <li>Each line can be a separate calculation</li>
+            <li>Swipe navigation between calculator and notes</li>
+            <li>Animated splash screen with instructions</li>
+            <li>Add calculator results directly to notes</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page4.html" target="_blank" class="link-button">Open Calculator →</a>
+</section>
 
-    <section class="app-section" id="page8">
-        <h2>☁️ Mini App 8: Cloud Status Checker</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** Shows the uptime or status of various external services with color-coded indicators (Green/Red).
-        </p>
-        <div class="content-placeholder">
-            [Describe the status monitoring elements.]
-        </div>
-        <p><a href="page8.html" target="_blank">View **page8.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page5">
+    <h2><span class="emoji">💻</span>Mobile IDE (Integrated Development Environment)</h2>
+    <p class="description">
+        A complete code editor for mobile and desktop with real-time output. Write, test, and debug code directly in your browser.
+    </p>
+    <div class="content-box">
+        <strong>Capabilities:</strong>
+        <ul class="features-list">
+            <li>Full code editor with syntax highlighting</li>
+            <li>Real-time code execution</li>
+            <li>Output console for debugging</li>
+            <li>Mobile-optimized interface</li>
+            <li>Support for multiple programming languages</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page5.html" target="_blank" class="link-button">Open IDE →</a>
+</section>
 
-    <section class="app-section" id="page9">
-        <h2>📧 Mini App 9: Contact Form</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A detailed contact form with validation, designed for user feedback submission.
-        </p>
-        <div class="content-placeholder">
-            [Describe the form fields and submission process.]
-        </div>
-        <p><a href="page9.html" target="_blank">View **page9.html** in a new tab →</a></p>
-    </section>
-    
-    <section class="app-section" id="page10">
-        <h2>🌐 Mini App 10: Map Integration</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A page that embeds a map (e.g., Google Maps or Leaflet) and displays markers.
-        </p>
-        <div class="content-placeholder">
-            [Describe the map view and features.]
-        </div>
-        <p><a href="page10.html" target="_blank">View **page10.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page6">
+    <h2><span class="emoji">🤖</span>AI Learning Platform</h2>
+    <p class="description">
+        An experimental machine learning platform that allows you to train, save, and export AI models. Includes JSON model export functionality for integration with GitHub or other platforms.
+    </p>
+    <div class="content-box">
+        <strong>Features:</strong>
+        <ul class="features-list">
+            <li>Interactive AI training interface</li>
+            <li>Model JSON export functionality</li>
+            <li>Copy and paste model data</li>
+            <li>GitHub integration ready</li>
+            <li>Save and load trained models</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page6.html" target="_blank" class="link-button">Open AI Learning →</a>
+</section>
 
-    <section class="app-section" id="page11">
-        <h2>🔔 Mini App 11: Notification Center</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A list or feed showing recent user notifications or system alerts.
-        </p>
-        <div class="content-placeholder">
-            [Describe the list style and notification elements.]
-        </div>
-        <p><a href="page11.html" target="_blank">View **page11.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page7">
+    <h2><span class="emoji">🗺️</span>Map Navigator</h2>
+    <p class="description">
+        Location-based map navigation tool that finds and displays nearby places of interest using your device's geolocation.
+    </p>
+    <div class="content-box">
+        <strong>Features:</strong>
+        <ul class="features-list">
+            <li>Geolocation-based place discovery</li>
+            <li>Interactive map interface</li>
+            <li>Nearby places visualization</li>
+            <li>One-tap location loading</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page7.html" target="_blank" class="link-button">Open Map Navigator →</a>
+</section>
 
-    <section class="app-section" id="page13">
-        <h2>💾 Mini App 13: Backup & Export</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** Utility page for managing data export and backup options.
-        </p>
-        <div class="content-placeholder">
-            [Describe the buttons and options available for data export.]
-        </div>
-        <p><a href="page13.html" target="_blank">View **page13.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page8">
+    <h2><span class="emoji">📍</span>Offline-Ready Map Navigator</h2>
+    <p class="description">
+        Advanced map navigator with offline capabilities and customizable marker filters. Toggle visibility of different location types and save your preferences.
+    </p>
+    <div class="content-box">
+        <strong>Features:</strong>
+        <ul class="features-list">
+            <li>Offline map functionality</li>
+            <li>Customizable location filters</li>
+            <li>Toggle marker visibility by category</li>
+            <li>Save filter preferences locally</li>
+            <li>Works without constant internet connection</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page8.html" target="_blank" class="link-button">Open Offline Maps →</a>
+</section>
 
-    <section class="app-section" id="page67">
-        <h2>🔒 Mini App 67: Admin Panel Login</h2>
-        <p class="description">
-            **CUSTOM CONTENT HERE:** A dedicated, secure login interface for system administrators.
-        </p>
-        <div class="content-placeholder">
-            [Describe the login form fields and security features.]
-        </div>
-        <p><a href="page67.html" target="_blank">View **page67.html** in a new tab →</a></p>
-    </section>
+<section class="app-section" id="page10">
+    <h2><span class="emoji">📺</span>LG webOS Remote Control</h2>
+    <p class="description">
+        Transform your device into a remote control for LG Smart TVs. Control your TV over WiFi with a web-based interface.
+    </p>
+    <div class="content-box">
+        <strong>Setup Instructions:</strong>
+        <ul class="features-list">
+            <li>Ensure TV is ON (not in standby mode)</li>
+            <li>Connect to the same WiFi network as your TV</li>
+            <li>Enable "LG Connect Apps" in TV Settings → Network</li>
+            <li>Find your TV's IP in Settings → Network → WiFi → Advanced</li>
+            <li>Try ports 3000 or 3001 for connection</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page10.html" target="_blank" class="link-button">Open TV Remote →</a>
+</section>
+
+<section class="app-section" id="page11">
+    <h2><span class="emoji">⏱️</span>GMT Cycle Counter</h2>
+    <p class="description">
+        Precision time tracking tool that counts cycles since an anchor date using GMT epoch time. Perfect for tracking recurring events and time intervals.
+    </p>
+    <div class="content-box">
+        <strong>Tracking Features:</strong>
+        <ul class="features-list">
+            <li>Total cycles completed counter</li>
+            <li>Time elapsed since anchor date</li>
+            <li>Time since last check</li>
+            <li>Customizable anchor date</li>
+            <li>GMT epoch time synchronization</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page11.html" target="_blank" class="link-button">Open Cycle Counter →</a>
+</section>
+
+<section class="app-section" id="page13">
+    <h2><span class="emoji">🎨</span>Dynamic Theme Switcher</h2>
+    <p class="description">
+        A demonstration of dynamic, class-based theme switching. Change the entire look and feel of the interface with different color schemes and styling options.
+    </p>
+    <div class="content-box">
+        <strong>Features:</strong>
+        <ul class="features-list">
+            <li>Multiple theme options</li>
+            <li>Real-time theme switching</li>
+            <li>Dynamic background and text styling</li>
+            <li>Class-based CSS architecture</li>
+            <li>Smooth theme transitions</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page13.html" target="_blank" class="link-button">Try Theme Switcher →</a>
+</section>
+
+<section class="app-section" id="page67">
+    <h2><span class="emoji">☠️</span>Mortis Cloud: Complete Nebula Skull</h2>
+    <p class="description">
+        An immersive, atmospheric visualization project featuring a nebula skull animation. Experience a unique blend of cosmic imagery and dark aesthetics with this impressive WebGL rendering.
+    </p>
+    <div class="content-box">
+        <strong>Experience:</strong>
+        <ul class="features-list">
+            <li>Stunning 3D nebula skull visualization</li>
+            <li>Atmospheric particle effects</li>
+            <li>Initialization sequence</li>
+            <li>Dark, cosmic theme</li>
+            <li>Interactive visual experience</li>
+        </ul>
+    </div>
+    <a href="https://santaslileper.github.io/Teat/page67.html" target="_blank" class="link-button">Enter Mortis Cloud →</a>
+</section>
+
+<footer>
+    <p>Santaslileper App Collection | All apps are browser-based and free to use</p>
+    <p style="margin-top: 10px; opacity: 0.8;">Built with HTML, CSS, and JavaScript</p>
+</footer>
+
 
 </body>
 </html>
