@@ -22,6 +22,7 @@
       min-height: 100vh;
       padding: 20px;
     }
+    
     /* Status Bar and Phone Shell Styles (Unchanged) */
     .status-bar {
       height: 44px;
@@ -48,7 +49,7 @@
     }
     
     /* ----------------------------------------------------------------
-       LAUNCHER VIEWPORT (New App Display Area)
+       LAUNCHER VIEWPORT (New App Display Area - For isolation)
     ---------------------------------------------------------------- */
     .app-display {
       position: absolute;
@@ -91,7 +92,7 @@
     }
     
     /* ----------------------------------------------------------------
-       HOME SCREEN STYLES (Unchanged)
+       HOME SCREEN STYLES 
     ---------------------------------------------------------------- */
     .home-screen {
       flex: 1;
@@ -142,7 +143,7 @@
        RESPONSIVENESS (Unchanged)
     ---------------------------------------------------------------- */
     @media (min-width: 768px) {
-        /* ... Phone Frame Styles (Unchanged) ... */
+        /* Phone Frame Styles */
         .phone {
             width: 375px; height: 812px; background: #1d1d1f; border-radius: 50px; position: relative;
             box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 12px solid #2c2c2e; overflow: hidden;
@@ -173,7 +174,7 @@
         .silent-switch { top: 100px; height: 30px; }
     }
     @media (max-width: 767px) {
-        /* ... Full Screen Mobile Styles (Unchanged) ... */
+        /* Full Screen Mobile Styles */
         .phone { width: 100%; height: 100vh; border-radius: 0; border: none; box-shadow: none; padding: 0; }
         .screen { width: 100%; height: 100vh; border-radius: 0; }
         .notch, .vol-up, .vol-down, .silent-switch { display: none !important; }
@@ -219,7 +220,8 @@
             title="Application Viewport">
         </iframe>
       </div>
-      </div>
+
+    </div>
   </div>
 
   <script>
@@ -240,10 +242,9 @@
         { id: 6, title: "Product Catalog", icon: "🛍️", path: "page6.html", class: "speaker" },
         { id: 7, title: "Search History", icon: "🔍", path: "page7.html", class: "camera" },
         { id: 8, title: "Cloud Status Monitor", icon: "☁️", path: "page8.html", class: "mic" },
-        { id: 9, title: "User Feedback Form", icon: "📧", path: "page9.html", class="motion" },
+        { id: 9, title: "User Feedback Form", icon: "📧", path: "page9.html", class: "motion" },
         { id: 10, title: "Geo-Location Map", icon: "🗺️", path: "page10.html", class: "torch" },
         { id: 11, title: "Notification History", icon: "🔔", path: "page11.html", class: "touch" }
-        // ... You can add page12, page14, etc., here if they are confirmed
     ];
 
     const appGrid = document.getElementById('appGrid');
@@ -253,15 +254,18 @@
     const closeAppBtn = document.getElementById('closeAppBtn');
 
     function createAppIcon(app) {
-        const wrapper = document.createElement('div'); // Use div instead of <a>
+        const wrapper = document.createElement('div');
         wrapper.className = 'app-icon-wrapper block text-center cursor-pointer';
         wrapper.title = app.title;
         wrapper.dataset.path = app.path;
-        wrapper.dataset.title = app.title; // Store title for display
+        wrapper.dataset.title = app.title;
 
         const iconDiv = document.createElement('div');
         iconDiv.className = `app-icon ${app.class || 'camera'}`;
-        iconDiv.textContent = app.icon;
+        
+        // --- THIS LINE FIXES THE MISSING ICONS ---
+        iconDiv.textContent = app.icon; 
+        // ----------------------------------------
 
         const labelDiv = document.createElement('div');
         labelDiv.className = 'app-label';
@@ -270,23 +274,23 @@
         wrapper.appendChild(iconDiv);
         wrapper.appendChild(labelDiv);
         
-        // NEW: Add click listener to launch app
+        // Add click listener to launch app
         wrapper.addEventListener('click', () => launchApp(app.path, app.title));
 
         return wrapper;
     }
 
-    // NEW: Function to handle app launch
+    // Function to handle app launch (opens the iframe)
     function launchApp(path, title) {
         appTitleDisplay.textContent = title;
         appIframe.src = path;
         appDisplay.style.display = 'flex'; // Show the app viewport
     }
 
-    // NEW: Function to close app
+    // Function to close app
     closeAppBtn.addEventListener('click', () => {
         appDisplay.style.display = 'none'; // Hide the app viewport
-        appIframe.src = 'about:blank'; // Stop the app from running (especially important for 3D/heavy apps)
+        appIframe.src = 'about:blank'; // Stop the app from running (saves resources)
     });
 
     // Render all icons
@@ -294,7 +298,7 @@
         appGrid.appendChild(createAppIcon(app));
     });
 
-    // Update time function for the status bar (Unchanged)
+    // Update time function for the status bar
     function updateTime() {
       const now = new Date();
       const hours = now.getHours() % 12 || 12; 
