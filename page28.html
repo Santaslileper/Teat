@@ -486,7 +486,6 @@ const MAX_ICE_SERVERS = [
 
 // ==========================================================
 // UI HELPERS
-// (Functions remain the same)
 // ==========================================================
 function addMessage(text, type = 'system'){
   const msg = document.createElement('div');
@@ -641,7 +640,6 @@ async function processAnswer(encoded){
 
 // ==========================================================
 // MESSAGING & EVENT LISTENERS
-// (Functions remain the same)
 // ==========================================================
 function sendMessage(){
   const text = els.msgInput.value.trim();
@@ -666,7 +664,6 @@ els.msgInput.addEventListener('keypress', e => {
 
 // ==========================================================
 // INIT - URL PARAMETER HANDLER
-// (Function remains the same)
 // ==========================================================
 (async function init(){
   const params = new URLSearchParams(location.search);
