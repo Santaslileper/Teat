@@ -18,14 +18,13 @@
     /* --- THEME --- */
     .phone { 
         position: relative; width: 100%; height: 100%; max-width: 375px; max-height: 812px;
-        background-color: #050505; /* Deep Black */
+        background-color: #050505; 
         background-image: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
         overflow: hidden; 
         display: flex; flex-direction: column;
         border: 1px solid #333;
     }
     
-    /* Desktop Styling */
     @media (min-width: 768px) {
         .phone { height: 812px; border-radius: 50px; box-shadow: 0 0 0 12px #2c2c2e, 0 20px 60px rgba(0,0,0,0.8); }
         .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
@@ -51,7 +50,6 @@
     }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 
-    /* Icons */
     .app-icon-wrapper { 
         display: flex; flex-direction: column; align-items: center; 
         transition: transform 0.2s ease; touch-action: none; 
@@ -62,11 +60,11 @@
         font-size: 30px; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         background: linear-gradient(135deg, #333, #555);
     }
-    .app-icon.info { background: linear-gradient(135deg, #3498db, #2980b9); } /* Tutorial App Color */
+    .app-icon.info { background: linear-gradient(135deg, #3498db, #2980b9); }
     .app-icon:active { filter: brightness(0.8); transform: scale(0.95); }
     .app-label { color: #fff; font-size: 11px; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 
-    /* --- RUNNING APPS & WINDOWS --- */
+    /* --- APP WINDOWS --- */
     .app-display { 
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
         z-index: 50; pointer-events: none;
@@ -81,38 +79,36 @@
     .app-window.active { transform: translate3d(0, 0, 0); }
     .app-iframe { width: 100%; height: 100%; border: none; display: block; }
 
-    /* --- TUTORIAL APP STYLES --- */
-    .tutorial-content {
-        width: 100%; height: 100%; background: #111; color: white;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        padding: 40px; text-align: center;
-    }
-    .tutorial-icon { font-size: 60px; margin-bottom: 20px; animation: bounce 2s infinite; }
-    .tutorial-title { font-size: 28px; font-weight: bold; margin-bottom: 20px; }
-    .tutorial-step { margin-bottom: 15px; font-size: 18px; color: #ccc; opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s forwards; }
-    .tutorial-step:nth-child(2) { animation-delay: 0.2s; }
-    .tutorial-step:nth-child(3) { animation-delay: 0.4s; }
-    .tutorial-step:nth-child(4) { animation-delay: 0.6s; }
-    
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-
-    /* --- APP SWITCHER (RECENTS) --- */
+    /* --- APP SWITCHER (FIXED SCROLLING) --- */
     .app-switcher {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: transparent; z-index: 40; display: none; 
-        overflow-x: auto; overflow-y: hidden;
-        white-space: nowrap; scroll-snap-type: x mandatory;
-        padding: 0 40px; pointer-events: auto;
+        background: transparent; z-index: 40; 
+        display: none; 
+        flex-direction: row;
+        align-items: center;
+        overflow-x: auto; 
+        overflow-y: hidden;
+        white-space: nowrap; 
+        scroll-snap-type: x mandatory;
+        padding-left: 20px;
+        padding-right: 20px;
+        pointer-events: auto;
     }
     
-    .switcher-container { display: inline-flex; height: 100%; align-items: center; gap: 20px; padding-right: 40px; }
+    .switcher-container { 
+        display: flex; 
+        height: 100%; 
+        align-items: center; 
+        gap: 20px; 
+        min-width: min-content; 
+    }
 
     .switcher-card {
         position: relative; width: 75vw; max-width: 300px; height: 70vh;
         background: #222; border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        scroll-snap-align: center; flex-shrink: 0;
+        scroll-snap-align: center; 
+        flex-shrink: 0;
         transform-origin: center; transition: transform 0.2s;
         overflow: hidden;
     }
@@ -124,11 +120,9 @@
         z-index: 20; pointer-events: none;
     }
     
-    /* Overlay to capture hold events over the iframe */
     .card-touch-layer {
         position: absolute; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);
-        z-index: 15; /* Above iframe, below header */
-        /* We rely on JS to toggle pointer-events for this layer */
+        z-index: 15;
     }
 
     /* Small X button for Recents Menu */
@@ -138,13 +132,21 @@
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
         color: white; font-weight: bold; font-size: 16px; cursor: pointer;
         z-index: 200; backdrop-filter: blur(5px);
-        display: none; /* Hidden by default */
+        display: none;
     }
 
     .empty-msg {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         color: #fff; font-size: 16px; pointer-events: none;
     }
+
+    /* --- TUTORIAL --- */
+    .tutorial-content {
+        width: 100%; height: 100%; background: #111; color: white;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 40px; text-align: center;
+    }
+    .tutorial-step { margin-bottom: 15px; font-size: 18px; color: #ccc; }
 
     /* --- GESTURE BAR --- */
     .home-indicator { 
@@ -162,7 +164,6 @@
 
 <div class="phone">
     <div class="notch"></div>
-
     <div class="screen">
         <div class="status-bar"><span id="clock">12:00</span><span>5G 100%</span></div>
 
@@ -179,14 +180,12 @@
         </div>
         
         <div id="recentsCloseBtn" class="recents-close-x">✕</div>
-
         <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps</div>
         <div class="home-indicator" id="homeIndicator"></div>
     </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'appLauncherOrder_v3';
     const appGrid = document.getElementById('appGrid');
     const appWindowContainer = document.getElementById('appWindowContainer');
     const appSwitcher = document.getElementById('appSwitcher');
@@ -195,25 +194,18 @@
     const emptyRecents = document.getElementById('emptyRecents');
     const recentsCloseBtn = document.getElementById('recentsCloseBtn');
     
-    // Core State
     let runningApps = []; 
     let currentAppPath = null;
     let isSwitcherMode = false;
 
-    // --- TUTORIAL APP DEFINITION ---
-    const TUTORIAL_APP = {
-        id: 999,
-        title: "Info",
-        icon: "ℹ️",
-        path: "system:tutorial",
-        class: "info"
-    };
+    // Hardcoded Tutorial
+    const TUTORIAL_APP = { id: 999, title: "Info", icon: "ℹ️", path: "system:tutorial", class: "info" };
 
     async function init() {
         updateClock(); setInterval(updateClock, 1000);
         await loadApps();
         
-        // Home Gesture
+        // Home Gesture (Swipe Up)
         const indicator = document.getElementById('homeIndicator');
         let startY = 0;
         indicator.addEventListener('touchstart', e => { startY = e.touches[0].clientY; e.preventDefault(); });
@@ -221,31 +213,25 @@
             if (e.changedTouches[0].clientY - startY < -40) handleHomeGesture();
         });
         
-        // Recents Close Button
         recentsCloseBtn.addEventListener('click', closeSwitcher);
-
-        // Switcher Scroll Active Detection
         appSwitcher.addEventListener('scroll', handleSwitcherScroll);
     }
 
     async function loadApps() {
-        // Render Tutorial Icon First
         renderIcon(TUTORIAL_APP);
-
         try {
             const res = await fetch('apps.json');
             if (res.ok) {
                 let apps = await res.json();
                 apps.forEach(renderIcon);
             }
-        } catch (e) { console.log("No external apps loaded"); }
+        } catch (e) { console.log("No apps.json"); }
     }
 
     function renderIcon(app) {
         const el = document.createElement('div');
         el.className = 'app-icon-wrapper';
         el.innerHTML = `<div class="app-icon ${app.class || ''}">${app.icon}</div><div class="app-label">${app.title}</div>`;
-        
         el.addEventListener('click', () => launchApp(app));
         appGrid.appendChild(el);
     }
@@ -257,28 +243,29 @@
         else if (runningApps.length > 0) openSwitcher();
     }
 
-    // --- APP LIFECYCLE ---
+    // --- APP LOGIC ---
     function launchApp(appData) {
-        let app = runningApps.find(a => a.path === appData.path);
-        
-        if (!app) {
-            app = createAppInstance(appData);
-            runningApps.push(app);
-        } else {
+        // Remove existing instance if any (so we push to end/front)
+        let existing = runningApps.find(a => a.path === appData.path);
+        if (existing) {
             runningApps = runningApps.filter(a => a.path !== appData.path);
-            runningApps.push(app);
+            runningApps.push(existing);
+        } else {
+            let newApp = createAppInstance(appData);
+            runningApps.push(newApp);
         }
 
         closeSwitcher();
-        // Restore iframe to window container
-        if (app.cardEl) restoreIframeToWindow(app);
+        let activeApp = runningApps[runningApps.length - 1]; // Last item is active
+
+        if (activeApp.cardEl) restoreIframeToWindow(activeApp);
 
         requestAnimationFrame(() => {
-            app.windowEl.classList.add('active');
+            activeApp.windowEl.classList.add('active');
             runningApps.forEach(a => a.windowEl.style.zIndex = 10);
-            app.windowEl.style.zIndex = 20;
+            activeApp.windowEl.style.zIndex = 20;
             homeScreen.classList.add('zoomed-out');
-            currentAppPath = app.path;
+            currentAppPath = activeApp.path;
         });
     }
 
@@ -286,23 +273,19 @@
         const win = document.createElement('div');
         win.className = 'app-window';
         
-        // Special Handling for Tutorial App
         if (data.path === "system:tutorial") {
             win.innerHTML = `
             <div class="tutorial-content">
-                <div class="tutorial-icon">ℹ️</div>
-                <div class="tutorial-title">Welcome to OS</div>
-                <div class="tutorial-step">1. Swipe up from bottom bar to go Home.</div>
-                <div class="tutorial-step">2. Hold & Swipe up again for Recents.</div>
-                <div class="tutorial-step">3. In Recents: Tap card to Open.</div>
-                <div class="tutorial-step">4. In Recents: <b>Hold Card</b> then Swipe Up to Close.</div>
+                <div style="font-size:60px; margin-bottom:20px;">ℹ️</div>
+                <h2>How to Use</h2><br>
+                <div class="tutorial-step">1. Swipe Up bar to go Home.</div>
+                <div class="tutorial-step">2. Hold & Swipe Up for Recents.</div>
+                <div class="tutorial-step">3. <b>Hold Card</b> & Swipe Up to Close it.</div>
             </div>`;
         } else {
-            // Standard App
             const iframe = document.createElement('iframe');
             iframe.className = 'app-iframe';
             iframe.src = data.path;
-            // Allow forms/scripts but restrict top nav
             iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals');
             win.appendChild(iframe);
         }
@@ -332,18 +315,23 @@
         if (currentAppPath === path) currentAppPath = null;
     }
 
-    // --- APP SWITCHER LOGIC ---
+    // --- SWITCHER ---
     function openSwitcher() {
         isSwitcherMode = true;
         homeScreen.classList.add('zoomed-out');
-        appSwitcher.style.display = 'flex';
+        appSwitcher.style.display = 'flex'; // Make visible
         recentsCloseBtn.style.display = 'flex';
         emptyRecents.style.display = runningApps.length === 0 ? 'block' : 'none';
 
         renderSwitcherCards();
+        
+        // Scroll to the end (most recent app)
         setTimeout(() => {
             if (switcherContainer.lastElementChild) {
-                appSwitcher.scrollLeft = switcherContainer.lastElementChild.offsetLeft;
+                const cardWidth = switcherContainer.lastElementChild.offsetWidth;
+                const containerWidth = appSwitcher.offsetWidth;
+                const scrollPos = switcherContainer.lastElementChild.offsetLeft - (containerWidth / 2) + (cardWidth / 2);
+                appSwitcher.scrollLeft = scrollPos;
             }
             handleSwitcherScroll();
         }, 10);
@@ -360,9 +348,8 @@
 
     function renderSwitcherCards() {
         switcherContainer.innerHTML = '';
-        const reversedApps = [...runningApps].reverse();
-
-        reversedApps.forEach(app => {
+        
+        runningApps.forEach(app => {
             const card = document.createElement('div');
             card.className = 'switcher-card';
             
@@ -372,61 +359,59 @@
             header.innerHTML = `<span style="color:white; font-size:12px; font-weight:bold;">${app.title}</span>`;
             card.appendChild(header);
 
-            // Touch Layer (The Grip Surface)
+            // Grip Layer
             const touchLayer = document.createElement('div');
             touchLayer.className = 'card-touch-layer';
             card.appendChild(touchLayer);
 
-            // Content Area
+            // Content
             const content = document.createElement('div');
             content.style.cssText = "width:100%; height:100%; pointer-events:none;"; 
-            // Move content from window to card
             while(app.windowEl.firstChild) { content.appendChild(app.windowEl.firstChild); }
             card.appendChild(content);
             
-            // --- GESTURE LOGIC ---
-            // 1. Tap to Open
-            // 2. Hold to Grip -> Swipe Up to Close
-            
+            // Interaction Logic (FIXED FOR TAP TO FULLSCREEN)
             let holdTimer = null;
             let isGripped = false;
             let startY = 0;
 
-            // Touch Start on the Overlay
             touchLayer.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
-                // Start Hold Timer
+                isGripped = false; // Reset grip state
+                
+                // Start Hold Timer: if it fires, we transition to grip/drag mode
                 holdTimer = setTimeout(() => {
-                    // USER IS HOLDING
                     isGripped = true;
-                    // Visual feedback: Shrink card
+                    // Visual feedback: Shrink card slightly
                     card.style.transform = 'scale(0.95)';
                     if(navigator.vibrate) navigator.vibrate(20);
-                }, 300); // 300ms hold time
+                }, 300);
             });
 
             touchLayer.addEventListener('touchmove', (e) => {
-                if (!isGripped) {
-                    // If moving before grip time, cancel grip (it's a scroll or tap attempt)
-                    clearTimeout(holdTimer);
-                    return;
+                // If we move too much vertically before the hold timer fires,
+                // we treat it as an immediate drag (for closing)
+                const deltaY = e.touches[0].clientY - startY;
+                
+                if (!isGripped && Math.abs(deltaY) > 5) { // User started dragging before hold time
+                     clearTimeout(holdTimer);
+                     isGripped = true; // Immediately enter grip mode
                 }
-                
-                // If Gripped, allow dragging card
-                e.preventDefault(); // Stop scrolling the list
-                const dy = e.touches[0].clientY - startY;
-                
-                if (dy < 0) { // Dragging Up
-                    card.style.transition = 'none';
-                    card.style.transform = `scale(0.95) translateY(${dy}px)`;
+
+                if (isGripped) {
+                    e.preventDefault(); // Stop scrolling the list if we're dragging the card
+                    if (deltaY < 0) { // Dragging Up
+                        card.style.transition = 'none';
+                        card.style.transform = `scale(0.95) translateY(${deltaY}px)`;
+                    }
                 }
             });
 
             touchLayer.addEventListener('touchend', (e) => {
-                clearTimeout(holdTimer); // Cancel hold if quick tap
+                clearTimeout(holdTimer);
                 
                 if (isGripped) {
-                    // Release Logic
+                    // Release Logic (Close Gesture)
                     const dy = e.changedTouches[0].clientY - startY;
                     if (dy < -100) {
                         // Swipe Up Successful -> Close
@@ -440,7 +425,7 @@
                     }
                     isGripped = false;
                 } else {
-                    // It was a Tap -> Launch
+                    // It was a Quick Tap -> Launch Fullscreen
                     launchApp(app);
                 }
             });
@@ -452,12 +437,11 @@
 
     function restoreIframeToWindow(app) {
         if (!app.cardEl) return;
-        // Move children back to windowEl
-        // Specifically look inside the content div we created
-        const contentDiv = app.cardEl.children[2]; // 0=Header, 1=TouchLayer, 2=Content
+        const contentDiv = app.cardEl.children[2];
         if(contentDiv) {
              while(contentDiv.firstChild) { app.windowEl.appendChild(contentDiv.firstChild); }
         }
+        app.cardEl.remove(); // Remove the card element
         app.cardEl = null;
     }
 
@@ -468,24 +452,11 @@
         runningApps.forEach(app => {
             if (!app.cardEl) return;
             const card = app.cardEl;
-            const touchLayer = card.querySelector('.card-touch-layer');
             const center = card.offsetLeft + (card.offsetWidth/2);
             const dist = Math.abs(center - centerLine);
 
-            if (dist < 50) {
-                // Active Card:
-                // We keep pointer-events on the touchLayer enabled so we can grab it.
-                // We set opacity to full.
-                card.style.opacity = 1;
-                // NOTE: If you want to interact with the app *inside* the switcher,
-                // you would set touchLayer.style.pointerEvents = 'none' here.
-                // BUT, your request was "Hold to swipe up". 
-                // To support both, we keep the layer but pass clicks through if no hold occurred.
-                // Current implementation: Tap layer -> Launch. Hold layer -> Drag. 
-                // This mimics iOS "screenshot" state in recents.
-            } else {
-                card.style.opacity = 0.5;
-            }
+            if (dist < 50) card.style.opacity = 1;
+            else card.style.opacity = 0.5;
         });
     }
     
