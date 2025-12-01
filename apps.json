@@ -8,7 +8,7 @@
     { "id": 7, "title": "🗺️ Map Navigator", "icon": "🗺️", "path": "page7.html", "class": "camera" },
     { "id": 8, "title": "📍 Offline Maps", "icon": "📍", "path": "page8.html", "class": "mic" },
     { "id": 9, "title": "📰 News Reader Pro", "icon": "📰", "path": "page9.html", "class": "motion" },
-    { "id": 10, "title": "📺 LG webOS Remote", "icon": "📺", "path": "page10.html", "class": "torch" },
+//    { "id": 10, "title": "📺 LG webOS Remote", "icon": "📺", "path": "page10.html", "class": "torch" },
     { "id": 11, "title": "⏱️ Cycle Counter", "icon": "⏱️", "path": "page11.html", "class": "touch" },
     { "id": 13, "title": "🎨 Theme Switcher", "icon": "🎨", "path": "page13.html", "class": "speaker" },
     { "id": 17, "title": "🗃️ Page 17", "icon": "🗃️", "path": "page17.html", "class": "camera" },
