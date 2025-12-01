@@ -1,1 +1,259 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover"> <title>Tinder for Taverns</title> <script src="https:<link rel="stylesheet" href="https:<style> @import url('https:body{font-family:'Inter',sans-serif;background-color:#0d1117;color:#e2e8f0;overscroll-behavior:none;}.container{max-width:640px;height:100vh;margin:0 auto;display:flex;flex-direction:column;padding-bottom:constant(safe-area-inset-bottom);padding-bottom:env(safe-area-inset-bottom);}#map{height:25vh;border-radius:0.75rem;margin-bottom:0.5rem;box-shadow:0 4px 10px rgba(0,0,0,0.5);transition:all 0.3s ease-in-out;}.pub-card{background-color:#161b22;border-radius:1.5rem;overflow:hidden;box-shadow:0 10px 20px rgba(0,0,0,0.4);position:absolute;width:100%;height:100%;transition:transform 0.3s ease-out,opacity 0.3s ease-out;transform-origin:center;top:0;left:0;}.card-stack{position:relative;flex-grow:1;min-height:400px;max-height:70vh;}.like-btn,.dislike-btn{padding:1rem 2rem;border-radius:9999px;font-size:1.125rem;font-weight:700;box-shadow:0 4px 6px rgba(0,0,0,0.2);transition:transform 0.1s ease,background-color 0.1s ease;}.like-btn:active,.dislike-btn:active{transform:scale(0.95);}.like-btn{background-color:#10b981;color:white;border:3px solid #059669;}.dislike-btn{background-color:#ef4444;color:white;border:3px solid #dc2626;}.skeleton{animation:pulse 1.5s infinite;background-color:#2f3640;border-radius:0.5rem;}@keyframes pulse{0%,100%{opacity:0.8;}50%{opacity:0.5;}}.tinder-title{background:linear-gradient(90deg,#ef4444,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}</style> </head> <body> <div class="container"> <header class="text-center py-4"> <h1 class="text-3xl font-extrabold tinder-title">Tinder for Taverns 🍺</h1> </header> <!-- Map Display --> <div id="map"></div> <!-- Card and Control Area --> <div class="flex flex-col flex-grow w-full overflow-hidden"> <!-- Input Screen (Initial View) --> <div id="input-screen" class="p-6 bg-neutral-900 rounded-xl shadow-lg space-y-4 mb-4"> <h2 class="text-xl font-bold text-white">Find Your Next Destination</h2> <p class="text-sm text-gray-400">Where are you looking to crawl tonight?</p> <input type="text" id="location-input" placeholder="e.g.,Shoreditch,London" class="w-full p-3 bg-neutral-800 border border-neutral-700 rounded-lg text-white focus:ring-red-500 focus:border-red-500" value="Shoreditch,London"> <button id="start-search-btn" class="w-full bg-red-600 text-white p-3 rounded-lg font-semibold hover:bg-red-700 transition duration-150 shadow-md" onclick="startSearch()"> Start Swiping! </button> </div> <!-- Loading Indicator --> <div id="loading-indicator" class="hidden flex flex-col items-center justify-center p-8 bg-neutral-900 rounded-xl shadow-lg"> <svg class="animate-spin h-8 w-8 text-red-500 mb-4" viewBox="0 0 24 24"> <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle> <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> </svg> <p id="loading-message" class="text-lg font-medium text-gray-300">Finding the best pubs...</p> </div> <!-- Card Stack Area --> <div id="card-stack" class="card-stack hidden"> <!-- Pub cards will be injected here --> </div> <!-- Controls (Like/Dislike) --> <div id="controls" class="flex justify-center space-x-8 py-4 hidden"> <button class="dislike-btn" onclick="handleSwipe('dislike')"> <span class="text-xl">👎</span> Pass </button> <button class="like-btn" onclick="handleSwipe('like')"> <span class="text-xl">👍</span> Match </button> </div> <!-- No More Pubs Message --> <div id="finished-message" class="hidden text-center p-8 bg-neutral-900 rounded-xl shadow-lg"> <p class="text-xl font-bold text-red-400">That's all the matches for now!</p> <p class="text-gray-400 mt-2">Try a new location or refresh to start over.</p> </div> </div> <!-- Auth Status for Canvas Environment --> <div id="auth-status" class="text-center text-xs text-neutral-600 mt-2 py-2">Initializing...</div> </div> <script src="https:<script type="module"> import{initializeApp}from "https:import{getAuth,signInAnonymously,signInWithCustomToken,onAuthStateChanged}from "https:import{getFirestore}from "https:const appId = typeof __app_id !== 'undefined' ? __app_id:'default-app-id';const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config):null;const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token:null;let app,auth,db,userId;if (firebaseConfig){app = initializeApp(firebaseConfig);db = getFirestore(app);auth = getAuth(app);}const authStatusEl = document.getElementById('auth-status');async function initializeAuth(){if (!auth){authStatusEl.textContent = "Firebase is not configured.";return;}try{if (initialAuthToken){await signInWithCustomToken(auth,initialAuthToken);}else{await signInAnonymously(auth);}onAuthStateChanged(auth,(user) =>{if (user){userId = user.uid;authStatusEl.textContent = `User ID:${userId.substring(0,12)}...`;}else{authStatusEl.textContent = "Authentication failed. Signed in anonymously.";}});}catch (error){console.error("Firebase Auth Error:",error);authStatusEl.textContent = `Authentication Error. (See console)`;}}if (firebaseConfig){initializeAuth();}else{authStatusEl.textContent = "Running without Firebase. Auth is disabled.";}window.pubs = [];window.currentPubIndex = 0;let userLocation ={lat:51.528,lon:-0.112};let map = null;let userMarker = null;let pubMarker = null;const mapEl = document.getElementById('map');const inputScreen = document.getElementById('input-screen');const loadingIndicator = document.getElementById('loading-indicator');const loadingMessage = document.getElementById('loading-message');const cardStack = document.getElementById('card-stack');const controls = document.getElementById('controls');const finishedMessage = document.getElementById('finished-message');window.startSearch = startSearch;window.handleSwipe = handleSwipe;function getUserLocation(){return new Promise((resolve,reject) =>{if (!navigator.geolocation){console.warn("Geolocation not supported. Using default London coordinates.");resolve(userLocation);return;}loadingMessage.textContent = "Getting your precise location...";navigator.geolocation.getCurrentPosition( (position) =>{userLocation.lat = position.coords.latitude;userLocation.lon = position.coords.longitude;resolve(userLocation);},(error) =>{console.error("Geolocation failed:",error.message);resolve(userLocation);},{enableHighAccuracy:true,timeout:5000,maximumAge:0});});}function initializeMap(){if (map){map.remove();}map = L.map('map',{zoomControl:false,attributionControl:false,scrollWheelZoom:false,dragging:false}).setView([userLocation.lat,userLocation.lon],13);L.tileLayer('https:maxZoom:18,minZoom:11}).addTo(map);userMarker = L.circleMarker([userLocation.lat,userLocation.lon],{radius:8,color:'#10b981',fillColor:'#10b981',fillOpacity:1,weight:2}).bindPopup("Your Location").addTo(map);pubMarker = L.marker([userLocation.lat,userLocation.lon],{icon:L.divIcon({className:'pub-icon',html:'<div class="text-3xl" style="color:#ef4444;text-shadow:0 0 5px #000;">🍻</div>',iconSize:[30,30],iconAnchor:[15,30]})}).bindPopup("Target Pub").addTo(map);}function updateMap(pub){if (!map) return;const pubLatLon = [pub.lat,pub.lon];pubMarker.setLatLng(pubLatLon).bindPopup(pub.name).openPopup();const bounds = L.latLngBounds([userLocation.lat,userLocation.lon],pubLatLon);map.fitBounds(bounds,{padding:[50,50],maxZoom:15,duration:0.5});}function calculateDistance(lat1,lon1,lat2,lon2){const R = 6371;const dLat = (lat2 - lat1) * (Math.PI / 180);const dLon = (lon2 - lon1) * (Math.PI / 180);const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);const c = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1 - a));return (R * c).toFixed(1);}const fetchPubs = async (location) =>{const systemPrompt = `You are a creative,enthusiastic,and knowledgeable travel blogger specializing in pubs and bars. Your goal is to generate enticing 'dating profile' descriptions for the best three pubs in a given location. Each 'about' description must be 2-3 sentences long,highly stylized,and focus on ambiance,unique history,or signature drinks. You must also generate the coordinates (lat/lon) and a short image prompt for a placeholder image.`;const userQuery = `Find the three best and most unique pubs or bars in the vicinity of ${location}. Generate the data in the required JSON format.`;const pubSchema ={type:"ARRAY",items:{type:"OBJECT",properties:{"name":{"type":"STRING"},"rating":{"type":"NUMBER"},"about":{"type":"STRING"},"lat":{"type":"NUMBER"},"lon":{"type":"NUMBER"},"imagePrompt":{"type":"STRING"}},required:["name","rating","about","lat","lon","imagePrompt"]}};const payload ={contents:[{parts:[{text:userQuery}]}],tools:[{"google_search":{}}],systemInstruction:{parts:[{text:systemPrompt}]},generationConfig:{responseMimeType:"application/json",responseSchema:pubSchema}};const apiKey = "";const apiUrl = `https:let response;try{loadingMessage.textContent = "Fetching pub profiles from the web...";response = await fetch(apiUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const result = await response.json();const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;if (response.ok && textContent){const parsedData = JSON.parse(textContent);return parsedData;}else{console.error("Gemini API Error:",result);return [];}}catch (error){console.error("Network or parsing error:",error);return [];}};function createPubCard(pub,index){const card = document.createElement('div');card.className = `pub-card ${index === 0 ? '':'opacity-0 scale-90 pointer-events-none'}`;card.id = `pub-card-${index}`;card.setAttribute('data-index',index);card.style.zIndex = pubs.length - index;const distance = calculateDistance(userLocation.lat,userLocation.lon,pub.lat,pub.lon);const imageText = encodeURIComponent(pub.imagePrompt);const imageUrl = `https:const fullStars = Math.floor(pub.rating);const partialStar = (pub.rating % 1) >= 0.5 ? '⭐':'';const emptyStars = 5 - fullStars - (partialStar ? 1:0);const ratingStars = Array(fullStars).fill('⭐').join('') + partialStar + Array(emptyStars).fill('☆').join('');card.innerHTML = ` <div class="h-4/6 relative"> <img src="${imageUrl}" alt="${pub.name}" class="w-full h-full object-cover" onerror="this.src='https:<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4"> <div> <h2 class="text-4xl font-extrabold text-white leading-tight">${pub.name}</h2> <div class="flex items-center space-x-2 mt-1"> <span class="text-lg font-bold text-yellow-400">${pub.rating.toFixed(1)}</span> <span class="text-xl">${ratingStars}</span> </div> </div> </div> </div> <div class="h-2/6 p-4 overflow-y-auto"> <h3 class="text-xl font-bold text-red-500 mb-2">About</h3> <p class="text-gray-300 mb-3">${pub.about}</p> <div class="text-sm font-semibold text-gray-400"> <span class="text-lg font-bold text-red-500">${distance}km</span> away </div> </div> `;return card;}function renderCards(){cardStack.innerHTML = '';pubs.forEach((pub,index) =>{const card = createPubCard(pub,index);cardStack.appendChild(card);});if (pubs.length > 0){updateMap(pubs[0]);}}async function startSearch(){const location = document.getElementById('location-input').value.trim();if (!location) return;inputScreen.classList.add('hidden');loadingIndicator.classList.remove('hidden');controls.classList.add('hidden');cardStack.classList.add('hidden');await getUserLocation();initializeMap();pubs = await fetchPubs(location);loadingIndicator.classList.add('hidden');if (pubs.length === 0){finishedMessage.classList.remove('hidden');finishedMessage.innerHTML = `<p class="text-xl font-bold text-red-400">No pubs found near ${location}!</p><p class="text-gray-400 mt-2">Try a different,more specific location.</p>`;}else{currentPubIndex = 0;renderCards();cardStack.classList.remove('hidden');controls.classList.remove('hidden');}}function handleSwipe(action){if (pubs.length === 0 || currentPubIndex >= pubs.length) return;const currentCard = document.getElementById(`pub-card-${currentPubIndex}`);const exitX = action === 'like' ? '150vw':'-150vw';const exitRotate = action === 'like' ? 'rotate(30deg)':'rotate(-30deg)';currentCard.style.transition = 'transform 0.4s ease-in';currentCard.style.transform = `translate(${exitX},0) ${exitRotate}`;currentCard.style.opacity = '0';currentCard.style.pointerEvents = 'none';console.log(`${pubs[currentPubIndex].name}was ${action}d!`);currentPubIndex++;if (currentPubIndex < pubs.length){const nextCard = document.getElementById(`pub-card-${currentPubIndex}`);nextCard.style.transition = 'transform 0.3s ease-out,opacity 0.3s ease-out';nextCard.style.transform = 'translate(0,0) scale(1)';nextCard.style.opacity = '1';nextCard.style.pointerEvents = 'auto';updateMap(pubs[currentPubIndex]);}else{controls.classList.add('hidden');finishedMessage.classList.remove('hidden');}}document.addEventListener('DOMContentLoaded',() =>{initializeMap();});</script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minification Comparator</title>
+    <style>
+        /* Mobile-First Base Styles */
+        body {
+            font-family: monospace;
+            background-color: #282c34;
+            color: #abb2bf;
+            margin: 10px;
+            padding: 10px;
+        }
+        h1 {
+            color: #61afef;
+            border-bottom: 2px solid #56b6c2;
+            padding-bottom: 5px;
+            font-size: 1.5em;
+        }
+        p, .output-label {
+            font-size: 0.9em;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            background-color: #3e4451;
+            color: #abb2bf;
+            border: 1px solid #5c6370;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #98c379;
+            color: #282c34;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+        button:hover { background-color: #a7d389; }
+        .output-container { margin-top: 10px; }
+        .output-label { color: #e5c07b; margin-bottom: 5px; display: block; }
+
+        /* Flex container for output controls */
+        .output-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        /* Copy Button specific styles */
+        #copyButton {
+            width: auto;
+            padding: 5px 10px;
+            background-color: #56b6c2;
+            color: #fff;
+            font-size: 0.8em;
+            margin: 0;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        #copyButton:hover {
+            background-color: #61afef;
+        }
+
+        /* Utility class for feedback */
+        .copied {
+            background-color: #98c379 !important;
+            transform: scale(1.05);
+        }
+
+        /* Comparison Data Display */
+        .comparison-data {
+            background-color: #3e4451;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        .comparison-data span {
+            display: block;
+            padding: 3px 0;
+        }
+        .red { color: #ff6c6b; }
+    </style>
+</head>
+<body>
+
+    <h1>Constraint-Based Minification 📏</h1>
+    <p>The tool uses variable shortening and text dictionary compression.</p>
+
+    <h2>Input (Original Code)</h2>
+    <textarea id="inputCode">
+/* Original identifier names: container, float */
+.container { 
+    width: 100%; 
+    animation: float 2s; 
+    border-radius: 5px;
+} 
+
+@keyframes float { 
+    0% { transform: translateY(0); } 
+}
+
+/* This repeated text pattern makes a good candidate for dictionary compression! */
+/* This repeated text pattern makes a good candidate for dictionary compression! */
+    </textarea>
+
+    <button onclick="processCode()">Process Code & Compare Sizes</button>
+
+    <div class="comparison-data">
+        <span id="originalSize">Original Size: 0 Bytes</span>
+        <span id="minifiedSize">Minified Size: 0 Bytes</span>
+        <span id="reductionPercent">Reduction: 0%</span>
+    </div>
+
+    <div class="output-container">
+        <div class="output-controls">
+            <span class="output-label">Output (Compressed & Edited)</span>
+            <button id="copyButton" onclick="copyCode()">Copy</button>
+        </div>
+        <textarea id="outputCode" readonly></textarea>
+    </div>
+
+    <script>
+        // --- Algorithmic Compression Maps ---
+
+        // Map 1: Variable/Identifier Shortening (Max 2 chars)
+        const identifierMap = {
+            'container': 'c',
+            'float': 'f',
+            'glitch1': 'g1',
+            'glitch2': 'g2',
+        };
+
+        // Map 2: Common Text/String Dictionary Compression
+        // Keys are common long strings; Values are short, unused placeholders.
+        const textMap = {
+            // Shorten CSS property
+            'border-radius': 'BR',
+            // Shorten repeated long string (from comments in the example input)
+            'This repeated text pattern makes a good candidate for dictionary compression!': 'TEXT-KEY',
+        };
+
+        // --- Core Compression Functions ---
+        
+        function applyReplacements(code, map) {
+            let processedCode = code;
+            // Iterate through the map and replace
+            for (const original in map) {
+                const minified = map[original];
+                
+                // Use a non-word-boundary replacement for the text map to catch partial phrases/strings
+                // Use a global flag for all replacements
+                const regex = new RegExp(original, 'g'); 
+                processedCode = processedCode.replace(regex, minified);
+            }
+            return processedCode;
+        }
+
+        function applyMinification(code) {
+            let minified = code.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''); // 1. Remove comments
+            minified = minified.replace(/\s+/g, ' '); // 2. Consolidate whitespace
+            minified = minified.replace(/\s?([;{}])\s?/g, '$1'); // 3. Remove spaces around delimiters
+            minified = minified.replace(/\s?:\s?/g, ':'); // 4. Remove spaces around colons
+            minified = minified.replace(/,\s/g, ','); // 5. Remove spaces after commas
+            
+            // 6. Add CSS Shorthand Optimization for 0 values
+            minified = minified.replace(/([: ])0(px|em|pt|rem|vh|vw)/g, '$1 0');
+
+            return minified.trim();
+        }
+
+        // --- Size Comparison Logic ---
+        function getSizeInBytes(str) {
+            return new Blob([str]).size;
+        }
+
+        function updateComparison(originalStr, minifiedStr) {
+            const originalBytes = getSizeInBytes(originalStr);
+            const minifiedBytes = getSizeInBytes(minifiedStr);
+            const reduction = originalBytes - minifiedBytes;
+            let percent = 0;
+
+            if (originalBytes > 0) {
+                percent = ((reduction / originalBytes) * 100).toFixed(2);
+            }
+            
+            document.getElementById('originalSize').textContent = `Original Size: ${originalBytes} Bytes`;
+            document.getElementById('minifiedSize').textContent = `Compressed Size: ${minifiedBytes} Bytes`;
+            
+            const reductionElement = document.getElementById('reductionPercent');
+            reductionElement.textContent = `Reduction: ${percent}%`;
+            reductionElement.classList.toggle('red', percent > 0);
+        }
+
+        // --- Copy to Clipboard Logic ---
+        function copyCode() {
+            const outputElement = document.getElementById('outputCode');
+            const copyButton = document.getElementById('copyButton');
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(outputElement.value).then(() => {
+                    copyButton.textContent = 'Copied!';
+                    copyButton.classList.add('copied');
+                    setTimeout(() => {
+                        copyButton.textContent = 'Copy';
+                        copyButton.classList.remove('copied');
+                    }, 1500);
+                }).catch(err => {
+                    alert('Copy failed.');
+                });
+            } else {
+                outputElement.select();
+                document.execCommand('copy');
+                copyButton.textContent = 'Copied!';
+                copyButton.classList.add('copied');
+                setTimeout(() => {
+                    copyButton.textContent = 'Copy';
+                    copyButton.classList.remove('copied');
+                }, 1500);
+            }
+        }
+
+        // --- Main Execution Function ---
+        function processCode() {
+            const inputElement = document.getElementById('inputCode');
+            const outputElement = document.getElementById('outputCode');
+            const inputCode = inputElement.value;
+
+            // Step 1: Algorithmic Constraint-Based Editing (Variable Shortening)
+            let processedCode = applyReplacements(inputCode, identifierMap);
+            
+            // Step 2: Advanced Dictionary Compression (Text Shortening)
+            processedCode = applyReplacements(processedCode, textMap);
+
+            // Step 3: Standard Minification (Whitespace, Comments, Syntax)
+            let minifiedCode = applyMinification(processedCode);
+            
+            // Step 4: Comparison and Display
+            updateComparison(inputCode, minifiedCode);
+            outputElement.value = minifiedCode;
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', processCode);
+    </script>
+
+</body>
+</html>
