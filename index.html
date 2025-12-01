@@ -82,17 +82,16 @@
     /* --- APP SWITCHER (FIXED SCROLLING) --- */
     .app-switcher {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: transparent; z-index: 40; display: none; 
-        /* UPDATED: Flex container logic */
-        display: none; /* Toggled to flex by JS */
+        background: transparent; z-index: 40; 
+        display: none; 
         flex-direction: row;
         align-items: center;
         overflow-x: auto; 
         overflow-y: hidden;
         white-space: nowrap; 
         scroll-snap-type: x mandatory;
-        padding-left: 20px; /* Start padding */
-        padding-right: 20px; /* End padding */
+        padding-left: 20px;
+        padding-right: 20px;
         pointer-events: auto;
     }
     
@@ -101,7 +100,6 @@
         height: 100%; 
         align-items: center; 
         gap: 20px; 
-        /* Ensures container grows with content */
         min-width: min-content; 
     }
 
@@ -110,7 +108,7 @@
         background: #222; border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         scroll-snap-align: center; 
-        flex-shrink: 0; /* CRITICAL: Prevents cards from squishing */
+        flex-shrink: 0;
         transform-origin: center; transition: transform 0.2s;
         overflow: hidden;
     }
@@ -330,10 +328,8 @@
         // Scroll to the end (most recent app)
         setTimeout(() => {
             if (switcherContainer.lastElementChild) {
-                // Align last card to center
                 const cardWidth = switcherContainer.lastElementChild.offsetWidth;
                 const containerWidth = appSwitcher.offsetWidth;
-                // Scroll amount = Card Offset Left - (Screen Half) + (Card Half)
                 const scrollPos = switcherContainer.lastElementChild.offsetLeft - (containerWidth / 2) + (cardWidth / 2);
                 appSwitcher.scrollLeft = scrollPos;
             }
@@ -352,11 +348,6 @@
 
     function renderSwitcherCards() {
         switcherContainer.innerHTML = '';
-        
-        // REVERSE order so most recent is last in list? 
-        // Actually, for scrolling right-to-left, we usually want most recent at the end.
-        // Let's keep normal order: [Oldest ... Newest]. 
-        // So we scroll to the end to see the active one.
         
         runningApps.forEach(app => {
             const card = document.createElement('div');
@@ -379,44 +370,62 @@
             while(app.windowEl.firstChild) { content.appendChild(app.windowEl.firstChild); }
             card.appendChild(content);
             
-            // Interaction Logic
+            // Interaction Logic (FIXED FOR TAP TO FULLSCREEN)
             let holdTimer = null;
             let isGripped = false;
             let startY = 0;
 
             touchLayer.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
+                isGripped = false; // Reset grip state
+                
+                // Start Hold Timer: if it fires, we transition to grip/drag mode
                 holdTimer = setTimeout(() => {
                     isGripped = true;
+                    // Visual feedback: Shrink card slightly
                     card.style.transform = 'scale(0.95)';
                     if(navigator.vibrate) navigator.vibrate(20);
                 }, 300);
             });
 
             touchLayer.addEventListener('touchmove', (e) => {
-                if (!isGripped) { clearTimeout(holdTimer); return; }
-                e.preventDefault();
-                const dy = e.touches[0].clientY - startY;
-                if (dy < 0) {
-                    card.style.transition = 'none';
-                    card.style.transform = `scale(0.95) translateY(${dy}px)`;
+                // If we move too much vertically before the hold timer fires,
+                // we treat it as an immediate drag (for closing)
+                const deltaY = e.touches[0].clientY - startY;
+                
+                if (!isGripped && Math.abs(deltaY) > 5) { // User started dragging before hold time
+                     clearTimeout(holdTimer);
+                     isGripped = true; // Immediately enter grip mode
+                }
+
+                if (isGripped) {
+                    e.preventDefault(); // Stop scrolling the list if we're dragging the card
+                    if (deltaY < 0) { // Dragging Up
+                        card.style.transition = 'none';
+                        card.style.transform = `scale(0.95) translateY(${deltaY}px)`;
+                    }
                 }
             });
 
             touchLayer.addEventListener('touchend', (e) => {
                 clearTimeout(holdTimer);
+                
                 if (isGripped) {
+                    // Release Logic (Close Gesture)
                     const dy = e.changedTouches[0].clientY - startY;
                     if (dy < -100) {
+                        // Swipe Up Successful -> Close
                         card.style.transition = 'transform 0.3s ease-out';
                         card.style.transform = 'translateY(-100vh)';
                         setTimeout(() => closeApp(app.path), 300);
                     } else {
+                        // Snap Back
                         card.style.transition = 'transform 0.2s ease';
                         card.style.transform = 'scale(1)';
                     }
                     isGripped = false;
                 } else {
+                    // It was a Quick Tap -> Launch Fullscreen
                     launchApp(app);
                 }
             });
@@ -432,6 +441,7 @@
         if(contentDiv) {
              while(contentDiv.firstChild) { app.windowEl.appendChild(contentDiv.firstChild); }
         }
+        app.cardEl.remove(); // Remove the card element
         app.cardEl = null;
     }
 
