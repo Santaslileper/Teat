@@ -5,43 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Santaslileper Adaptive App Launcher</title>
   <style>
-    /* BASE STYLES */
+    /* ----------------------------------------------------------------
+       CORE STYLES
+    ---------------------------------------------------------------- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
     .status-bar { height: 44px; background: rgba(0,0,0,0.3); padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; z-index: 5; }
     .home-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 140px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
     
-    /* LAUNCHER VIEWPORT - FIXED CLOSE BAR */
-    .app-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20; display: none; position: relative; }
-    .app-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; background-color: white; }
-    .close-bar { position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: rgba(40, 40, 40, 0.9); display: flex; align-items: center; padding: 0 10px; z-index: 21; backdrop-filter: blur(10px); }
+    /* LAUNCHER VIEWPORT */
+    .app-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20; display: none; position: relative; overflow: hidden; }
+    .app-window { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: translateZ(0); transition: transform 0.3s ease-out; will-change: transform; z-index: 10; background: #fff; }
+    .app-iframe { width: 100%; height: 100%; border: none; background-color: white; }
+    .close-bar { position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: rgba(40, 40, 40, 0.9); display: flex; align-items: center; padding: 0 10px; z-index: 21; backdrop-filter: blur(10px); color: white; }
     .close-btn { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
     .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
-    
-    /* HOME SCREEN STYLES */
+
+    /* HOME SCREEN & ICONS */
     .home-screen { flex: 1; padding: 60px 20px 20px 20px; }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    .app-icon-wrapper { text-align: center; text-decoration: none; touch-action: none; }
+    
+    .app-icon-wrapper { 
+        text-align: center; text-decoration: none; touch-action: none; 
+        transition: transform 0.2s ease-out; /* BUMPING ANIMATION: Applies smooth shifting */
+    }
+    
     .app-icon {
-      width: 100%; aspect-ratio: 1; 
-      border-radius: 22%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); 
+      width: 100%; aspect-ratio: 1; border-radius: 22%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); 
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; font-size: 32px; color: #fff; 
-      transition: transform 0.1s, box-shadow 0.1s;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; 
+      font-size: 32px; color: #fff; transition: transform 0.1s, box-shadow 0.1s; 
     }
     
     /* INTERACTION STYLES (iOS-like) */
     .app-icon:active { transform: scale(0.9); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5); }
     .app-icon-wrapper.dragging { z-index: 100; cursor: grabbing; }
     .app-icon-wrapper.dragging .app-icon {
-      transform: scale(1.15); /* Lifts the icon */
-      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); /* Big shadow for 'floating' */
-      opacity: 0.8; 
-      transition: none; /* Crucial: disables transition during drag */
+      transform: scale(1.15); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); opacity: 0.8; 
+      transition: none; /* Disable transition on dragged item itself */
     }
-
-    /* Custom Gradients */
+    
+    /* Custom Gradients (Minified) */
     .app-icon.camera { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .app-icon.mic { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     .app-icon.motion { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -51,7 +55,15 @@
     
     .app-label { color: #fff; font-size: 12px; margin-top: 4px; text-align: center; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); }
 
-    /* RESPONSIVENESS (UNCHANGED) */
+    /* APP SWITCHER STYLES */
+    .app-switcher { position: absolute; top: 40px; left: 0; width: 100%; height: calc(100% - 40px); background: rgba(0, 0, 0, 0.8); z-index: 20; display: none; padding: 20px; overflow-y: auto; gap: 15px; flex-direction: column; align-items: center; }
+    .switcher-card { width: 90%; max-width: 400px; height: 200px; background: #222; border-radius: 15px; box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5); position: relative; cursor: pointer; overflow: hidden; border: 4px solid #fff; opacity: 0.95; transition: transform 0.2s, opacity 0.2s; }
+    .switcher-card:hover { transform: scale(1.02); opacity: 1; }
+    .switcher-card-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scale(0.246); transform-origin: top left; }
+    .switcher-card-title { position: absolute; bottom: 5px; left: 10px; color: white; font-size: 14px; font-weight: 600; text-shadow: 0 0 5px black; z-index: 5; }
+    .switcher-close-btn { position: absolute; top: 5px; right: 5px; background: #ff3b30; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; line-height: 25px; text-align: center; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+    
+    /* RESPONSIVENESS (Minified) */
     @media (min-width: 768px) {
         .phone { width: 375px; height: 812px; background: #1d1d1f; border-radius: 50px; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 12px solid #2c2c2e; overflow: hidden; display: block; }
         .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 10; display: block; }
@@ -97,18 +109,15 @@
 
       <div class="app-display" id="appDisplay">
         
-        <iframe 
-            class="app-iframe" 
-            id="appIframe" 
-            src=""
-            allow="fullscreen" 
-            sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
-            title="Application Viewport">
-        </iframe>
+        <div id="appWindowContainer">
+          </div>
         
+        <div class="app-switcher" id="appSwitcher">
+          </div>
+
         <div class="close-bar">
-            <span id="app-title-display" style="flex-grow: 1; font-weight: bold;"></span>
-            <button class="close-btn" id="closeAppBtn">Close</button>
+            <span id="app-title-display" style="flex-grow: 1; font-weight: bold; cursor: default;">Home</span>
+            <button class="close-btn" id="toggleAppSwitcherBtn">Recents</button>
         </div>
 
       </div>
@@ -119,12 +128,18 @@
   <script>
     const appGrid = document.getElementById('appGrid');
     const appDisplay = document.getElementById('appDisplay');
-    const appIframe = document.getElementById('appIframe');
+    const appWindowContainer = document.getElementById('appWindowContainer');
+    const appSwitcher = document.getElementById('appSwitcher');
     const appTitleDisplay = document.getElementById('app-title-display');
-    const closeAppBtn = document.getElementById('closeAppBtn');
+    const toggleAppSwitcherBtn = document.getElementById('toggleAppSwitcherBtn');
     
     const STORAGE_KEY = 'appLauncherOrder';
+    
+    let runningApps = []; 
+    let currentAppPath = null;
+    let isSwitcherOpen = false;
     let draggedItem = null;
+
 
     // --- Core Icon Rendering and Drag Setup ---
 
@@ -169,19 +184,7 @@
         return wrapper;
     }
 
-    // --- App Launch/Close ---
-    function launchApp(path, title) {
-        appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim(); 
-        appIframe.src = path;
-        appDisplay.style.display = 'flex'; 
-    }
-
-    closeAppBtn.addEventListener('click', () => {
-        appDisplay.style.display = 'none'; 
-        appIframe.src = 'about:blank'; 
-    });
-
-    // --- Local Storage Management ---
+    // Local Storage Management
     function getSavedOrder() {
         const storedOrder = localStorage.getItem(STORAGE_KEY);
         return storedOrder ? JSON.parse(storedOrder) : null;
@@ -212,12 +215,12 @@
         return sortedData;
     }
 
-    // --- Drag and Drop Handlers ---
+    // Drag and Drop Handlers (The logic remains the same, but the CSS transition adds the animation)
     function handleDragStart(e) {
         draggedItem = this;
         e.dataTransfer.setData('text/html', ''); 
         this.classList.add('dragging'); 
-        if (navigator.vibrate) { // iOS-like haptic feedback
+        if (navigator.vibrate) { 
             navigator.vibrate(50); 
         }
     }
@@ -225,11 +228,9 @@
     function handleDragOver(e) {
         e.preventDefault(); 
         
-        // Find the element we are hovering over that is NOT the dragged element
         const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
         if (!target) return;
         
-        // Determine insertion point based on mouse position
         const rect = target.getBoundingClientRect();
         const next = (e.clientX - rect.left) / rect.width > 0.5; 
 
@@ -238,6 +239,8 @@
         } else {
             appGrid.insertBefore(draggedItem, target);
         }
+        // The CSS transition on .app-icon-wrapper causes the other icons to smoothly 
+        // "bump" out of the way when insertBefore() reorders the DOM.
     }
 
     function handleDrop(e) {
@@ -252,25 +255,170 @@
     }
 
 
-    // --- Async Fetch and Initial Render ---
+    // --- App Lifecycle Management (Multitasking) ---
+
+    function launchApp(path, title) {
+        let app = runningApps.find(a => a.path === path);
+
+        if (!app) {
+            app = createNewAppWindow(path, title);
+            runningApps.push(app);
+        }
+
+        isSwitcherOpen = false;
+        appSwitcher.style.display = 'none';
+
+        setActiveApp(path, title);
+        appDisplay.style.display = 'block';
+
+        appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim();
+    }
+
+    function createNewAppWindow(path, title) {
+        const appWindow = document.createElement('div');
+        appWindow.className = 'app-window';
+        appWindow.dataset.path = path;
+
+        const iframe = document.createElement('iframe');
+        iframe.className = 'app-iframe';
+        iframe.src = path;
+        iframe.title = title;
+        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups');
+
+        appWindow.appendChild(iframe);
+        appWindowContainer.appendChild(appWindow);
+        
+        return { path, title, windowElement: appWindow };
+    }
+
+    function setActiveApp(path, title) {
+        runningApps.forEach(app => {
+            app.windowElement.style.transform = 'translateX(100%)'; 
+            app.windowElement.style.zIndex = 10;
+        });
+
+        const app = runningApps.find(a => a.path === path);
+        if (app) {
+            app.windowElement.style.transform = 'translateX(0)'; 
+            app.windowElement.style.zIndex = 15;
+            currentAppPath = path;
+            appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim();
+        }
+    }
+    
+    function closeApp(path) {
+        runningApps = runningApps.filter(app => {
+            if (app.path === path) {
+                app.windowElement.remove();
+                return false;
+            }
+            return true;
+        });
+        
+        if (currentAppPath === path) {
+            currentAppPath = null;
+            renderAppSwitcher();
+            if (runningApps.length === 0) {
+                 appDisplay.style.display = 'none';
+                 appSwitcher.style.display = 'none';
+                 isSwitcherOpen = false;
+            } else {
+                 appSwitcher.style.display = 'flex'; 
+                 isSwitcherOpen = true;
+            }
+        } else if (isSwitcherOpen) {
+            renderAppSwitcher();
+        }
+    }
+
+    // --- App Switcher/Recents Logic ---
+    
+    function renderAppSwitcher() {
+        appSwitcher.innerHTML = '';
+        
+        if (runningApps.length === 0) {
+             appSwitcher.innerHTML = '<div style="color: white; margin-top: 50px;">No recent apps.</div>';
+             appTitleDisplay.textContent = 'Home';
+             return;
+        }
+
+        appTitleDisplay.textContent = 'Recents';
+        
+        [...runningApps].reverse().forEach(app => {
+            const card = document.createElement('div');
+            card.className = 'switcher-card';
+            card.dataset.path = app.path;
+            
+            const iframeClone = app.windowElement.querySelector('.app-iframe').cloneNode(true);
+            iframeClone.className = 'switcher-card-iframe';
+
+            const titleElement = document.createElement('div');
+            titleElement.className = 'switcher-card-title';
+            titleElement.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim();
+
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'switcher-close-btn';
+            closeBtn.textContent = 'X';
+
+            card.appendChild(iframeClone);
+            card.appendChild(titleElement);
+            card.appendChild(closeBtn);
+            
+            appSwitcher.appendChild(card);
+            
+            closeBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
+                closeApp(app.path);
+            });
+            
+            card.addEventListener('click', () => {
+                launchApp(app.path, app.title);
+            });
+        });
+        
+        runningApps.forEach(app => {
+             app.windowElement.style.transform = 'translateY(-100%)'; 
+             app.windowElement.style.zIndex = 10;
+        });
+    }
+
+    toggleAppSwitcherBtn.addEventListener('click', () => {
+        if (!isSwitcherOpen && runningApps.length > 0) {
+            renderAppSwitcher();
+            appSwitcher.style.display = 'flex';
+            isSwitcherOpen = true;
+        } else {
+            appSwitcher.style.display = 'none';
+            isSwitcherOpen = false;
+            
+            if (currentAppPath) {
+                const app = runningApps.find(a => a.path === currentAppPath);
+                 app.windowElement.style.transform = 'translateX(0)';
+                 app.windowElement.style.zIndex = 15;
+                 appTitleDisplay.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim();
+            } else {
+                 appDisplay.style.display = 'none';
+                 appTitleDisplay.textContent = 'Home';
+            }
+        }
+    });
+
+    // --- Initial Render ---
     async function fetchAndRenderApps() {
         try {
             const response = await fetch('./apps.json');
-            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
             let appData = await response.json();
             appData = sortAppData(appData);
             
             appData.forEach(app => {
                 appGrid.appendChild(createAppIcon(app));
             });
-
         } catch (error) {
             console.error("Could not load app data:", error);
-            appGrid.innerHTML = '<div style="color: #ff3b30; grid-column: 1 / -1; margin-top: 50px; text-align: center;">⚠️ Error: Could not load app manifest. Check console for details.</div>';
+            appGrid.innerHTML = '<div style="color: #ff3b30; grid-column: 1 / -1; margin-top: 50px; text-align: center;">⚠️ Error: Could not load app manifest.</div>';
         }
     }
 
