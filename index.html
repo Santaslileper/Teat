@@ -1,445 +1,87 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Santaslileper OS</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; 
-        background: #000; display: flex; justify-content: center; align-items: center; 
-        min-height: 100vh; padding: 20px; 
-        user-select: none; -webkit-user-select: none; cursor: default;
-        overflow: hidden;
-    }
-    .phone, .screen, .home-screen, .app-display, .app-window {
-        touch-action: none; /* Disable native swipe gestures */
-    }
-    .phone { 
-        position: relative; width: 100%; height: 100%; max-width: 375px; max-height: 812px;
-        background-color: #050505; 
-        background-image: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-        overflow: hidden; 
-        display: flex; flex-direction: column;
-        border: 1px solid #333;
-    }
-    @media (min-width: 768px) {
-        .phone { height: 812px; border-radius: 50px; box-shadow: 0 0 0 12px #2c2c2e, 0 20px 60px rgba(0,0,0,0.8); }
-        .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
-    }
-    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 2; }
-    .status-bar { 
-        height: 44px; padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; 
-        padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; 
-        z-index: 100; pointer-events: none; position: absolute; width: 100%; top: 0;
-    }
-    .home-screen { 
-        padding: 60px 20px 80px 20px; height: 100%; overflow-y: auto;
-        transition: transform 0.4s cubic-bezier(0.32, 0, 0.67, 0), filter 0.4s linear;
-        will-change: transform, filter;
-    }
-    .home-screen.zoomed-out {
-        transform: scale(0.85);
-        filter: brightness(0.6) blur(5px);
-        pointer-events: none;
-    }
-    .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-    .app-icon-wrapper { 
-        display: flex; flex-direction: column; align-items: center; 
-        transition: transform 0.2s ease; touch-action: none; 
-    }
-    .app-icon-wrapper.dragging { opacity: 0.5; } /* New Dragging Style */
-    .app-icon { 
-        width: 60px; height: 60px; border-radius: 14px; 
-        display: flex; align-items: center; justify-content: center; 
-        font-size: 30px; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        background: linear-gradient(135deg, #333, #555);
-    }
-    .app-icon.info { background: linear-gradient(135deg, #3498db, #2980b9); }
-    .app-icon:active { filter: brightness(0.8); transform: scale(0.95); }
-    .app-label { color: #fff; font-size: 11px; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-    .app-display { 
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-        z-index: 50; pointer-events: none;
-    }
-    .app-window {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: #000; /* Fixed: Changed from #fff to #000 to prevent white flash on app close */
-        transform: translate3d(100%, 0, 0); 
-        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-        pointer-events: auto; overflow: hidden;
-    }
-    .app-window.active { transform: translate3d(0, 0, 0); }
-    .app-iframe { width: 100%; height: 100%; border: none; display: block; }
-    .app-switcher {
-        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: transparent; z-index: 40; 
-        display: none; 
-        flex-direction: row;
-        align-items: center;
-        overflow-x: auto; 
-        overflow-y: hidden;
-        white-space: nowrap; 
-        scroll-snap-type: x mandatory;
-        padding-left: 20px;
-        padding-right: 20px;
-        pointer-events: auto;
-    }
-    .switcher-container { 
-        display: flex; 
-        height: 100%; 
-        align-items: center; 
-        gap: 20px; 
-        min-width: min-content; 
-    }
-    .switcher-card {
-        position: relative; width: 75vw; max-width: 300px; height: 70vh;
-        background: #222; border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        scroll-snap-align: center; 
-        flex-shrink: 0;
-        transform-origin: center; transition: transform 0.2s;
-        overflow: hidden;
-    }
-    .card-header {
-        position: absolute; top: 0; left: 0; width: 100%; height: 40px;
-        display: flex; align-items: center; justify-content: center;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-        z-index: 20; pointer-events: none;
-    }
-    .card-touch-layer {
-        position: absolute; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);
-        z-index: 15;
-    }
-    .recents-close-x {
-        position: absolute; top: 50px; right: 20px;
-        width: 30px; height: 30px; background: rgba(60,60,60,0.8);
-        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        color: white; font-weight: bold; font-size: 16px; cursor: pointer;
-        z-index: 200; backdrop-filter: blur(5px);
-        display: none;
-    }
-    .empty-msg {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        color: #fff; font-size: 16px; pointer-events: none;
-    }
-    .tutorial-content {
-        width: 100%; height: 100%; background: #111; color: white;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        padding: 40px; text-align: center;
-    }
-    .tutorial-step { margin-bottom: 15px; font-size: 18px; color: #ccc; }
-    .home-indicator { 
-        position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; 
-        display: flex; justify-content: center; align-items: center; z-index: 999; 
-        touch-action: none;
-    }
-    .home-indicator::before { 
-        content: ''; display: block; width: 140px; height: 5px; 
-        background: rgba(255,255,255,0.7); border-radius: 3px; 
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Santaslileper OS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;user-select:none;-webkit-user-select:none;cursor:default;overflow:hidden}
+.p,.s,.h,.ad,.aw,.as{touch-action:none}
+.p{position:relative;width:100%;height:100%;max-width:375px;max-height:812px;background-color:#050505;background-image:radial-gradient(circle at center,#1a1a1a 0%,#000 100%);overflow:hidden;display:flex;flex-direction:column;border:1px solid #333}
+@media(min-width:768px){.p{height:812px;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e,0 20px 60px rgba(0,0,0,.8)}.n{position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:30px;background:#000;border-radius:0 0 20px 20px;z-index:100}}
+.s{position:relative;width:100%;height:100%;overflow:hidden;z-index:2}
+.sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
+.h{padding:60px 20px 80px 20px;height:100%;overflow-y:auto;transition:transform .4s cubic-bezier(.32,0,.67,0),filter .4s linear;will-change:transform,filter}
+.h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
+.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.aiw{display:flex;flex-direction:column;align-items:center;transition:transform .2s ease;touch-action:none}
+.ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
+.ai.i{background:linear-gradient(135deg,#3498db,#2980b9)}
+.ai.st{background:linear-gradient(135deg,#95a5a6,#7f8c8d)}
+.ai:active{filter:brightness(.8);transform:scale(.95)}
+.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+.ad{position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;pointer-events:none}
+.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden}
+.aw.ac{transform:translate3d(0,0,0)}
+.aif{width:100%;height:100%;border:none;display:block}
+.as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
+.sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
+.scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#222;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;transform-origin:center;transition:transform .2s;overflow:hidden}
+.ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
+.ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:15}
+.rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;z-index:200;backdrop-filter:blur(5px);display:none}
+.em{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;pointer-events:none}
+.tc{width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center}
+.ts{margin-bottom:15px;font-size:18px;color:#ccc}
+.hi{position:absolute;bottom:0;left:0;width:100%;height:40px;display:flex;justify-content:center;align-items:center;z-index:999;touch-action:none}
+.hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px}
+select,button{font-family:inherit}
+</style>
 </head>
 <body>
-<div class="phone">
-    <div class="notch"></div>
-    <div class="screen">
-        <div class="status-bar"><span id="clock">12:00</span><span>5G 100%</span></div>
-        <div class="home-screen" id="homeScreen">
-            <div class="app-grid" id="appGrid"></div>
-        </div>
-        <div class="app-display" id="appDisplay">
-            <div id="appWindowContainer"></div>
-        </div>
-        <div class="app-switcher" id="appSwitcher">
-            <div class="switcher-container" id="switcherContainer"></div>
-        </div>
-        <div id="recentsCloseBtn" class="recents-close-x">✕</div>
-        <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps</div>
-        <div class="home-indicator" id="homeIndicator"></div>
-    </div>
+<div class="p">
+<div class="n"></div>
+<div class="s">
+<div class="sb"><span id="c">12:00</span><span>5G 100%</span></div>
+<div class="h" id="h"><div class="ag" id="ag"></div></div>
+<div class="ad" id="ad"><div id="awc"></div></div>
+<div class="as" id="as"><div class="sc" id="scc"></div></div>
+<div id="rcb" class="rcx">✕</div>
+<div id="er" class="em" style="display:none">No Recent Apps</div>
+<div class="hi" id="hi"></div>
+</div>
 </div>
 <script>
-    const appGrid = document.getElementById('appGrid'), appWindowContainer = document.getElementById('appWindowContainer'), appSwitcher = document.getElementById('appSwitcher'), switcherContainer = document.getElementById('switcherContainer'), homeScreen = document.getElementById('homeScreen'), emptyRecents = document.getElementById('emptyRecents'), recentsCloseBtn = document.getElementById('recentsCloseBtn');
-    let runningApps = [], currentAppPath = null, isSwitcherMode = false;
-    const TUTORIAL_APP = { id: 999, title: "Info", icon: "ℹ️", path: "system:tutorial", class: "info" };
-    
-    const LK = 'appLauncherOrder'; /* Local Storage Key for app order */
-    let Dn = null; /* Dragged Node (for drag/drop) */
-
-    function getStoredOrder() {
-        const order = localStorage.getItem(LK);
-        return order ? JSON.parse(order) : [];
-    }
-    
-    function Hds(e) { /* handleDragStart */
-        Dn = this;
-        this.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        if(navigator.vibrate) navigator.vibrate(50);
-    }
-    function Hdo(e) { /* handleDragOver */
-        e.preventDefault();
-        const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
-        if (target && target !== Dn) {
-            const rect = target.getBoundingClientRect();
-            /* Determine if we insert before or after the target */
-            const next = (e.clientX - rect.left) / rect.width > 0.5;
-            appGrid.insertBefore(Dn, next ? target.nextSibling : target);
-        }
-    }
-    function Hd(e) { e.preventDefault(); } /* handleDrop */
-    function Hde() { /* handleDragEnd */
-        if (Dn) {
-            Dn.classList.remove('dragging');
-            Dn = null;
-        }
-        /* Save new order to local storage */
-        const newOrder = Array.from(appGrid.children).map(t => t.dataset.path);
-        localStorage.setItem(LK, JSON.stringify(newOrder));
-    }
-
-    async function init() {
-        updateClock(); setInterval(updateClock, 1000);
-        await loadApps();
-        const indicator = document.getElementById('homeIndicator');
-        let startY = 0;
-        indicator.addEventListener('touchstart', e => { startY = e.touches[0].clientY; e.preventDefault(); });
-        indicator.addEventListener('touchend', e => {
-            if (e.changedTouches[0].clientY - startY < -40) handleHomeGesture();
-        });
-        recentsCloseBtn.addEventListener('click', closeSwitcher);
-        appSwitcher.addEventListener('scroll', handleSwitcherScroll);
-    }
-
-    async function loadApps() {
-        let allApps = [TUTORIAL_APP];
-        try {
-            const res = await fetch('apps.json');
-            if (res.ok) {
-                allApps = allApps.concat(await res.json());
-            }
-        } catch (e) { console.log("No apps.json"); }
-
-        const storedOrder = getStoredOrder();
-        if (storedOrder.length) {
-            allApps.sort((a, b) => storedOrder.indexOf(a.path) - storedOrder.indexOf(b.path));
-        }
-        
-        appGrid.innerHTML = '';
-        allApps.forEach(renderIcon);
-    }
-
-    function renderIcon(app) {
-        const el = document.createElement('div');
-        el.className = 'app-icon-wrapper';
-        el.dataset.path = app.path; /* Path needed for saving order */
-        el.setAttribute('draggable', true); /* Enable native drag */
-        
-        el.innerHTML = `<div class="app-icon ${app.class || ''}">${app.icon}</div><div class="app-label">${app.title}</div>`;
-        
-        el.addEventListener('click', (e) => {
-            /* Prevent launching if it was a drag operation */
-            if(e.currentTarget.classList.contains('dragging')) return; 
-            launchApp(app)
-        });
-        
-        /* Add drag listeners */
-        el.addEventListener('dragstart', Hds);
-        el.addEventListener('dragover', Hdo);
-        el.addEventListener('drop', Hd);
-        el.addEventListener('dragend', Hde);
-
-        appGrid.appendChild(el);
-    }
-
-    function handleHomeGesture() {
-        if (currentAppPath) { minimizeApp(); openSwitcher(); }
-        else if (isSwitcherMode) closeSwitcher();
-        else if (runningApps.length > 0) openSwitcher();
-    }
-
-    function launchApp(appData) {
-        let existing = runningApps.find(a => a.path === appData.path);
-        if (existing) {
-            runningApps = runningApps.filter(a => a.path !== appData.path);
-            runningApps.push(existing);
-        } else {
-            let newApp = createAppInstance(appData);
-            runningApps.push(newApp);
-        }
-        closeSwitcher();
-        let activeApp = runningApps[runningApps.length - 1];
-        if (activeApp.cardEl) restoreIframeToWindow(activeApp);
-        requestAnimationFrame(() => {
-            activeApp.windowEl.classList.add('active');
-            runningApps.forEach(a => a.windowEl.style.zIndex = 10);
-            activeApp.windowEl.style.zIndex = 20;
-            homeScreen.classList.add('zoomed-out');
-            currentAppPath = activeApp.path;
-        });
-    }
-
-    function createAppInstance(data) {
-        const win = document.createElement('div');
-        win.className = 'app-window';
-        if (data.path === "system:tutorial") {
-            win.innerHTML = `<div class="tutorial-content"><div style="font-size:60px; margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="tutorial-step">1. Swipe Up bar to go Home.</div><div class="tutorial-step">2. Hold & Swipe Up for Recents.</div><div class="tutorial-step">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="tutorial-step">4. <b>Drag icons</b> on Home Screen to reorder.</div></div>`;
-        } else {
-            const iframe = document.createElement('iframe');
-            iframe.className = 'app-iframe';
-            iframe.src = data.path;
-            iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals');
-            win.appendChild(iframe);
-        }
-        appWindowContainer.appendChild(win);
-        return { ...data, windowEl: win, cardEl: null };
-    }
-
-    function minimizeApp() {
-        if (!currentAppPath) return;
-        const app = runningApps.find(a => a.path === currentAppPath);
-        if (app) app.windowEl.classList.remove('active');
-        homeScreen.classList.remove('zoomed-out');
-        currentAppPath = null;
-    }
-
-    function closeApp(path) {
-        const idx = runningApps.findIndex(a => a.path === path);
-        if (idx === -1) return;
-        const app = runningApps[idx];
-        app.windowEl.remove();
-        if (app.cardEl) app.cardEl.remove();
-        runningApps.splice(idx, 1);
-        if (runningApps.length === 0) emptyRecents.style.display = 'block';
-        if (currentAppPath === path) currentAppPath = null;
-    }
-
-    function openSwitcher() {
-        isSwitcherMode = true;
-        homeScreen.classList.add('zoomed-out');
-        appSwitcher.style.display = 'flex';
-        recentsCloseBtn.style.display = 'flex';
-        emptyRecents.style.display = runningApps.length === 0 ? 'block' : 'none';
-        renderSwitcherCards();
-        setTimeout(() => {
-            if (switcherContainer.lastElementChild) {
-                const cardWidth = switcherContainer.lastElementChild.offsetWidth;
-                const containerWidth = appSwitcher.offsetWidth;
-                const scrollPos = switcherContainer.lastElementChild.offsetLeft - (containerWidth / 2) + (cardWidth / 2);
-                appSwitcher.scrollLeft = scrollPos;
-            }
-            handleSwitcherScroll();
-        }, 10);
-    }
-
-    function closeSwitcher() {
-        isSwitcherMode = false;
-        appSwitcher.style.display = 'none';
-        recentsCloseBtn.style.display = 'none';
-        homeScreen.classList.remove('zoomed-out');
-        emptyRecents.style.display = 'none';
-        runningApps.forEach(restoreIframeToWindow);
-    }
-
-    function renderSwitcherCards() {
-        switcherContainer.innerHTML = '';
-        runningApps.forEach(app => {
-            const card = document.createElement('div');
-            card.className = 'switcher-card';
-            const header = document.createElement('div');
-            header.className = 'card-header';
-            header.innerHTML = `<span style="color:white; font-size:12px; font-weight:bold;">${app.title}</span>`;
-            card.appendChild(header);
-            const touchLayer = document.createElement('div');
-            touchLayer.className = 'card-touch-layer';
-            card.appendChild(touchLayer);
-            const content = document.createElement('div');
-            content.style.cssText = "width:100%; height:100%; pointer-events:none;"; 
-            while(app.windowEl.firstChild) { content.appendChild(app.windowEl.firstChild); }
-            card.appendChild(content);
-            
-            let holdTimer = null, isGripped = false, startY = 0;
-
-            touchLayer.addEventListener('touchstart', (e) => {
-                startY = e.touches[0].clientY;
-                isGripped = false;
-                holdTimer = setTimeout(() => {
-                    isGripped = true;
-                    card.style.transform = 'scale(0.95)';
-                    if(navigator.vibrate) navigator.vibrate(20);
-                }, 300);
-            });
-
-            touchLayer.addEventListener('touchmove', (e) => {
-                const deltaY = e.touches[0].clientY - startY;
-                if (!isGripped && Math.abs(deltaY) > 5) {
-                     clearTimeout(holdTimer);
-                     isGripped = true;
-                }
-                if (isGripped) {
-                    e.preventDefault();
-                    if (deltaY < 0) {
-                        card.style.transition = 'none';
-                        card.style.transform = `scale(0.95) translateY(${deltaY}px)`;
-                    }
-                }
-            });
-
-            touchLayer.addEventListener('touchend', (e) => {
-                clearTimeout(holdTimer);
-                if (isGripped) {
-                    const dy = e.changedTouches[0].clientY - startY;
-                    if (dy < -100) {
-                        card.style.transition = 'transform 0.3s ease-out';
-                        card.style.transform = 'translateY(-100vh)';
-                        setTimeout(() => closeApp(app.path), 300);
-                    } else {
-                        card.style.transition = 'transform 0.2s ease';
-                        card.style.transform = 'scale(1)';
-                    }
-                    isGripped = false;
-                } else {
-                    launchApp(app);
-                }
-            });
-
-            switcherContainer.appendChild(card);
-            app.cardEl = card;
-        });
-    }
-
-    function restoreIframeToWindow(app) {
-        if (!app.cardEl) return;
-        const contentDiv = app.cardEl.children[2];
-        if(contentDiv) {
-             while(contentDiv.firstChild) { app.windowEl.appendChild(contentDiv.firstChild); }
-        }
-        app.cardEl.remove();
-        app.cardEl = null;
-    }
-
-    function handleSwitcherScroll() {
-        if (!isSwitcherMode) return;
-        const centerLine = appSwitcher.scrollLeft + (appSwitcher.clientWidth / 2);
-        runningApps.forEach(app => {
-            if (!app.cardEl) return;
-            const card = app.cardEl;
-            const center = card.offsetLeft + (card.offsetWidth/2);
-            const dist = Math.abs(center - centerLine);
-            if (dist < 50) card.style.opacity = 1;
-            else card.style.opacity = 0.5;
-        });
-    }
-    
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').textContent = now.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
-    }
-
-    init();
+const D=document,g=n=>D.getElementById(n),q=s=>D.querySelector(s),qa=s=>D.querySelectorAll(s),ce=t=>D.createElement(t),
+L=localStorage,K={o:'appLauncherOrder',t:'appLauncherTheme',f:'appLauncherFont'},
+E={ag:g('ag'),awc:g('awc'),as:g('as'),scc:g('scc'),h:g('h'),er:g('er'),rcb:g('rcb'),p:q('.p')},
+A=[{id:999,title:"Info",icon:"ℹ️",path:"system:tutorial",class:"i"},{id:998,title:"Settings",icon:"⚙️",path:"system:settings",class:"st"}],
+S={r:[],c:null,sw:0,dn:null,dr:0,dc:null,ds:{x:0,y:0}},
+gv=(k,d)=>L.getItem(k)||d,sv=(k,v)=>L.setItem(k,v),
+gt=_=>gv(K.t,'dark'),gf=_=>gv(K.f,'system'),
+at=_=>{const t=gt(),p=E.p,h=E.h,m={light:['linear-gradient(135deg,#e0e0e0,#f5f5f5)','#000'],blue:['linear-gradient(135deg,#1e3c72,#2a5298)','#fff'],purple:['linear-gradient(135deg,#2d1b69,#5b3a9d)','#fff'],green:['linear-gradient(135deg,#0f2027,#203a43,#2c5364)','#fff']};if(m[t]){p.style.background=m[t][0];h.style.color=m[t][1];qa('.al').forEach(l=>l.style.color=m[t][1])}else{p.style.backgroundImage='radial-gradient(circle at center,#1a1a1a 0%,#000 100%)';p.style.backgroundColor='#050505'}},
+af=_=>{const f=gf(),m={system:'-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif',serif:'Georgia,"Times New Roman",serif',mono:'"Courier New",Courier,monospace',rounded:'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'};D.body.style.fontFamily=m[f]||m.system},
+up=(x,y)=>{if(S.dc){S.dc.style.left=(x-30)+'px';S.dc.style.top=(y-30)+'px'}},
+hts=function(e){const t=e.touches[0];S.ds={x:t.clientX,y:t.clientY};S.dr=0;this.dataset.ht=setTimeout(()=>{S.dr=1;S.dn=this;if(navigator.vibrate)navigator.vibrate(50);S.dc=this.cloneNode(!0);Object.assign(S.dc.style,{position:'fixed',zIndex:'1000',pointerEvents:'none',opacity:'.8',transform:'scale(1.1)',transition:'none'});D.body.appendChild(S.dc);this.style.opacity='.3';up(t.clientX,t.clientY)},300)},
+htm=function(e){if(S.dr&&S.dn){e.preventDefault();const t=e.touches[0];up(t.clientX,t.clientY);const el=D.elementFromPoint(t.clientX,t.clientY),tg=el?.closest('.aiw:not([style*="opacity: 0.3"])');if(tg&&tg!==S.dn){const r=tg.getBoundingClientRect(),nx=(t.clientX-r.left)/r.width>.5;E.ag.insertBefore(S.dn,nx?tg.nextSibling:tg)}}else{const t=e.touches[0],d=Math.abs(t.clientX-S.ds.x)+Math.abs(t.clientY-S.ds.y);if(d>10)clearTimeout(this.dataset.ht)}},
+hte=function(e){clearTimeout(this.dataset.ht);if(S.dr&&S.dn){e.preventDefault();S.dn.style.opacity='1';if(S.dc){S.dc.remove();S.dc=null}sv(K.o,JSON.stringify(Array.from(E.ag.children).map(t=>t.dataset.path)));S.dn=null;S.dr=0}},
+ri=a=>{const el=ce('div');el.className='aiw';el.dataset.path=a.path;el.innerHTML=`<div class="ai ${a.class||''}">${a.icon}</div><div class="al">${a.title}</div>`;el.addEventListener('click',()=>{if(!S.dr)la(a)});el.addEventListener('touchstart',hts);el.addEventListener('touchmove',htm);el.addEventListener('touchend',hte);E.ag.appendChild(el)},
+la=async a=>{const o=gv(K.o,'');let or=o?JSON.parse(o):[];const ex=S.r.find(x=>x.path===a.path);if(ex){S.r=S.r.filter(x=>x.path!==a.path);S.r.push(ex)}else{let na=ca(a);S.r.push(na)}cs();let ac=S.r[S.r.length-1];if(ac.ce)ri2w(ac);requestAnimationFrame(()=>{ac.we.classList.add('ac');S.r.forEach(x=>x.we.style.zIndex=10);ac.we.style.zIndex=20;E.h.classList.add('zo');S.c=ac.path})},
+loadApps=async()=>{try{const r=await fetch('apps.json');if(r.ok)A.push(...await r.json())}catch(e){}const o=gv(K.o,''),or=o?JSON.parse(o):[];if(or.length)A.sort((a,b)=>or.indexOf(a.path)-or.indexOf(b.path));E.ag.innerHTML='';A.forEach(ri)},
+ca=d=>{const w=ce('div');w.className='aw';if(d.path==="system:tutorial"){w.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div></div>`}else if(d.path==="system:settings"){w.innerHTML=`<div class="tc" style="overflow-y:auto"><div style="font-size:60px;margin-bottom:20px;">⚙️</div><h2>Settings</h2><br><div style="width:100%;max-width:300px"><h3 style="margin-bottom:10px;color:#aaa">Theme</h3><select id="tsl" style="width:100%;padding:12px;font-size:16px;border-radius:8px;background:#222;color:#fff;border:1px solid #444;margin-bottom:30px"><option value="dark">Dark (Default)</option><option value="light">Light</option><option value="blue">Ocean Blue</option><option value="purple">Purple Night</option><option value="green">Forest Green</option></select><h3 style="margin-bottom:10px;color:#aaa">Font</h3><select id="fsl" style="width:100%;padding:12px;font-size:16px;border-radius:8px;background:#222;color:#fff;border:1px solid #444;margin-bottom:30px"><option value="system">System (Default)</option><option value="serif">Serif</option><option value="mono">Monospace</option><option value="rounded">Rounded</option></select><button id="rb" style="width:100%;padding:12px;font-size:16px;border-radius:8px;background:#d9534f;color:#fff;border:none;cursor:pointer;margin-top:20px">Reset Icon Order</button></div></div>`;setTimeout(()=>{const ts=w.querySelector('#tsl'),fs=w.querySelector('#fsl'),rb=w.querySelector('#rb');ts.value=gt();fs.value=gf();ts.addEventListener('change',e=>{sv(K.t,e.target.value);at()});fs.addEventListener('change',e=>{sv(K.f,e.target.value);af()});rb.addEventListener('click',()=>{if(confirm('Reset all icons to default order?')){L.removeItem(K.o);loadApps()}})},100)}else{const i=ce('iframe');i.className='aif';i.src=d.path;i.setAttribute('sandbox','allow-scripts allow-forms allow-popups allow-modals');w.appendChild(i)}E.awc.appendChild(w);return{...d,we:w,ce:null}},
+hg=_=>{if(S.c){ma();os()}else if(S.sw)cs();else if(S.r.length>0)os()},
+ma=_=>{if(!S.c)return;const a=S.r.find(x=>x.path===S.c);if(a)a.we.classList.remove('ac');E.h.classList.remove('zo');S.c=null},
+cla=p=>{const i=S.r.findIndex(x=>x.path===p);if(i===-1)return;const a=S.r[i];a.we.remove();if(a.ce)a.ce.remove();S.r.splice(i,1);if(S.r.length===0)E.er.style.display='block';if(S.c===p)S.c=null},
+os=_=>{S.sw=1;E.h.classList.add('zo');E.as.style.display='flex';E.rcb.style.display='flex';E.er.style.display=S.r.length===0?'block':'none';rsc();setTimeout(()=>{if(E.scc.lastElementChild){const cw=E.scc.lastElementChild.offsetWidth,cow=E.as.offsetWidth,sp=E.scc.lastElementChild.offsetLeft-(cow/2)+(cw/2);E.as.scrollLeft=sp}hss()},10)},
+cs=_=>{S.sw=0;E.as.style.display='none';E.rcb.style.display='none';E.h.classList.remove('zo');E.er.style.display='none';S.r.forEach(ri2w)},
+rsc=_=>{E.scc.innerHTML='';S.r.forEach(a=>{const c=ce('div');c.className='scd';const h=ce('div');h.className='ch';h.innerHTML=`<span style="color:#fff;font-size:12px;font-weight:bold">${a.title}</span>`;c.appendChild(h);const tl=ce('div');tl.className='ctl';c.appendChild(tl);const ct=ce('div');ct.style.cssText="width:100%;height:100%;pointer-events:none";while(a.we.firstChild)ct.appendChild(a.we.firstChild);c.appendChild(ct);let ht=null,gr=0,sy=0;tl.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;gr=0;ht=setTimeout(()=>{gr=1;c.style.transform='scale(.95)';if(navigator.vibrate)navigator.vibrate(20)},300)});tl.addEventListener('touchmove',e=>{const dy=e.touches[0].clientY-sy;if(!gr&&Math.abs(dy)>5){clearTimeout(ht);gr=1}if(gr){e.preventDefault();if(dy<0){c.style.transition='none';c.style.transform=`scale(.95) translateY(${dy}px)`}}});tl.addEventListener('touchend',e=>{clearTimeout(ht);if(gr){const dy=e.changedTouches[0].clientY-sy;if(dy<-100){c.style.transition='transform .3s ease-out';c.style.transform='translateY(-100vh)';setTimeout(()=>cla(a.path),300)}else{c.style.transition='transform .2s ease';c.style.transform='scale(1)'}gr=0}else la(a)});E.scc.appendChild(c);a.ce=c})},
+ri2w=a=>{if(!a.ce)return;const cd=a.ce.children[2];if(cd)while(cd.firstChild)a.we.appendChild(cd.firstChild);a.ce.remove();a.ce=null},
+hss=_=>{if(!S.sw)return;const cl=E.as.scrollLeft+(E.as.clientWidth/2);S.r.forEach(a=>{if(!a.ce)return;const c=a.ce,cn=c.offsetLeft+(c.offsetWidth/2),d=Math.abs(cn-cl);c.style.opacity=d<50?1:.5})},
+uc=_=>{const n=new Date();g('c').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})},
+init=async()=>{uc();setInterval(uc,1e3);at();af();await loadApps();const i=E.hi;let sy=0;i.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});i.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});E.rcb.addEventListener('click',cs);E.as.addEventListener('scroll',hss)};
+init();
 </script>
 </body>
 </html>
-
