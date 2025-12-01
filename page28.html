@@ -166,7 +166,7 @@ margin-top:8px
   </button>
 
   <div class="instructions" id="instructions">
-    Click "Start New Chat Room" to create a room. Share the QR code with someone nearby to connect peer-to-peer. No server needed!
+    **Step 1:** Click "Start New Chat Room" to create a room. **Step 2:** Share the first QR code with a peer. **Step 3:** The peer will generate a second QR code. Scan that to connect!
   </div>
 
   <div class="messages" id="messages"></div>
@@ -180,14 +180,18 @@ margin-top:8px
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
-// Encoding utilities
+// ==========================================================
+// RTC SIGNALING UTILITIES
+// ==========================================================
 const encodeSDP = sdp => encodeURIComponent(btoa(unescape(encodeURIComponent(sdp))));
 const decodeSDP = str => {
   try { return decodeURIComponent(escape(atob(decodeURIComponent(str)))); }
   catch(e){ return null; }
 };
 
-// DOM elements
+// ==========================================================
+// DOM ELEMENTS & STATE
+// ==========================================================
 const els = {
   statusDot: document.getElementById('statusDot'),
   statusText: document.getElementById('statusText'),
@@ -203,12 +207,12 @@ const els = {
   sendBtn: document.getElementById('sendBtn')
 };
 
-// State
 let pc = null;
 let dataChannel = null;
-let isHost = false;
 
-// Message handling
+// ==========================================================
+// UI HELPERS
+// ==========================================================
 function addMessage(text, type = 'system'){
   const msg = document.createElement('div');
   msg.className = `message ${type}`;
@@ -224,10 +228,13 @@ function setStatus(text, connected = false){
     els.msgInput.disabled = false;
     els.sendBtn.disabled = false;
     els.instructions.style.display = 'none';
+  } else {
+    els.statusDot.classList.remove('connected');
+    els.msgInput.disabled = true;
+    els.sendBtn.disabled = true;
   }
 }
 
-// QR display
 function showQR(url){
   els.qrCanvas.innerHTML = '';
   els.qrSection.classList.remove('hidden');
@@ -250,13 +257,17 @@ function showQR(url){
 
 function hideQR(){
   els.qrSection.classList.add('hidden');
-  if(!pc || pc.connectionState === 'closed'){
+  if(!pc || pc.connectionState === 'closed' || pc.connectionState === 'failed' || pc.connectionState === 'disconnected'){
     els.startBtn.style.display = 'flex';
+    els.instructions.style.display = 'block';
   }
 }
 
-// WebRTC setup
+// ==========================================================
+// WEBRTC LOGIC
+// ==========================================================
 function setupDataChannel(channel){
+  dataChannel = channel;
   channel.onopen = () => {
     addMessage('✅ Connected! Chat is now encrypted and peer-to-peer.', 'system');
     setStatus('Connected', true);
@@ -264,80 +275,98 @@ function setupDataChannel(channel){
   };
   
   channel.onclose = () => {
-    addMessage('❌ Connection closed.', 'system');
+    addMessage('❌ Connection closed. Refresh to restart.', 'system');
     setStatus('Disconnected');
-    els.msgInput.disabled = true;
-    els.sendBtn.disabled = true;
   };
   
   channel.onmessage = e => addMessage(e.data, 'received');
 }
 
-// Create offer (host)
+// 1. Create offer (Host/Initiator)
 async function createOffer(){
-  isHost = true;
+  // Cleanup any old connection
+  if (pc) pc.close();
+  
   els.startBtn.disabled = true;
-  addMessage('Creating secure connection...', 'system');
+  addMessage('Creating secure connection offer...', 'system');
   setStatus('Waiting for peer...');
   
+  // Use public STUN server for NAT traversal
   pc = new RTCPeerConnection({
-    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] 
   });
   
-  dataChannel = pc.createDataChannel('chat');
-  setupDataChannel(dataChannel);
+  // Host creates the data channel
+  const dc = pc.createDataChannel('chat');
+  setupDataChannel(dc);
   
   pc.onconnectionstatechange = () => {
-    if(pc.connectionState === 'failed' || pc.connectionState === 'disconnected'){
-      addMessage('Connection failed. Try again.', 'system');
+    if(['failed', 'disconnected', 'closed'].includes(pc.connectionState)){
+      addMessage('Connection failed or lost. Try again.', 'system');
       setStatus('Disconnected');
     }
   };
   
-  await pc.setLocalDescription(await pc.createOffer());
-  await new Promise(r => setTimeout(r, 1000));
+  // Create and set local SDP (the Offer)
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
   
+  // Wait a moment for ICE candidates to gather (improves connection reliability)
+  await new Promise(r => setTimeout(r, 1000)); 
+  
+  // Generate the first link (Offer)
   const offerUrl = `${location.origin}${location.pathname}?offer=${encodeSDP(pc.localDescription.sdp)}`;
   showQR(offerUrl);
-  addMessage('📱 Show QR code to peer to connect', 'system');
+  addMessage('**Step 1: First QR Code.** Show this QR code to your peer (Visitor) to generate the Answer.', 'system');
 }
 
-// Process incoming offer (visitor)
+// 2. Process incoming offer (Visitor/Receiver)
 async function processOffer(encoded){
-  addMessage('Received connection request...', 'system');
+  els.startBtn.style.display = 'none';
+  els.startBtn.disabled = true;
+  addMessage('Received connection offer. Creating Answer...', 'system');
   setStatus('Connecting...');
   
   const sdp = decodeSDP(encoded);
   if(!sdp){ addMessage('❌ Invalid connection code', 'system'); return; }
   
+  // Use public STUN server for NAT traversal
   pc = new RTCPeerConnection({
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
   });
   
-  pc.ondatachannel = e => {
-    dataChannel = e.channel;
-    setupDataChannel(dataChannel);
-  };
+  // Visitor listens for the incoming data channel
+  pc.ondatachannel = e => setupDataChannel(e.channel);
   
+  // Set remote SDP (the Offer)
   await pc.setRemoteDescription({ type: 'offer', sdp });
-  await pc.setLocalDescription(await pc.createAnswer());
+  
+  // Create and set local SDP (the Answer)
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  
+  // Wait a moment for ICE candidates to gather
   await new Promise(r => setTimeout(r, 1000));
   
+  // Generate the second link (Answer)
   const answerUrl = `${location.origin}${location.pathname}?answer=${encodeSDP(pc.localDescription.sdp)}`;
   showQR(answerUrl);
-  addMessage('📱 Show this QR code to complete connection', 'system');
+  addMessage('**Step 2: Second QR Code.** Show this QR code to the Host to finalize the connection.', 'system');
 }
 
-// Process incoming answer (host receives)
+// 3. Process incoming answer (Host receives)
 async function processAnswer(encoded){
   const sdp = decodeSDP(encoded);
-  if(!sdp || !pc){ addMessage('❌ Invalid response', 'system'); return; }
+  if(!sdp || !pc){ addMessage('❌ Invalid response or missing offer setup.', 'system'); return; }
   
   await pc.setRemoteDescription({ type: 'answer', sdp });
-  addMessage('Finalizing connection...', 'system');
+  addMessage('Finalizing connection via Answer...', 'system');
+  // Connection should now finalize automatically via ICE/STUN
 }
 
-// Send message
+// ==========================================================
+// MESSAGING & EVENT LISTENERS
+// ==========================================================
 function sendMessage(){
   const text = els.msgInput.value.trim();
   if(!text || !dataChannel || dataChannel.readyState !== 'open') return;
@@ -347,29 +376,32 @@ function sendMessage(){
   els.msgInput.value = '';
 }
 
-// Event listeners
 els.startBtn.addEventListener('click', createOffer);
 els.hideQrBtn.addEventListener('click', hideQR);
 els.copyBtn.addEventListener('click', () => {
   navigator.clipboard?.writeText(els.joinLink.href)
     .then(() => addMessage('Link copied to clipboard', 'system'))
-    .catch(() => addMessage('Copy failed', 'system'));
+    .catch(() => addMessage('Copy failed. Please copy manually.', 'system'));
 });
 els.sendBtn.addEventListener('click', sendMessage);
 els.msgInput.addEventListener('keypress', e => {
   if(e.key === 'Enter') sendMessage();
 });
 
-// URL parameter handling
+// ==========================================================
+// INIT - URL PARAMETER HANDLER
+// ==========================================================
 (async function init(){
   const params = new URLSearchParams(location.search);
   
   if(params.has('offer')){
-    history.replaceState(null, '', location.pathname);
-    els.startBtn.style.display = 'none';
+    // Visitor: Remove URL parameter and start the process
+    history.replaceState(null, '', location.pathname); 
     await processOffer(params.get('offer'));
   } else if(params.has('answer')){
-    history.replaceState(null, '', location.pathname);
+    // Host: Remove URL parameter and start the process
+    history.replaceState(null, '', location.pathname); 
+    els.startBtn.style.display = 'none'; // Keep start button hidden while waiting for connection to finalize
     await processAnswer(params.get('answer'));
   }
 })();
