@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Santaslileper iOS Launcher</title>
+  <title>Santaslileper Fluid App Launcher</title>
   <style>
     /* ----------------------------------------------------------------
        CORE STYLES
@@ -13,7 +13,6 @@
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; 
         background: #000; display: flex; justify-content: center; align-items: center; 
         min-height: 100vh; padding: 20px; 
-        /* GLOBAL TEXT SELECTION DISABLER */
         user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; cursor: default;
     }
     .status-bar { height: 44px; background: rgba(0,0,0,0.3); padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; z-index: 5; }
@@ -21,71 +20,85 @@
     
     /* LAUNCHER VIEWPORT & APP WINDOWS */
     .app-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20; display: none; position: relative; overflow: hidden; }
-    .app-window { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: translateZ(0); transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); will-change: transform; z-index: 10; background: #fff; }
+    
+    .app-window { 
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+        transform: translate3d(100%, 0, 0); 
+        transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+        will-change: transform; z-index: 10; background: #fff; 
+        overflow: hidden; 
+        border-radius: 0;
+    }
+    .app-window.active {
+        transform: translate3d(0, 0, 0);
+        z-index: 15;
+    }
     .app-iframe { width: 100%; height: 100%; border: none; background-color: white; }
     
+    .home-screen { 
+        flex: 1; padding: 60px 20px 20px 20px; 
+        transition: transform 0.4s ease-out, filter 0.4s ease-out;
+        will-change: transform;
+    }
+    .home-screen.hidden {
+        transform: scale(0.95);
+        filter: blur(2px) brightness(0.9);
+        pointer-events: none;
+    }
+
     /* NAVIGATION BAR (Fixed on top of everything) */
     .close-bar { position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: rgba(40, 40, 40, 0.9); display: flex; align-items: center; padding: 0 10px; z-index: 50; backdrop-filter: blur(10px); color: white; }
     .close-btn { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
     .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
 
-    /* --- iOS APP SWITCHER VIEW --- */
+    /* --- FULL-SCREEN FLICKABLE APP SWITCHER --- */
     .app-switcher {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111;
         z-index: 20; display: none; overflow-x: scroll; overflow-y: hidden; 
-        white-space: nowrap; padding-top: 60px; /* Space from status bar */
-        -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
-        scroll-snap-type: x mandatory; /* Snap to cards */
-        align-items: flex-start;
+        white-space: nowrap; 
+        -webkit-overflow-scrolling: touch; 
+        scroll-snap-type: x mandatory; 
+        padding-top: 50px; /* Space for status bar/close bar */
     }
 
     /* Container for the horizontal row of cards */
     .switcher-card-container {
-        display: inline-flex; /* Lays children out horizontally */
+        display: inline-flex; 
         height: 100%;
-        padding: 0 50px; /* Padding on the edges for centering */
-        gap: 20px;
+        padding: 0 10px; /* Reduced padding for almost full width */
+        gap: 15px; /* Reduced gap */
         align-items: flex-start;
     }
     
-    /* Individual App Card */
+    /* Individual App Card: Now takes up most of the viewport */
     .switcher-card {
-        width: 200px; /* Fixed width */
-        height: 80%; /* Takes up most of the vertical space */
-        flex-shrink: 0; /* Prevents cards from shrinking */
+        width: calc(100vw - 40px); /* Fill screen width minus small margins */
+        max-width: 355px; /* Max width for phone wrapper */
+        height: 90%; /* Fill vertically */
+        flex-shrink: 0; 
         background: #222;
-        border-radius: 20px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+        border-radius: 15px; /* Subtle rounding */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         position: relative;
         cursor: pointer;
         overflow: hidden;
-        border: 4px solid #fff;
+        border: 2px solid #fff;
         transition: transform 0.2s;
-        scroll-snap-align: center; /* Crucial for snapping */
+        scroll-snap-align: center; 
     }
-    .switcher-card:active { transform: scale(0.98); }
+    .switcher-card:active { transform: scale(0.99); }
 
     .switcher-card-iframe {
         position: absolute; top: 0; left: 0; 
         width: 100%; height: 100%; 
-        transform: scale(0.5); /* Scale iframe content down */
-        transform-origin: top left;
+        /* The iframe content is no longer scaled down, it's displayed directly */
+        transform: none; 
         filter: brightness(0.9);
     }
-    .switcher-card-title {
-        position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-        color: white; font-size: 14px; font-weight: 600; text-shadow: 0 0 5px black; z-index: 5;
-    }
-    .switcher-close-btn {
-        position: absolute; top: 10px; right: 10px;
-        background: #ff3b30; color: white; border: none; border-radius: 50%;
-        width: 30px; height: 30px; line-height: 30px; text-align: center;
-        font-weight: bold; cursor: pointer; z-index: 10;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-    }
+    /* We hide the title/close buttons since the card itself is the primary view now */
+    .switcher-card-title, .switcher-close-btn { display: none; }
 
     /* HOME SCREEN & ICONS (unchanged) */
-    .home-screen { flex: 1; padding: 60px 20px 20px 20px; }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
     .app-icon-wrapper { text-align: center; text-decoration: none; touch-action: none; transition: transform 0.2s ease-out; }
     .app-icon { width: 100%; aspect-ratio: 1; border-radius: 22%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 32px; color: #fff; transition: transform 0.1s, box-shadow 0.1s; }
@@ -161,6 +174,7 @@
     const appWindowContainer = document.getElementById('appWindowContainer');
     const appSwitcher = document.getElementById('appSwitcher');
     const switcherCardContainer = document.getElementById('switcherCardContainer');
+    const homeScreen = document.getElementById('homeScreen');
     const appTitleDisplay = document.getElementById('app-title-display');
     const toggleAppSwitcherBtn = document.getElementById('toggleAppSwitcherBtn');
     
@@ -170,18 +184,22 @@
     let isSwitcherOpen = false;
     let draggedItem = null;
 
+    const BASE_SANDBOX_PERMISSIONS = 'allow-scripts allow-forms allow-popups';
+    const MAPS_PATH = 'maps'; 
+
     // Helper to scroll the switcher to the active app
     function scrollSwitcherToActive() {
         if (!currentAppPath || !isSwitcherOpen) return;
-        
+        // The most recent app is the first card (index 0) in the runningApps array
+        // which corresponds to the first card in the container (index 0).
         const cardContainer = document.getElementById('switcherCardContainer');
-        const activeCard = cardContainer.querySelector(`.switcher-card[data-path="${currentAppPath}"]`);
+        const activeCard = cardContainer.children[0]; 
         
         if (activeCard) {
              const cardCenter = activeCard.offsetLeft + activeCard.offsetWidth / 2;
              const containerCenter = appSwitcher.offsetWidth / 2;
-             // Calculate scroll position to center the card, minus 50px of initial padding
-             const scrollPos = cardCenter - containerCenter - 50; 
+             // Scroll position to center the first card
+             const scrollPos = cardCenter - containerCenter - 10; 
              appSwitcher.scrollLeft = scrollPos;
         }
     }
@@ -224,21 +242,15 @@
     function sortAppData(appData) {
         const savedOrder = getSavedOrder();
         if (!savedOrder || savedOrder.length !== appData.length) return appData;
-
         const appMap = new Map(appData.map(app => [app.path, app]));
         const sortedData = savedOrder.map(appId => appMap.get(appId)).filter(app => app); 
-
         const existingAppIds = new Set(savedOrder);
         appData.forEach(app => { if (!existingAppIds.has(app.path)) sortedData.push(app); });
         return sortedData;
     }
 
     // Drag and Drop Handlers (Minified)
-    function handleDragStart(e) {
-        draggedItem = this; e.dataTransfer.setData('text/html', ''); 
-        this.classList.add('dragging'); 
-        if (navigator.vibrate) navigator.vibrate(50); 
-    }
+    function handleDragStart(e) { draggedItem = this; e.dataTransfer.setData('text/html', ''); this.classList.add('dragging'); if (navigator.vibrate) navigator.vibrate(50); }
     function handleDragOver(e) {
         e.preventDefault(); 
         const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
@@ -248,12 +260,8 @@
         if (next) appGrid.insertBefore(draggedItem, target.nextSibling);
         else appGrid.insertBefore(draggedItem, target);
     }
-    function handleDrop(e) {
-        e.preventDefault(); draggedItem.classList.add('just-dragged'); saveCurrentOrder();
-    }
-    function handleDragEnd(e) {
-        this.classList.remove('dragging'); draggedItem = null;
-    }
+    function handleDrop(e) { e.preventDefault(); draggedItem.classList.add('just-dragged'); saveCurrentOrder(); }
+    function handleDragEnd(e) { this.classList.remove('dragging'); draggedItem = null; }
 
 
     // --- App Lifecycle Management ---
@@ -264,18 +272,24 @@
 
         if (isNewApp) {
             app = createNewAppWindow(path, title);
-            runningApps.unshift(app); // Add new app to the front of the recents list
+            runningApps.unshift(app); // Add new app to the front (most recent)
         } else {
-            // If app is already running, move it to the front (most recent)
+            // If app is already running, move it to the front
             runningApps = runningApps.filter(a => a.path !== path);
             runningApps.unshift(app);
         }
 
         isSwitcherOpen = false;
         appSwitcher.style.display = 'none';
-
-        setActiveApp(path, title);
+        
         appDisplay.style.display = 'block';
+        
+        homeScreen.classList.add('hidden'); 
+        
+        setTimeout(() => {
+            setActiveApp(path, title);
+        }, 50);
+
         appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim();
     }
 
@@ -288,7 +302,14 @@
         iframe.className = 'app-iframe';
         iframe.src = path;
         iframe.title = title;
-        iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-same-origin allow-popups');
+        
+        let sandboxPermissions = BASE_SANDBOX_PERMISSIONS;
+        // Conditional sandboxing for maps
+        if (path.includes(MAPS_PATH)) {
+             sandboxPermissions += ' allow-modals allow-pointer-lock allow-orientation-lock'; 
+        }
+        
+        iframe.setAttribute('sandbox', sandboxPermissions);
 
         appWindow.appendChild(iframe);
         appWindowContainer.appendChild(appWindow);
@@ -298,8 +319,13 @@
 
     function setActiveApp(path, title) {
         runningApps.forEach(app => {
-            app.windowElement.style.transform = (app.path === path) ? 'translateX(0)' : 'translateX(100%)'; 
-            app.windowElement.style.zIndex = (app.path === path) ? 15 : 10;
+            if (app.path === path) {
+                app.windowElement.classList.add('active'); 
+                app.windowElement.style.zIndex = 15;
+            } else {
+                app.windowElement.classList.remove('active');
+                app.windowElement.style.zIndex = 10;
+            }
         });
         currentAppPath = path;
         appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim();
@@ -308,7 +334,8 @@
     function closeApp(path) {
         runningApps = runningApps.filter(app => {
             if (app.path === path) {
-                app.windowElement.remove();
+                app.windowElement.style.transform = 'translate3d(100%, 0, 0)'; 
+                setTimeout(() => app.windowElement.remove(), 400); 
                 return false;
             }
             return true;
@@ -316,18 +343,20 @@
         
         if (currentAppPath === path) {
             currentAppPath = null;
-            // If an app was closed, immediately open the switcher if other apps remain
             if (runningApps.length > 0) {
                 renderAppSwitcher();
                 appSwitcher.style.display = 'flex';
                 isSwitcherOpen = true;
+                homeScreen.classList.remove('hidden'); 
             } else {
                  appDisplay.style.display = 'none';
                  appSwitcher.style.display = 'none';
                  isSwitcherOpen = false;
+                 homeScreen.classList.remove('hidden'); 
+                 appTitleDisplay.textContent = 'Home';
             }
         } else if (isSwitcherOpen) {
-            renderAppSwitcher(); // Update switcher if we're viewing it
+            renderAppSwitcher();
         }
     }
 
@@ -344,47 +373,33 @@
 
         appTitleDisplay.textContent = 'Recents';
         
-        // Render in reverse order (most recent first) for standard iOS view
-        [...runningApps].forEach(app => {
+        // Render apps in order (most recent is first)
+        runningApps.forEach(app => {
             const card = document.createElement('div');
             card.className = 'switcher-card';
             card.dataset.path = app.path;
             
-            // Clone the iframe for the card view
             const iframeClone = app.windowElement.querySelector('.app-iframe').cloneNode(true);
             iframeClone.className = 'switcher-card-iframe';
-
-            const titleElement = document.createElement('div');
-            titleElement.className = 'switcher-card-title';
-            titleElement.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim();
-
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'switcher-close-btn';
-            closeBtn.textContent = 'X';
+            // IMPORTANT: We do not append the title or close button to maintain the "full app view" look
 
             card.appendChild(iframeClone);
-            card.appendChild(titleElement);
-            card.appendChild(closeBtn);
-            
             switcherCardContainer.appendChild(card);
             
-            closeBtn.addEventListener('click', (e) => {
-                e.stopPropagation(); 
-                closeApp(app.path);
-            });
+            // Tapping anywhere on the card switches to that app
+            card.addEventListener('click', () => { launchApp(app.path, app.title); });
             
-            card.addEventListener('click', () => {
-                launchApp(app.path, app.title);
-            });
+            // Double-tap or long-press logic for closing the app (optional, complex for pure JS)
         });
         
-        // Hide all active app windows (Apps "fly" away when switcher opens)
+        // Move app windows out of the way for the switcher
         runningApps.forEach(app => {
              app.windowElement.style.transform = 'translateY(100%)'; 
+             app.windowElement.classList.remove('active'); 
              app.windowElement.style.zIndex = 10;
         });
         
-        // After rendering, ensure the currently active app card is centered
+        // After rendering, scroll to center the most recent app (the first card)
         setTimeout(scrollSwitcherToActive, 100); 
     }
 
@@ -392,17 +407,18 @@
         if (!isSwitcherOpen && runningApps.length > 0) {
             // Open Switcher
             renderAppSwitcher();
-            appSwitcher.style.display = 'flex';
+            appSwitcher.style.display = 'block'; // Use 'block' to allow full scrolling viewport
             isSwitcherOpen = true;
+            homeScreen.classList.remove('hidden');
         } else if (isSwitcherOpen && currentAppPath) {
-            // Close Switcher to active app
+            // Close Switcher to active app (This path is rarely hit now, as clicking a card handles it)
             appSwitcher.style.display = 'none';
             isSwitcherOpen = false;
-            // Restore active app
             const app = runningApps.find(a => a.path === currentAppPath);
-            app.windowElement.style.transform = 'translateX(0)';
+            app.windowElement.classList.add('active');
             app.windowElement.style.zIndex = 15;
             appTitleDisplay.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim();
+            homeScreen.classList.add('hidden');
         } else {
             // Go back to home screen
             appDisplay.style.display = 'none';
@@ -410,6 +426,7 @@
             isSwitcherOpen = false;
             currentAppPath = null;
             appTitleDisplay.textContent = 'Home';
+            homeScreen.classList.remove('hidden');
         }
     });
 
