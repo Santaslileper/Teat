@@ -7,9 +7,9 @@
 <title>Santaslileper OS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+body,html{touch-action:none;overscroll-behavior:none}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;user-select:none;-webkit-user-select:none;cursor:default;overflow:hidden;position:fixed;width:100%;height:100%;top:0;left:0}
 .p,.s,.h,.ad,.aw,.as{touch-action:none}
-body,html{touch-action:none;overscroll-behavior:none}
 .p{position:relative;width:100%;height:100%;max-width:375px;max-height:812px;background-color:#050505;background-image:radial-gradient(circle at center,#1a1a1a 0%,#000 100%);overflow:hidden;display:flex;flex-direction:column;border:1px solid #333}
 @media(min-width:768px){.p{height:812px;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e,0 20px 60px rgba(0,0,0,.8)}.n{position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:30px;background:#000;border-radius:0 0 20px 20px;z-index:100}}
 .s{position:relative;width:100%;height:100%;overflow:hidden;z-index:2}
@@ -35,19 +35,33 @@ body,html{touch-action:none;overscroll-behavior:none}
 .ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:15}
 .rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;z-index:200;backdrop-filter:blur(5px);display:none}
 .em{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;pointer-events:none}
-.tc{width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;text-align:center}
+.tc{width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;text-align:center;overflow-y:auto}
 .ts{margin-bottom:15px;font-size:18px;color:#ccc}
 .hi{position:absolute;bottom:0;left:0;width:100%;height:40px;display:flex;justify-content:center;align-items:center;z-index:999;touch-action:none;pointer-events:auto}
 .hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px}
 .aw .hi{z-index:1000;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,rgba(0,0,0,.6) 60%,transparent 100%)}
-select,button{font-family:inherit}
+.sg{width:100%;max-width:320px;margin-bottom:25px}
+.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:left;padding:0 15px}
+.so{background:#1c1c1e;border-radius:10px;overflow:hidden}
+.si{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #2c2c2e;min-height:44px}
+.si:last-child{border-bottom:none}
+.sl{color:#fff;font-size:16px}
+.sr{display:flex;align-items:center;gap:10px}
+.sr select,.sr input{padding:6px 10px;font-size:14px;border-radius:6px;background:#2c2c2e;color:#fff;border:1px solid #3a3a3c}
+.sr input[type="file"]{display:none}
+.fb{padding:8px 15px;font-size:14px;border-radius:6px;background:#007aff;color:#fff;border:none;cursor:pointer}
+.fb:active{background:#0051d5}
+.db{background:#ff3b30}
+.db:active{background:#d32f2f}
+.bgp{width:100px;height:60px;border-radius:6px;background-size:cover;background-position:center;border:2px solid #3a3a3c;cursor:pointer}
+select,button,input{font-family:inherit}
 </style>
 </head>
 <body>
-<div class="p">
+<div class="p" id="phone">
 <div class="n"></div>
 <div class="s">
-<div class="sb"><span id="c">12:00</span><span>5G 100%</span></div>
+<div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
 <div class="h" id="h"><div class="ag" id="ag"></div></div>
 <div class="ad" id="ad"><div id="awc"></div></div>
 <div class="as" id="as"><div class="sc" id="scc"></div></div>
@@ -58,14 +72,15 @@ select,button{font-family:inherit}
 </div>
 <script>
 const D=document,g=n=>D.getElementById(n),q=s=>D.querySelector(s),qa=s=>D.querySelectorAll(s),ce=t=>D.createElement(t),
-L=localStorage,K={o:'appLauncherOrder',t:'appLauncherTheme',f:'appLauncherFont'},
-E={ag:g('ag'),awc:g('awc'),as:g('as'),scc:g('scc'),h:g('h'),er:g('er'),rcb:g('rcb'),p:q('.p'),hi:g('hi')},
+L=localStorage,K={o:'appLauncherOrder',t:'appLauncherTheme',f:'appLauncherFont',bg:'appLauncherBg',bb:'appLauncherBattery'},
+E={ag:g('ag'),awc:g('awc'),as:g('as'),scc:g('scc'),h:g('h'),er:g('er'),rcb:g('rcb'),p:g('phone'),hi:g('hi'),batt:g('batt')},
 A=[{id:999,title:"Info",icon:"ℹ️",path:"system:tutorial",class:"i"},{id:998,title:"Settings",icon:"⚙️",path:"system:settings",class:"st"}],
 S={r:[],c:null,sw:0,dn:null,dr:0,dc:null,ds:{x:0,y:0}},
 gv=(k,d)=>L.getItem(k)||d,sv=(k,v)=>L.setItem(k,v),
-gt=_=>gv(K.t,'dark'),gf=_=>gv(K.f,'system'),
-at=_=>{const t=gt(),p=E.p,h=E.h,m={light:['linear-gradient(135deg,#e0e0e0,#f5f5f5)','#000'],blue:['linear-gradient(135deg,#1e3c72,#2a5298)','#fff'],purple:['linear-gradient(135deg,#2d1b69,#5b3a9d)','#fff'],green:['linear-gradient(135deg,#0f2027,#203a43,#2c5364)','#fff']};if(m[t]){p.style.background=m[t][0];h.style.color=m[t][1];qa('.al').forEach(l=>l.style.color=m[t][1])}else{p.style.backgroundImage='radial-gradient(circle at center,#1a1a1a 0%,#000 100%)';p.style.backgroundColor='#050505'}},
+gt=_=>gv(K.t,'dark'),gf=_=>gv(K.f,'system'),gb=_=>gv(K.bg,''),gbb=_=>gv(K.bb,'show'),
+at=_=>{const t=gt(),p=E.p,h=E.h,bg=gb(),m={light:['linear-gradient(135deg,#e0e0e0,#f5f5f5)','#000'],blue:['linear-gradient(135deg,#1e3c72,#2a5298)','#fff'],purple:['linear-gradient(135deg,#2d1b69,#5b3a9d)','#fff'],green:['linear-gradient(135deg,#0f2027,#203a43,#2c5364)','#fff'],red:['linear-gradient(135deg,#c31432,#240b36)','#fff'],orange:['linear-gradient(135deg,#f46b45,#eea849)','#fff'],pink:['linear-gradient(135deg,#ff9a9e,#fecfef)','#000']};if(bg){p.style.background='#000';p.style.backgroundImage=`url(${bg})`;p.style.backgroundSize='cover';p.style.backgroundPosition='center'}else if(m[t]){p.style.backgroundImage='none';p.style.background=m[t][0];h.style.color=m[t][1];qa('.al').forEach(l=>l.style.color=m[t][1])}else{p.style.backgroundImage='radial-gradient(circle at center,#1a1a1a 0%,#000 100%)';p.style.backgroundColor='#050505'}},
 af=_=>{const f=gf(),m={system:'-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif',serif:'Georgia,"Times New Roman",serif',mono:'"Courier New",Courier,monospace',rounded:'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'};D.body.style.fontFamily=m[f]||m.system},
+ab=_=>{const bb=gbb();E.batt.style.display=bb==='hide'?'none':'block'},
 up=(x,y)=>{if(S.dc){S.dc.style.left=(x-30)+'px';S.dc.style.top=(y-30)+'px'}},
 hts=function(e){const t=e.touches[0];S.ds={x:t.clientX,y:t.clientY};S.dr=0;this.dataset.ht=setTimeout(()=>{S.dr=1;S.dn=this;if(navigator.vibrate)navigator.vibrate(50);S.dc=this.cloneNode(!0);Object.assign(S.dc.style,{position:'fixed',zIndex:'1000',pointerEvents:'none',opacity:'.8',transform:'scale(1.1)',transition:'none'});D.body.appendChild(S.dc);this.style.opacity='.3';up(t.clientX,t.clientY)},300)},
 htm=function(e){if(S.dr&&S.dn){e.preventDefault();const t=e.touches[0];up(t.clientX,t.clientY);const el=D.elementFromPoint(t.clientX,t.clientY),tg=el?.closest('.aiw:not([style*="opacity: 0.3"])');if(tg&&tg!==S.dn){const r=tg.getBoundingClientRect(),nx=(t.clientX-r.left)/r.width>.5;E.ag.insertBefore(S.dn,nx?tg.nextSibling:tg)}}else{const t=e.touches[0],d=Math.abs(t.clientX-S.ds.x)+Math.abs(t.clientY-S.ds.y);if(d>10)clearTimeout(this.dataset.ht)}},
@@ -73,7 +88,7 @@ hte=function(e){clearTimeout(this.dataset.ht);if(S.dr&&S.dn){e.preventDefault();
 ri=a=>{const el=ce('div');el.className='aiw';el.dataset.path=a.path;el.innerHTML=`<div class="ai ${a.class||''}">${a.icon}</div><div class="al">${a.title}</div>`;el.addEventListener('click',()=>{if(!S.dr)la(a)});el.addEventListener('touchstart',hts);el.addEventListener('touchmove',htm);el.addEventListener('touchend',hte);E.ag.appendChild(el)},
 la=async a=>{const ex=S.r.find(x=>x.path===a.path);if(ex){S.r=S.r.filter(x=>x.path!==a.path);S.r.push(ex)}else S.r.push(ca(a));cs();let ac=S.r[S.r.length-1];if(ac.ce)ri2w(ac);requestAnimationFrame(()=>{ac.we.classList.add('ac');S.r.forEach(x=>x.we.style.zIndex=10);ac.we.style.zIndex=20;E.h.classList.add('zo');S.c=ac.path})},
 loadApps=async()=>{try{const r=await fetch('apps.json');if(r.ok)A.push(...await r.json())}catch(e){}const o=gv(K.o,''),or=o?JSON.parse(o):[];if(or.length)A.sort((a,b)=>or.indexOf(a.path)-or.indexOf(b.path));E.ag.innerHTML='';A.forEach(ri)},
-ca=d=>{const w=ce('div'),wc=ce('div');w.className='aw';wc.className='awc';if(d.path==="system:tutorial"){wc.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div></div>`}else if(d.path==="system:settings"){wc.innerHTML=`<div class="tc" style="overflow-y:auto"><div style="font-size:60px;margin-bottom:20px;">⚙️</div><h2>Settings</h2><br><div style="width:100%;max-width:300px"><h3 style="margin-bottom:10px;color:#aaa">Theme</h3><select id="tsl" style="width:100%;padding:12px;font-size:16px;border-radius:8px;background:#222;color:#fff;border:1px solid #444;margin-bottom:30px"><option value="dark">Dark (Default)</option><option value="light">Light</option><option value="blue">Ocean Blue</option><option value="purple">Purple Night</option><option value="green">Forest Green</option></select><h3 style="margin-bottom:10px;color:#aaa">Font</h3><select id="fsl" style="width:100%;padding:12px;font-size:16px;border-radius:8px;background:#222;color:#fff;border:1px solid #444;margin-bottom:30px"><option value="system">System (Default)</option><option value="serif">Serif</option><option value="mono">Monospace</option><option value="rounded">Rounded</option></select><button id="rb" style="width:100%;padding:12px;font-size:16px;border-radius:8px;background:#d9534f;color:#fff;border:none;cursor:pointer;margin-top:20px">Reset Icon Order</button></div></div>`;setTimeout(()=>{const ts=wc.querySelector('#tsl'),fs=wc.querySelector('#fsl'),rb=wc.querySelector('#rb');ts.value=gt();fs.value=gf();ts.addEventListener('change',e=>{sv(K.t,e.target.value);at()});fs.addEventListener('change',e=>{sv(K.f,e.target.value);af()});rb.addEventListener('click',()=>{if(confirm('Reset all icons to default order?')){L.removeItem(K.o);loadApps()}})},100)}else{const i=ce('iframe');i.className='aif';i.src=d.path;i.setAttribute('sandbox','allow-scripts allow-forms allow-popups allow-modals allow-same-origin');wc.appendChild(i)}const ih=ce('div');ih.className='hi';let sy=0;ih.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});ih.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});w.appendChild(wc);w.appendChild(ih);E.awc.appendChild(w);return{...d,we:w,ce:null}},
+ca=d=>{const w=ce('div'),wc=ce('div');w.className='aw';wc.className='awc';if(d.path==="system:tutorial"){wc.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div></div>`}else if(d.path==="system:settings"){wc.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">⚙️</div><h2 style="margin-bottom:30px">Settings</h2><div class="sg"><div class="sh">Appearance</div><div class="so"><div class="si"><span class="sl">Theme</span><div class="sr"><select id="tsl"><option value="dark">Dark</option><option value="light">Light</option><option value="blue">Ocean Blue</option><option value="purple">Purple</option><option value="green">Forest</option><option value="red">Red Velvet</option><option value="orange">Sunset</option><option value="pink">Pink Dream</option></select></div></div><div class="si"><span class="sl">Font</span><div class="sr"><select id="fsl"><option value="system">System</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="rounded">Rounded</option></select></div></div><div class="si"><span class="sl">Background</span><div class="sr"><div class="bgp" id="bgp"></div><label for="bgi" class="fb">Upload</label><input type="file" id="bgi" accept="image/*"></div></div></div></div><div class="sg"><div class="sh">Status Bar</div><div class="so"><div class="si"><span class="sl">Battery</span><div class="sr"><select id="bbs"><option value="show">Show</option><option value="hide">Hide</option></select></div></div></div></div><div class="sg"><div class="sh">Advanced</div><div class="so"><div class="si"><span class="sl">Reset Icon Order</span><div class="sr"><button class="fb" id="rio">Reset</button></div></div><div class="si"><span class="sl">Clear Background</span><div class="sr"><button class="fb db" id="cbg">Clear</button></div></div><div class="si"><span class="sl">Reset All</span><div class="sr"><button class="fb db" id="ra">Reset</button></div></div></div></div></div>`;setTimeout(()=>{const ts=wc.querySelector('#tsl'),fs=wc.querySelector('#fsl'),bbs=wc.querySelector('#bbs'),bgi=wc.querySelector('#bgi'),bgp=wc.querySelector('#bgp'),rio=wc.querySelector('#rio'),cbg=wc.querySelector('#cbg'),ra=wc.querySelector('#ra');ts.value=gt();fs.value=gf();bbs.value=gbb();const bg=gb();if(bg)bgp.style.backgroundImage=`url(${bg})`;bgp.addEventListener('click',()=>bgi.click());ts.addEventListener('change',e=>{sv(K.t,e.target.value);sv(K.bg,'');at()});fs.addEventListener('change',e=>{sv(K.f,e.target.value);af()});bbs.addEventListener('change',e=>{sv(K.bb,e.target.value);ab()});bgi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const b64=ev.target.result;sv(K.bg,b64);bgp.style.backgroundImage=`url(${b64})`;at()};r.readAsDataURL(f)}});cbg.addEventListener('click',()=>{if(confirm('Clear custom background?')){sv(K.bg,'');bgp.style.backgroundImage='';at()}});rio.addEventListener('click',()=>{if(confirm('Reset icon order?')){L.removeItem(K.o);loadApps()}});ra.addEventListener('click',()=>{if(confirm('Reset ALL settings to default?')){L.clear();location.reload()}})},100)}else{const i=ce('iframe');i.className='aif';i.src=d.path;i.setAttribute('sandbox','allow-scripts allow-forms allow-popups allow-modals allow-same-origin');wc.appendChild(i)}const ih=ce('div');ih.className='hi';let sy=0;ih.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});ih.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});w.appendChild(wc);w.appendChild(ih);E.awc.appendChild(w);return{...d,we:w,ce:null}},
 hg=_=>{if(S.c){ma();os()}else if(S.sw)cs();else if(S.r.length>0)os()},
 ma=_=>{if(!S.c)return;const a=S.r.find(x=>x.path===S.c);if(a)a.we.classList.remove('ac');E.h.classList.remove('zo');S.c=null},
 cla=p=>{const i=S.r.findIndex(x=>x.path===p);if(i===-1)return;const a=S.r[i];a.we.remove();if(a.ce)a.ce.remove();S.r.splice(i,1);if(S.r.length===0)E.er.style.display='block';if(S.c===p)S.c=null},
@@ -83,7 +98,7 @@ rsc=_=>{E.scc.innerHTML='';S.r.forEach(a=>{const c=ce('div');c.className='scd';c
 ri2w=a=>{if(!a.ce)return;const cd=a.ce.children[2];if(cd){const fc=a.we.firstChild;if(fc)while(cd.firstChild)fc.appendChild(cd.firstChild)}a.ce.remove();a.ce=null},
 hss=_=>{if(!S.sw)return;const cl=E.as.scrollLeft+(E.as.clientWidth/2);S.r.forEach(a=>{if(!a.ce)return;const c=a.ce,cn=c.offsetLeft+(c.offsetWidth/2),d=Math.abs(cn-cl);c.style.opacity=d<50?1:.5})},
 uc=_=>{const n=new Date();g('c').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})},
-init=async()=>{uc();setInterval(uc,1e3);at();af();await loadApps();let sy=0;E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});E.rcb.addEventListener('click',cs);E.as.addEventListener('scroll',hss)};
+init=async()=>{uc();setInterval(uc,1e3);at();af();ab();await loadApps();let sy=0;E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});E.rcb.addEventListener('click',cs);E.as.addEventListener('scroll',hss)};
 init();
 </script>
 </body>
