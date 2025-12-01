@@ -5,126 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Santaslileper Adaptive App Launcher</title>
   <style>
-    /* ----------------------------------------------------------------
-       BASE STYLES (Applies to all screens)
-    ---------------------------------------------------------------- */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
+    /* BASE STYLES */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    .status-bar { height: 44px; background: rgba(0,0,0,0.3); padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; z-index: 5; }
+    .home-indicator { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 140px; height: 5px; background: rgba(255,255,255,0.3); border-radius: 3px; }
     
-    /* Status Bar and Phone Shell Styles */
-    .status-bar {
-      height: 44px;
-      background: rgba(0,0,0,0.3);
-      padding: 0 20px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      padding-bottom: 8px;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 600;
-      z-index: 5;
-    }
-    .home-indicator {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 140px;
-      height: 5px;
-      background: rgba(255,255,255,0.3);
-      border-radius: 3px;
-    }
+    /* LAUNCHER VIEWPORT - FIXED CLOSE BAR */
+    .app-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 20; display: none; position: relative; }
+    .app-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; background-color: white; }
+    .close-bar { position: absolute; top: 0; left: 0; width: 100%; height: 40px; background: rgba(40, 40, 40, 0.9); display: flex; align-items: center; padding: 0 10px; z-index: 21; backdrop-filter: blur(10px); }
+    .close-btn { color: #fff; background: none; border: none; font-size: 16px; cursor: pointer; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
+    .close-btn:hover { background: rgba(255, 255, 255, 0.1); }
     
-    /* ----------------------------------------------------------------
-       LAUNCHER VIEWPORT 
-    ---------------------------------------------------------------- */
-    .app-display {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      z-index: 20; 
-      display: none; 
-      flex-direction: column;
-    }
-    .app-iframe {
-      flex-grow: 1;
-      width: 100%;
-      height: 100%;
-      border: none;
-      background-color: white; 
-    }
-    .close-bar {
-      height: 40px;
-      background: rgba(40, 40, 40, 0.9);
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      flex-shrink: 0;
-    }
-    .close-btn {
-      color: #fff;
-      background: none;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      padding: 5px 10px;
-      border-radius: 5px;
-      transition: background 0.2s;
-    }
-    .close-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-    
-    /* ----------------------------------------------------------------
-       HOME SCREEN STYLES 
-    ---------------------------------------------------------------- */
-    .home-screen {
-      flex: 1;
-      padding: 60px 20px 20px 20px;
-    }
-    .app-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-    .app-icon-wrapper {
-        text-align: center;
-        text-decoration: none; 
-    }
+    /* HOME SCREEN STYLES */
+    .home-screen { flex: 1; padding: 60px 20px 20px 20px; }
+    .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .app-icon-wrapper { text-align: center; text-decoration: none; touch-action: none; }
     .app-icon {
-      width: 100%;
-      aspect-ratio: 1;
+      width: 100%; aspect-ratio: 1; 
+      border-radius: 22%; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); 
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 22%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 32px;
-      transition: transform 0.1s;
-      color: #fff; 
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 32px; color: #fff; 
+      transition: transform 0.1s, box-shadow 0.1s;
     }
-    .app-icon:active {
-      transform: scale(0.9);
+    
+    /* INTERACTION STYLES (iOS-like) */
+    .app-icon:active { transform: scale(0.9); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5); }
+    .app-icon-wrapper.dragging { z-index: 100; cursor: grabbing; }
+    .app-icon-wrapper.dragging .app-icon {
+      transform: scale(1.15); /* Lifts the icon */
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5); /* Big shadow for 'floating' */
+      opacity: 0.8; 
+      transition: none; /* Crucial: disables transition during drag */
     }
-    /* Custom App Icon Gradients */
+
+    /* Custom Gradients */
     .app-icon.camera { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
     .app-icon.mic { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
     .app-icon.motion { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
@@ -132,49 +49,21 @@
     .app-icon.touch { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
     .app-icon.speaker { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
     
-    .app-label {
-      color: #fff;
-      font-size: 12px;
-      margin-top: 4px;
-      text-align: center;
-    }
+    .app-label { color: #fff; font-size: 12px; margin-top: 4px; text-align: center; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6); }
 
-    /* ----------------------------------------------------------------
-       RESPONSIVENESS (Unchanged)
-    ---------------------------------------------------------------- */
+    /* RESPONSIVENESS (UNCHANGED) */
     @media (min-width: 768px) {
-        /* Phone Frame Styles */
-        .phone {
-            width: 375px; height: 812px; background: #1d1d1f; border-radius: 50px; position: relative;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 12px solid #2c2c2e; overflow: hidden;
-            display: block; 
-        }
-        .notch {
-            position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px;
-            height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 10; display: block;
-        }
-        .camera {
-            position: absolute; width: 12px; height: 12px; background: #1a1a1a; border-radius: 50%;
-            top: 9px; left: 50%; transform: translateX(-30px); border: 1px solid #333;
-        }
-        .speaker {
-            position: absolute; width: 60px; height: 6px; background: #1a1a1a; border-radius: 3px;
-            top: 12px; left: 50%; transform: translateX(-50%);
-        }
-        .screen {
-            width: 100%; height: 100%; background: #000; border-radius: 38px; overflow: hidden;
-            position: relative; display: flex; flex-direction: column;
-        }
-        .vol-up, .vol-down, .silent-switch {
-            position: absolute; left: -2px; width: 4px; height: 50px; background: #2c2c2e;
-            border-radius: 2px 0 0 2px; display: block; 
-        }
+        .phone { width: 375px; height: 812px; background: #1d1d1f; border-radius: 50px; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.8); border: 12px solid #2c2c2e; overflow: hidden; display: block; }
+        .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 10; display: block; }
+        .camera { position: absolute; width: 12px; height: 12px; background: #1a1a1a; border-radius: 50%; top: 9px; left: 50%; transform: translateX(-30px); border: 1px solid #333; }
+        .speaker { position: absolute; width: 60px; height: 6px; background: #1a1a1a; border-radius: 3px; top: 12px; left: 50%; transform: translateX(-50%); }
+        .screen { width: 100%; height: 100%; background: #000; border-radius: 38px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .vol-up, .vol-down, .silent-switch { position: absolute; left: -2px; width: 4px; height: 50px; background: #2c2c2e; border-radius: 2px 0 0 2px; display: block; }
         .vol-up { top: 150px; }
         .vol-down { top: 220px; }
         .silent-switch { top: 100px; height: 30px; }
     }
     @media (max-width: 767px) {
-        /* Full Screen Mobile Styles */
         .phone { width: 100%; height: 100vh; border-radius: 0; border: none; box-shadow: none; padding: 0; }
         .screen { width: 100%; height: 100vh; border-radius: 0; }
         .notch, .vol-up, .vol-down, .silent-switch { display: none !important; }
@@ -207,10 +96,7 @@
       <div class="home-indicator"></div>
 
       <div class="app-display" id="appDisplay">
-        <div class="close-bar">
-            <span id="app-title-display" style="flex-grow: 1; font-weight: bold;"></span>
-            <button class="close-btn" id="closeAppBtn">Close</button>
-        </div>
+        
         <iframe 
             class="app-iframe" 
             id="appIframe" 
@@ -219,6 +105,12 @@
             sandbox="allow-scripts allow-forms allow-same-origin allow-popups"
             title="Application Viewport">
         </iframe>
+        
+        <div class="close-bar">
+            <span id="app-title-display" style="flex-grow: 1; font-weight: bold;"></span>
+            <button class="close-btn" id="closeAppBtn">Close</button>
+        </div>
+
       </div>
 
     </div>
@@ -230,6 +122,11 @@
     const appIframe = document.getElementById('appIframe');
     const appTitleDisplay = document.getElementById('app-title-display');
     const closeAppBtn = document.getElementById('closeAppBtn');
+    
+    const STORAGE_KEY = 'appLauncherOrder';
+    let draggedItem = null;
+
+    // --- Core Icon Rendering and Drag Setup ---
 
     function createAppIcon(app) {
         const wrapper = document.createElement('div');
@@ -237,11 +134,12 @@
         wrapper.title = app.title;
         wrapper.dataset.path = app.path;
         wrapper.dataset.title = app.title;
+        wrapper.setAttribute('draggable', true); 
+        wrapper.dataset.appId = app.path; 
 
         const iconDiv = document.createElement('div');
         iconDiv.className = `app-icon ${app.class || 'camera'}`;
         
-        // Logic to correctly display emojis as icons
         iconDiv.textContent = app.icon.replace(/\s/g, '').replace(/[^A-Za-z0-9\s]/g, ''); 
         if (iconDiv.textContent.length === 0 && app.icon) {
             iconDiv.textContent = app.icon; 
@@ -249,45 +147,123 @@
 
         const labelDiv = document.createElement('div');
         labelDiv.className = 'app-label';
-        // Remove emoji from label for cleaner look
         labelDiv.textContent = app.title.replace(/[^A-Za-z0-9\s]/g, '').trim(); 
 
         wrapper.appendChild(iconDiv);
         wrapper.appendChild(labelDiv);
         
-        // Add click listener to launch app
-        wrapper.addEventListener('click', () => launchApp(app.path, app.title));
+        wrapper.addEventListener('click', (e) => {
+            if (e.currentTarget.classList.contains('just-dragged')) {
+                e.currentTarget.classList.remove('just-dragged');
+                return;
+            }
+            launchApp(app.path, app.title);
+        });
+        
+        // Drag Listeners
+        wrapper.addEventListener('dragstart', handleDragStart);
+        wrapper.addEventListener('dragover', handleDragOver);
+        wrapper.addEventListener('drop', handleDrop);
+        wrapper.addEventListener('dragend', handleDragEnd);
 
         return wrapper;
     }
 
-    // Function to handle app launch (opens the iframe)
+    // --- App Launch/Close ---
     function launchApp(path, title) {
         appTitleDisplay.textContent = title.replace(/[^A-Za-z0-9\s]/g, '').trim(); 
         appIframe.src = path;
-        appDisplay.style.display = 'flex'; // Show the app viewport
+        appDisplay.style.display = 'flex'; 
     }
 
-    // Function to close app
     closeAppBtn.addEventListener('click', () => {
-        appDisplay.style.display = 'none'; // Hide the app viewport
-        appIframe.src = 'about:blank'; // Stop the app from running (saves resources)
+        appDisplay.style.display = 'none'; 
+        appIframe.src = 'about:blank'; 
     });
 
-    // --- DYNAMIC APP LOADING FUNCTION ---
+    // --- Local Storage Management ---
+    function getSavedOrder() {
+        const storedOrder = localStorage.getItem(STORAGE_KEY);
+        return storedOrder ? JSON.parse(storedOrder) : null;
+    }
+    
+    function saveCurrentOrder() {
+        const newOrder = Array.from(appGrid.children).map(icon => icon.dataset.appId);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newOrder));
+    }
+    
+    function sortAppData(appData) {
+        const savedOrder = getSavedOrder();
+        
+        if (!savedOrder || savedOrder.length !== appData.length) {
+            return appData;
+        }
+
+        const appMap = new Map(appData.map(app => [app.path, app]));
+        const sortedData = savedOrder.map(appId => appMap.get(appId)).filter(app => app); 
+
+        const existingAppIds = new Set(savedOrder);
+        appData.forEach(app => {
+            if (!existingAppIds.has(app.path)) {
+                sortedData.push(app);
+            }
+        });
+
+        return sortedData;
+    }
+
+    // --- Drag and Drop Handlers ---
+    function handleDragStart(e) {
+        draggedItem = this;
+        e.dataTransfer.setData('text/html', ''); 
+        this.classList.add('dragging'); 
+        if (navigator.vibrate) { // iOS-like haptic feedback
+            navigator.vibrate(50); 
+        }
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault(); 
+        
+        // Find the element we are hovering over that is NOT the dragged element
+        const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
+        if (!target) return;
+        
+        // Determine insertion point based on mouse position
+        const rect = target.getBoundingClientRect();
+        const next = (e.clientX - rect.left) / rect.width > 0.5; 
+
+        if (next) {
+            appGrid.insertBefore(draggedItem, target.nextSibling);
+        } else {
+            appGrid.insertBefore(draggedItem, target);
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        draggedItem.classList.add('just-dragged'); 
+        saveCurrentOrder();
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        draggedItem = null;
+    }
+
+
+    // --- Async Fetch and Initial Render ---
     async function fetchAndRenderApps() {
         try {
-            // Fetch the apps.json file
             const response = await fetch('./apps.json');
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // Parse the JSON data
-            const appData = await response.json();
+            let appData = await response.json();
+            appData = sortAppData(appData);
             
-            // Render all icons
             appData.forEach(app => {
                 appGrid.appendChild(createAppIcon(app));
             });
@@ -298,11 +274,9 @@
         }
     }
 
-    // Call the function to start the process
     fetchAndRenderApps();
 
-
-    // Update time function for the status bar
+    // --- Time Update ---
     function updateTime() {
       const now = new Date();
       const hours = now.getHours() % 12 || 12; 
