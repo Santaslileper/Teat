@@ -1,110 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>404 Not Found</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"><title>404 Not Found</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
-
-  body {
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #1e1e2f;
-    font-family: 'Roboto Mono', monospace;
-    color: #fff;
-    overflow: hidden;
-  }
-
-  .container {
-    text-align: center;
-  }
-
-  h1 {
-    font-size: 8em;
-    position: relative;
-    color: #ff5555;
-    animation: float 2s ease-in-out infinite alternate;
-  }
-
-  h1::before,
-  h1::after {
-    content: "404";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    clip: rect(0, 900px, 0, 0);
-  }
-
-  h1::before {
-    left: 2px;
-    text-shadow: -2px 0 #7289da;
-    animation: glitch1 2s infinite linear alternate-reverse;
-  }
-
-  h1::after {
-    left: -2px;
-    text-shadow: -2px 0 #ff55ff;
-    animation: glitch2 2s infinite linear alternate-reverse;
-  }
-
-  p {
-    font-size: 1.5em;
-    color: #bbb;
-    margin: 0;
-  }
-
-  a {
-    color: #7289da;
-    text-decoration: none;
-    font-size: 1.2em;
-    border: 2px solid #7289da;
-    padding: 10px 20px;
-    border-radius: 6px;
-    margin-top: 20px;
-    display: inline-block;
-    transition: 0.2s;
-  }
-
-  a:hover {
-    background-color: #7289da;
-    color: #fff;
-  }
-
-  /* Floating animation */
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    100% { transform: translateY(-20px); }
-  }
-
-  /* Glitch animations */
-  @keyframes glitch1 {
-    0% { clip: rect(0, 9999px, 0, 0); transform: translate(0,0); }
-    10% { clip: rect(10px, 9999px, 50px, 0); transform: translate(-5px,-5px); }
-    20% { clip: rect(20px, 9999px, 60px, 0); transform: translate(5px,5px); }
-    30% { clip: rect(0, 9999px, 30px, 0); transform: translate(-5px,0); }
-    40% { clip: rect(15px, 9999px, 45px, 0); transform: translate(5px,5px); }
-    50% { clip: rect(0, 9999px, 60px, 0); transform: translate(-5px,-5px); }
-    100% { clip: rect(0, 9999px, 0, 0); transform: translate(0,0); }
-  }
-
-  @keyframes glitch2 {
-    0% { clip: rect(0, 9999px, 0, 0); transform: translate(0,0); }
-    10% { clip: rect(5px, 9999px, 35px, 0); transform: translate(5px,5px); }
-    20% { clip: rect(25px, 9999px, 55px, 0); transform: translate(-5px,-5px); }
-    30% { clip: rect(0, 9999px, 20px, 0); transform: translate(5px,0); }
-    40% { clip: rect(10px, 9999px, 40px, 0); transform: translate(-5px,5px); }
-    50% { clip: rect(0, 9999px, 50px, 0); transform: translate(5px,-5px); }
-    100% { clip: rect(0, 9999px, 0, 0); transform: translate(0,0); }
-  }
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap');
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;background-color:#1e1e2f;font-family:'Roboto Mono',monospace;color:#fff;overflow:hidden}.c{text-align:center}h1{font-size:8em;position:relative;color:#f55;animation:f 2s ease-in-out infinite alternate}h1::before,h1::after{content:"404";position:absolute;top:0;left:0;width:100%;overflow:hidden;clip:rect(0,900px,0,0)}h1::before{left:2px;text-shadow:-2px 0 #7289da;animation:g1 2s infinite linear alternate-reverse}h1::after{left:-2px;text-shadow:-2px 0 #ff55ff;animation:g2 2s infinite linear alternate-reverse}p{font-size:1.5em;color:#bbb;margin:0}a{color:#7289da;text-decoration:none;font-size:1.2em;border:2px solid #7289da;padding:10px 20px;border-radius:6px;margin-top:20px;display:inline-block;transition:.2s}a:hover{background-color:#7289da;color:#fff}@keyframes f{0%{transform:translateY(0)}100%{transform:translateY(-20px)}}@keyframes g1{0%{clip:rect(0,9999px,0,0);transform:translate(0,0)}10%{clip:rect(10px,9999px,50px,0);transform:translate(-5px,-5px)}20%{clip:rect(20px,9999px,60px,0);transform:translate(5px,5px)}30%{clip:rect(0,9999px,30px,0);transform:translate(-5px,0)}40%{clip:rect(15px,9999px,45px,0);transform:translate(5px,5px)}50%{clip:rect(0,9999px,60px,0);transform:translate(-5px,-5px)}100%{clip:rect(0,9999px,0,0);transform:translate(0,0)}}@keyframes g2{0%{clip:rect(0,9999px,0,0);transform:translate(0,0)}10%{clip:rect(5px,9999px,35px,0);transform:translate(5px,5px)}20%{clip:rect(25px,9999px,55px,0);transform:translate(-5px,-5px)}30%{clip:rect(0,9999px,20px,0);transform:translate(5px,0)}40%{clip:rect(10px,9999px,40px,0);transform:translate(-5px,5px)}50%{clip:rect(0,9999px,50px,0);transform:translate(5px,-5px)}100%{clip:rect(0,9999px,0,0);transform:translate(0,0)}}
 </style>
 </head>
 <body>
-  <div class="container">
+  <div class="c">
     <h1>404</h1>
     <p>Oops! Page not found.</p>
     <a href="/">Go Home</a>
