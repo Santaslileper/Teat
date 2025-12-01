@@ -11,34 +11,63 @@
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; 
         background: #000; display: flex; justify-content: center; align-items: center; 
         min-height: 100vh; padding: 20px; 
-        /* Global Text Selection Disable */
         user-select: none; -webkit-user-select: none; cursor: default;
-        overflow: hidden; /* Prevent body scroll */
+        overflow: hidden;
+    }
+
+    /* --- THEME: BACKGROUND & OVERLAY --- */
+    .phone { 
+        position: relative; width: 100%; height: 100%; max-width: 375px; max-height: 812px;
+        background-color: #111; /* Fallback Dark Slate */
+        /* --- 🎨 OPTIONAL: ADD YOUR BACKGROUND IMAGE HERE --- */
+        /* background-image: url('YOUR_IMAGE_PATH_HERE.jpg'); */
+        background-size: cover;
+        background-position: center;
+        overflow: hidden; 
+        display: flex; flex-direction: column;
+    }
+    /* Subtle Glow/Overlay Effect */
+    .phone::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.2); /* Semi-opaque dark layer for soft look */
+        z-index: 1; 
+        pointer-events: none;
     }
 
     /* --- PHONE FRAME & UI --- */
-    .status-bar { height: 44px; padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; z-index: 100; pointer-events: none; }
+    .status-bar { 
+        height: 44px; padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; 
+        padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; 
+        z-index: 100; pointer-events: none;
+        position: absolute; width: 100%; top: 0; left: 0;
+    }
     
-    /* Home Indicator (The Gesture Target) */
+    /* Home Indicator (The Gesture Target and VISUAL Bar) */
     .home-indicator { 
         position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; 
         display: flex; justify-content: center; align-items: center; z-index: 999; 
-        touch-action: none; /* Crucial for JS gestures */
+        touch-action: none;
     }
-    .home-indicator::before { content: ''; display: block; width: 140px; height: 5px; background: rgba(255,255,255,0.4); border-radius: 3px; }
+    /* The visible bar */
+    .home-indicator::before { 
+        content: ''; 
+        display: block; 
+        width: 140px; 
+        height: 5px; 
+        background: rgba(255,255,255,0.7); /* Brighter bar for contrast */
+        border-radius: 3px; 
+    }
 
     /* --- LAYOUT CONTAINERS --- */
-    .phone { 
-        position: relative; width: 100%; height: 100%; max-width: 375px; max-height: 812px;
-        background: #000; overflow: hidden; display: flex; flex-direction: column;
-    }
     /* Desktop Phone styling */
     @media (min-width: 768px) {
         .phone { height: 812px; border-radius: 50px; box-shadow: 0 0 0 12px #2c2c2e, 0 20px 60px rgba(0,0,0,0.8); }
         .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
     }
     
-    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 2; /* Above the ::after overlay */ }
 
     /* --- HOME SCREEN --- */
     .home-screen { 
@@ -48,7 +77,7 @@
     }
     .home-screen.zoomed-out {
         transform: scale(0.85);
-        filter: brightness(0.5) blur(10px);
+        filter: brightness(0.7) blur(10px); /* Slightly lighter blur */
         pointer-events: none;
     }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
@@ -57,15 +86,15 @@
     .app-icon-wrapper { 
         display: flex; flex-direction: column; align-items: center; 
         transition: transform 0.2s ease;
-        touch-action: none; /* Prevent scrolling while dragging icons */
+        touch-action: none; 
     }
     .app-icon { 
         width: 60px; height: 60px; border-radius: 14px; 
         display: flex; align-items: center; justify-content: center; 
         font-size: 30px; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        background: linear-gradient(135deg, #333, #555); /* Default */
+        background: linear-gradient(135deg, #333, #555);
     }
-    /* Icon Gradients */
+    /* Icon Gradients (kept same) */
     .app-icon.camera { background: linear-gradient(135deg, #667eea, #764ba2); }
     .app-icon.mic { background: linear-gradient(135deg, #f093fb, #f5576c); }
     .app-icon.motion { background: linear-gradient(135deg, #4facfe, #00f2fe); }
@@ -82,20 +111,18 @@
     /* --- APP DISPLAY (Running Apps) --- */
     .app-display { 
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-        z-index: 50; pointer-events: none; /* Let clicks pass to home if empty */
+        z-index: 50; pointer-events: none;
     }
     
-    /* Active App Window */
     .app-window {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: #fff;
-        transform: translate3d(100%, 0, 0); /* Hidden to right by default */
-        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); /* iOS Spring-ish */
+        transform: translate3d(100%, 0, 0); 
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
         pointer-events: auto;
         overflow: hidden;
     }
     .app-window.active { transform: translate3d(0, 0, 0); }
-    
     .app-iframe { width: 100%; height: 100%; border: none; display: block; }
 
     /* --- APP SWITCHER (Recents) --- */
@@ -103,18 +130,18 @@
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: transparent;
         z-index: 40;
-        display: none; /* Hidden by default */
+        display: none; 
         overflow-x: auto; overflow-y: hidden;
         white-space: nowrap;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
-        padding: 0 40px; /* Center alignment padding */
+        padding: 0 40px;
         pointer-events: auto;
     }
     
     .switcher-container {
         display: inline-flex; height: 100%; align-items: center; gap: 20px;
-        padding-right: 40px; /* Spacer */
+        padding-right: 40px;
     }
 
     .switcher-card {
@@ -129,7 +156,6 @@
         overflow: hidden;
     }
     
-    /* Header inside card (Icon + Title) */
     .card-header {
         position: absolute; top: 0; left: 0; width: 100%; height: 40px;
         display: flex; align-items: center; justify-content: center;
@@ -139,16 +165,14 @@
     .card-title { color: #fff; font-size: 14px; font-weight: 600; margin-left: 8px; }
     .card-icon-small { font-size: 16px; }
 
-    /* The iframe inside the card */
     .switcher-iframe {
         width: 100%; height: 100%; border: none; background: #fff;
-        pointer-events: none; /* Disabled by default, enabled via JS if active */
+        pointer-events: none;
     }
 
-    /* Message when empty */
     .empty-msg {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        color: #666; font-size: 16px; pointer-events: none;
+        color: #fff; font-size: 16px; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.9);
     }
   </style>
 </head>
@@ -158,7 +182,7 @@
     <div class="notch"></div>
 
     <div class="screen">
-        <div class="status-bar">
+        <div class="status-bar" id="statusBar">
             <span id="clock">12:00</span>
             <span>5G 100%</span>
         </div>
@@ -175,7 +199,7 @@
             <div class="switcher-container" id="switcherContainer"></div>
         </div>
         
-        <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps</div>
+        <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps. Swipe up again to go Home.</div>
 
         <div class="home-indicator" id="homeIndicator"></div>
     </div>
@@ -189,11 +213,13 @@
     const appSwitcher = document.getElementById('appSwitcher');
     const switcherContainer = document.getElementById('switcherContainer');
     const homeScreen = document.getElementById('homeScreen');
+    const homeIndicator = document.getElementById('homeIndicator');
     const emptyRecents = document.getElementById('emptyRecents');
+    const statusBar = document.getElementById('statusBar');
     
     // Core State
-    let runningApps = []; // { path, title, icon, windowEl, cardEl }
-    let currentAppPath = null; // Path of the app currently full screen
+    let runningApps = []; 
+    let currentAppPath = null;
     let isSwitcherMode = false;
 
     // --- INITIALIZATION ---
@@ -203,18 +229,19 @@
         await loadApps();
         
         // Attach Global Gesture Listener to Home Indicator
-        const indicator = document.getElementById('homeIndicator');
         let startY = 0;
-        
-        indicator.addEventListener('touchstart', e => { startY = e.touches[0].clientY; });
-        indicator.addEventListener('touchend', e => {
+        homeIndicator.addEventListener('touchstart', e => { 
+            startY = e.touches[0].clientY; 
+            // Prevent initial drag from interfering with home screen
+            e.preventDefault();
+        });
+        homeIndicator.addEventListener('touchend', e => {
             const deltaY = e.changedTouches[0].clientY - startY;
             if (deltaY < -40) { // Swiped Up
                 handleHomeGesture();
             }
         });
         
-        // Scroll Listener for Switcher (to activate centered card)
         appSwitcher.addEventListener('scroll', handleSwitcherScroll);
     }
 
@@ -222,7 +249,7 @@
     async function loadApps() {
         try {
             const res = await fetch('apps.json');
-            if (!res.ok) throw new Error("No apps.json");
+            if (!res.ok) throw new Error("No apps.json found. Create one!");
             let apps = await res.json();
             
             // Apply saved sort order
@@ -237,7 +264,10 @@
 
             renderIcons(apps);
         } catch (e) {
-            appGrid.innerHTML = `<div style="color:white; grid-column:1/-1; text-align:center;">Error loading apps.json</div>`;
+            console.error("App loading error:", e);
+            appGrid.innerHTML = `<div style="color:white; grid-column:1/-1; text-align:center; padding-top: 50px;">
+                ⚠️ Error loading apps.json. Please ensure the file exists.
+            </div>`;
         }
     }
 
@@ -254,29 +284,33 @@
             `;
             
             // Launch on click
-            el.addEventListener('click', () => {
-                if(!el.classList.contains('dragging')) launchApp(app);
+            el.addEventListener('click', (e) => {
+                if(!el.classList.contains('dragging')) {
+                    launchApp(app);
+                }
             });
 
             // Drag Events
             el.addEventListener('dragstart', handleDragStart);
             el.addEventListener('dragover', handleDragOver);
             el.addEventListener('drop', handleDrop);
+            el.addEventListener('dragend', handleDragEnd); // FIX: Ensure drag state clears
             
             appGrid.appendChild(el);
         });
     }
 
-    // --- DRAG & DROP LOGIC ---
+    // --- DRAG & DROP LOGIC (FIXED) ---
     let draggedEl = null;
     function handleDragStart(e) {
         draggedEl = this;
         this.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
+        if (navigator.vibrate) navigator.vibrate(50); 
     }
     function handleDragOver(e) {
         e.preventDefault();
-        const target = e.target.closest('.app-icon-wrapper');
+        const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
         if (target && target !== draggedEl) {
             const rect = target.getBoundingClientRect();
             const next = (e.clientX - rect.left) / rect.width > 0.5;
@@ -285,7 +319,13 @@
     }
     function handleDrop(e) {
         e.preventDefault();
-        this.classList.remove('dragging');
+        // draggedEl is cleared in handleDragEnd
+    }
+    function handleDragEnd(e) {
+        if (draggedEl) {
+            draggedEl.classList.remove('dragging');
+            draggedEl = null;
+        }
         // Save Order
         const newOrder = Array.from(appGrid.children).map(c => c.dataset.path);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newOrder));
@@ -294,61 +334,57 @@
     // --- NAVIGATION CONTROLLER ---
     function handleHomeGesture() {
         if (currentAppPath) {
-            // App is Open -> Go to Home (minimize)
+            // App is Open -> Go to Recents
             minimizeApp();
-        } else if (!isSwitcherMode && runningApps.length > 0) {
-            // On Home -> Go to Recents
             openSwitcher();
-        } else {
+        } else if (isSwitcherMode) {
             // In Recents -> Go Home
             closeSwitcher();
+        } else if (runningApps.length > 0) {
+            // On Home, apps are running -> Go to Recents
+            openSwitcher();
         }
     }
 
     // --- APP LIFECYCLE ---
     function launchApp(appData) {
-        // 1. Check if running
         let app = runningApps.find(a => a.path === appData.path);
         
         if (!app) {
-            // Create new App Instance
             app = createAppInstance(appData);
             runningApps.push(app);
         } else {
-            // Move to end (most recent)
             runningApps = runningApps.filter(a => a.path !== appData.path);
-            runningApps.push(app);
+            runningApps.push(app); // Move to end (most recent)
         }
 
-        // 2. UI Transitions
-        closeSwitcher(); // Ensure switcher is gone
+        closeSwitcher();
         
-        // Wait a tick for DOM
+        // Restore iframe if it was in the card
+        if (app.cardEl) restoreIframe(app);
+
         requestAnimationFrame(() => {
-            // Slide in
             app.windowEl.classList.add('active');
-            // Bring to front Z-index
             runningApps.forEach(a => a.windowEl.style.zIndex = 10);
             app.windowEl.style.zIndex = 20;
             
-            // Zoom out home screen
             homeScreen.classList.add('zoomed-out');
-            
             currentAppPath = app.path;
         });
     }
 
     function createAppInstance(data) {
-        // Create Fullscreen Window
         const win = document.createElement('div');
         win.className = 'app-window';
         
-        // Sandbox Permissions: Allow scripts/forms. 
-        // NOTE: 'allow-same-origin' is DANGEROUS if loading external sites. Removed for safety.
-        // Special case: If path includes 'map', maybe relax?
         const sandboxRules = "allow-scripts allow-forms allow-popups allow-modals";
         
-        win.innerHTML = `<iframe class="app-iframe" src="${data.path}" sandbox="${sandboxRules}"></iframe>`;
+        const iframe = document.createElement('iframe');
+        iframe.className = 'app-iframe';
+        iframe.src = data.path;
+        iframe.setAttribute('sandbox', sandboxRules);
+        
+        win.appendChild(iframe);
         appWindowContainer.appendChild(win);
 
         return { ...data, windowEl: win, cardEl: null };
@@ -356,51 +392,45 @@
 
     function minimizeApp() {
         if (!currentAppPath) return;
-        
         const app = runningApps.find(a => a.path === currentAppPath);
-        if (app) {
-            app.windowEl.classList.remove('active');
-        }
+        if (app) app.windowEl.classList.remove('active');
         
         homeScreen.classList.remove('zoomed-out');
         currentAppPath = null;
     }
 
     function closeApp(path) {
-        // Find app
         const idx = runningApps.findIndex(a => a.path === path);
         if (idx === -1) return;
         const app = runningApps[idx];
 
-        // Remove DOM
         app.windowEl.remove();
         if (app.cardEl) app.cardEl.remove();
-
-        // Remove from state
         runningApps.splice(idx, 1);
 
-        // UI Updates
         if (runningApps.length === 0) {
             emptyRecents.style.display = 'block';
         }
-        
-        // If this was the active app, reset
         if (currentAppPath === path) currentAppPath = null;
     }
 
     // --- APP SWITCHER (RECENTS) ---
     function openSwitcher() {
         isSwitcherMode = true;
-        homeScreen.classList.add('zoomed-out'); // Blur home
+        homeScreen.classList.add('zoomed-out');
         appSwitcher.style.display = 'flex';
         emptyRecents.style.display = runningApps.length === 0 ? 'block' : 'none';
+        statusBar.style.pointerEvents = 'none';
 
         renderSwitcherCards();
         
-        // Scroll to end (most recent)
         setTimeout(() => {
-            appSwitcher.scrollLeft = appSwitcher.scrollWidth;
-            handleSwitcherScroll(); // Trigger interaction check
+            // Scroll to end (most recent) - index 0 is at the end of the container array
+            const mostRecentCard = switcherContainer.lastElementChild;
+            if (mostRecentCard) {
+                appSwitcher.scrollLeft = mostRecentCard.offsetLeft - (appSwitcher.clientWidth / 2) + (mostRecentCard.offsetWidth / 2);
+            }
+            handleSwitcherScroll(); 
         }, 10);
     }
 
@@ -409,51 +439,48 @@
         appSwitcher.style.display = 'none';
         homeScreen.classList.remove('zoomed-out');
         emptyRecents.style.display = 'none';
+        statusBar.style.pointerEvents = 'auto';
+
+        // Move all iframes back to their window container
+        runningApps.forEach(restoreIframe);
     }
 
     function renderSwitcherCards() {
         switcherContainer.innerHTML = '';
         
-        // Render in order (runningApps)
-        runningApps.forEach(app => {
+        // Render in REVERSE order (most recent is now last in array, should be last visually for snap)
+        // Note: Running apps are pushed, so array[n-1] is the most recent.
+        const reversedApps = [...runningApps].reverse();
+
+        reversedApps.forEach(app => {
             const card = document.createElement('div');
             card.className = 'switcher-card';
             
-            // Clone iframe? No, moving iframes reloads them.
-            // Technique: We actually move the iframe DOM node into the card
-            // When exiting switcher, we move it back to windowContainer.
-            // BUT for simplicity in this single-file demo, we will use a distinct visual approach:
-            // We use the *same* iframe.
-            
-            // Header
             const header = document.createElement('div');
             header.className = 'card-header';
             header.innerHTML = `<span class="card-icon-small">${app.icon}</span><span class="card-title">${app.title}</span>`;
             card.appendChild(header);
 
-            // Container for iframe content
             const content = document.createElement('div');
             content.style.width = '100%'; 
             content.style.height = '100%';
-            content.style.pointerEvents = 'none'; // Default to non-interactive
+            content.style.pointerEvents = 'none';
             content.className = 'card-content-area';
             
-            // Move iframe to card
-            content.appendChild(app.windowEl.querySelector('iframe'));
+            // Move iframe from window container to card
+            const iframe = app.windowEl.querySelector('iframe');
+            if (iframe) content.appendChild(iframe);
             card.appendChild(content);
             
-            // Attach Events
-            // 1. Click to Open
+            // Click to Open
             card.addEventListener('click', (e) => {
-                // If interactive, let click pass through. If not, launch.
-                if (content.style.pointerEvents === 'none') {
-                    // Restore iframe to window container first
-                    restoreIframe(app);
+                const isInteractive = content.style.pointerEvents === 'auto';
+                // Only launch if it's the center card and the click wasn't inside the iframe
+                if (isInteractive && e.target === card) { 
                     launchApp(app);
                 }
             });
 
-            // 2. Tinder Flick Logic
             applyFlickLogic(card, app);
 
             switcherContainer.appendChild(card);
@@ -461,12 +488,16 @@
         });
     }
 
-    // When closing switcher or launching app, we must put iframes back!
     function restoreIframe(app) {
-        if (!app.cardEl) return;
+        if (!app.cardEl || !app.windowEl) return;
         const iframe = app.cardEl.querySelector('iframe');
         if (iframe) {
+            // Reset pointer events for fullscreen use
+            iframe.style.pointerEvents = 'auto'; 
             app.windowEl.appendChild(iframe);
+            // Clear card reference since it's now visually empty
+            app.cardEl.remove();
+            app.cardEl = null;
         }
     }
 
@@ -476,34 +507,40 @@
         let isDragging = false;
 
         card.addEventListener('touchstart', (e) => {
-            // Only allow drag if we are NOT interacting with content
-            // Simple check: if scrolling switcher, don't flick
+            if (card.querySelector('.card-content-area').style.pointerEvents === 'none') return;
             startY = e.touches[0].clientY;
             isDragging = true;
+            // Temporarily disable iframe interaction if dragging starts
+            card.querySelector('iframe').style.pointerEvents = 'none'; 
         });
 
         card.addEventListener('touchmove', (e) => {
             if (!isDragging) return;
             const dy = e.touches[0].clientY - startY;
-            if (dy < 0) { // Only up
-                e.preventDefault(); // Stop scroll
-                card.style.transform = `translateY(${dy}px) scale(${1 + dy/1000})`;
+            if (dy < 0) {
+                e.preventDefault();
+                card.style.transition = 'none';
+                card.style.transform = `translateY(${dy}px) scale(${1 + dy/5000})`;
             }
         });
 
         card.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
             isDragging = false;
             const dy = e.changedTouches[0].clientY - startY;
             
+            // Restore iframe pointer events
+            card.querySelector('iframe').style.pointerEvents = 'auto';
+
             if (dy < -100) {
-                // Flicked away!
-                card.style.transition = 'transform 0.3s ease';
+                // Flicked away
+                card.style.transition = 'transform 0.3s ease-out';
                 card.style.transform = `translateY(-100vh)`;
                 setTimeout(() => closeApp(app.path), 300);
             } else {
                 // Reset
-                card.style.transition = 'transform 0.2s ease';
-                card.style.transform = '';
+                card.style.transition = 'transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1)';
+                card.style.transform = 'translateY(0)';
             }
         });
     }
@@ -512,29 +549,27 @@
     function handleSwitcherScroll() {
         if (!isSwitcherMode) return;
         
-        const centerLine = appSwitcher.scrollLeft + (appSwitcher.clientWidth / 2);
+        const scrollCenter = appSwitcher.scrollLeft + (appSwitcher.clientWidth / 2);
         
         runningApps.forEach(app => {
             if (!app.cardEl) return;
-            const rect = app.cardEl.getBoundingClientRect();
-            // Calculate card center relative to scrolling container logic isn't strictly needed
-            // Just check screen center matches card center
+            const card = app.cardEl;
+            const content = card.querySelector('.card-content-area');
+
+            const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
+            const dist = Math.abs(cardCenter - scrollCenter);
             
-            // Simpler: Distance from screen center
-            const cardCenter = app.cardEl.offsetLeft + (app.cardEl.offsetWidth / 2);
-            const dist = Math.abs(cardCenter - centerLine);
-            
-            const content = app.cardEl.querySelector('.card-content-area');
-            
-            // Threshold: if within 20px of center
+            // Threshold: if within 40px of center
             if (dist < 40) {
-                content.style.pointerEvents = 'auto'; // Interactive!
-                app.cardEl.style.transform = 'scale(1)';
-                app.cardEl.style.opacity = '1';
+                content.style.pointerEvents = 'auto'; 
+                card.style.transform = 'scale(1)';
+                card.style.opacity = '1';
+                // For debug: card.style.border = '2px solid red';
             } else {
-                content.style.pointerEvents = 'none'; // Static
-                app.cardEl.style.transform = 'scale(0.95)';
-                app.cardEl.style.opacity = '0.7';
+                content.style.pointerEvents = 'none';
+                card.style.transform = 'scale(0.95)';
+                card.style.opacity = '0.7';
+                // For debug: card.style.border = 'none';
             }
         });
     }
