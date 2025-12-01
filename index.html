@@ -25,6 +25,7 @@
         border: 1px solid #333;
     }
     
+    /* Desktop Styling */
     @media (min-width: 768px) {
         .phone { height: 812px; border-radius: 50px; box-shadow: 0 0 0 12px #2c2c2e, 0 20px 60px rgba(0,0,0,0.8); }
         .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
@@ -52,7 +53,13 @@
 
     .app-icon-wrapper { 
         display: flex; flex-direction: column; align-items: center; 
-        transition: transform 0.2s ease; touch-action: none; 
+        transition: transform 0.2s ease, box-shadow 0.2s; /* Added transition for smooth return */
+        touch-action: none; 
+        position: relative; /* Needed for z-index stacking */
+    }
+    .app-icon-wrapper.dragging-effect {
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 0 5px rgba(255,255,255,0.2);
+        cursor: grabbing;
     }
     .app-icon { 
         width: 60px; height: 60px; border-radius: 14px; 
@@ -78,8 +85,17 @@
     }
     .app-window.active { transform: translate3d(0, 0, 0); }
     .app-iframe { width: 100%; height: 100%; border: none; display: block; }
+    
+    /* Grab handle for full-screen apps */
+    .app-drag-handle {
+        position: absolute; top: 0; left: 0; width: 100%; height: 44px; 
+        z-index: 90;
+        cursor: grab;
+        touch-action: none; 
+        background: transparent;
+    }
 
-    /* --- APP SWITCHER (FIXED SCROLLING) --- */
+    /* --- APP SWITCHER --- */
     .app-switcher {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: transparent; z-index: 40; 
@@ -111,6 +127,7 @@
         flex-shrink: 0;
         transform-origin: center; transition: transform 0.2s;
         overflow: hidden;
+        touch-action: none;
     }
     
     .card-header {
@@ -118,11 +135,6 @@
         display: flex; align-items: center; justify-content: center;
         background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
         z-index: 20; pointer-events: none;
-    }
-    
-    .card-touch-layer {
-        position: absolute; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);
-        z-index: 15;
     }
 
     /* Small X button for Recents Menu */
@@ -194,9 +206,17 @@
     const emptyRecents = document.getElementById('emptyRecents');
     const recentsCloseBtn = document.getElementById('recentsCloseBtn');
     
+    // Core State
     let runningApps = []; 
     let currentAppPath = null;
     let isSwitcherMode = false;
+
+    // Icon Drag State
+    let draggingIcon = null;
+    let initialX, initialY;
+    let dragTimeout = null;
+    let isDragging = false;
+    const DRAG_DELAY = 400; // ms for long press to start drag
 
     // Hardcoded Tutorial
     const TUTORIAL_APP = { id: 999, title: "Info", icon: "ℹ️", path: "system:tutorial", class: "info" };
@@ -205,7 +225,7 @@
         updateClock(); setInterval(updateClock, 1000);
         await loadApps();
         
-        // Home Gesture (Swipe Up)
+        // Home Indicator Swipe Up
         const indicator = document.getElementById('homeIndicator');
         let startY = 0;
         indicator.addEventListener('touchstart', e => { startY = e.touches[0].clientY; e.preventDefault(); });
@@ -232,9 +252,121 @@
         const el = document.createElement('div');
         el.className = 'app-icon-wrapper';
         el.innerHTML = `<div class="app-icon ${app.class || ''}">${app.icon}</div><div class="app-label">${app.title}</div>`;
-        el.addEventListener('click', () => launchApp(app));
+        
+        // App Launch on Click/Tap
+        el.addEventListener('click', (e) => {
+            if (!isDragging) {
+                launchApp(app);
+            }
+            // isDragging flag is reset in touchend
+        });
+        
+        setupIconDrag(el);
         appGrid.appendChild(el);
     }
+    
+    // --- ICON DRAG LOGIC (Re-enabled) ---
+    function setupIconDrag(iconWrapper) {
+        iconWrapper.addEventListener('touchstart', (e) => {
+            isDragging = false; 
+            iconWrapper.style.transition = 'transform 0.2s ease, box-shadow 0.2s';
+            
+            initialX = e.touches[0].clientX;
+            initialY = e.touches[0].clientY;
+
+            // Start long press timer
+            dragTimeout = setTimeout(() => {
+                isDragging = true;
+                draggingIcon = iconWrapper;
+                draggingIcon.style.transition = 'none'; // Disable transition while actively dragging
+                draggingIcon.style.zIndex = 100;
+                draggingIcon.classList.add('dragging-effect');
+                if(navigator.vibrate) navigator.vibrate(50);
+            }, DRAG_DELAY);
+        }, { passive: true }); // passive: true to allow smooth touchstart
+
+        iconWrapper.addEventListener('touchmove', (e) => {
+            const currentClientX = e.touches[0].clientX;
+            const currentClientY = e.touches[0].clientY;
+            
+            // Check for premature movement (treat as scroll/tap, not drag)
+            if (!isDragging) {
+                if (Math.abs(currentClientX - initialX) > 10 || Math.abs(currentClientY - initialY) > 10) {
+                    clearTimeout(dragTimeout);
+                    return;
+                }
+            }
+            
+            if (isDragging) {
+                // Prevent scrolling the home screen while dragging an icon
+                e.preventDefault(); 
+                const dragX = currentClientX - initialX;
+                const dragY = currentClientY - initialY;
+                
+                draggingIcon.style.transform = `translate(${dragX}px, ${dragY}px) scale(1.1)`;
+
+                // Check for swap target
+                checkSwapTarget(currentClientX, currentClientY);
+            }
+        }, { passive: false }); // passive: false to allow e.preventDefault() on touchmove
+
+        iconWrapper.addEventListener('touchend', (e) => {
+            clearTimeout(dragTimeout);
+            
+            if (draggingIcon) {
+                // End drag state
+                draggingIcon.style.transition = 'transform 0.3s ease-out, box-shadow 0.3s';
+                draggingIcon.style.transform = 'translate(0, 0)'; // Snap back to grid
+                draggingIcon.style.zIndex = 1;
+                draggingIcon.classList.remove('dragging-effect');
+                draggingIcon = null;
+            }
+            // Reset isDragging after touchend to allow click logic to run next time
+            // if it was a quick tap. We wait a moment just in case a final click fires.
+            setTimeout(() => { isDragging = false; }, 50); 
+        });
+    }
+
+    function checkSwapTarget(x, y) {
+        if (!draggingIcon) return;
+
+        const appIcons = Array.from(appGrid.children);
+        let target = null;
+
+        for (const icon of appIcons) {
+            if (icon === draggingIcon) continue;
+            const rect = icon.getBoundingClientRect();
+            
+            // Simple center-point overlap detection
+            if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) {
+                target = icon;
+                break;
+            }
+        }
+
+        if (target) {
+            swapIcons(draggingIcon, target);
+        }
+    }
+
+    function swapIcons(icon1, icon2) {
+        const parent = appGrid;
+        const icon1Index = Array.from(parent.children).indexOf(icon1);
+        const icon2Index = Array.from(parent.children).indexOf(icon2);
+
+        // Get the current translation and scale before swapping DOM
+        const currentTransform = icon1.style.transform;
+        
+        if (icon1Index < icon2Index) {
+            parent.insertBefore(icon2, icon1);
+        } else {
+            parent.insertBefore(icon1, icon2);
+        }
+        
+        // Restore the live transform state on the dragged icon
+        icon1.style.transform = currentTransform;
+    }
+
 
     // --- NAVIGATION ---
     function handleHomeGesture() {
@@ -243,9 +375,8 @@
         else if (runningApps.length > 0) openSwitcher();
     }
 
-    // --- APP LOGIC ---
+    // --- APP LIFECYCLE ---
     function launchApp(appData) {
-        // Remove existing instance if any (so we push to end/front)
         let existing = runningApps.find(a => a.path === appData.path);
         if (existing) {
             runningApps = runningApps.filter(a => a.path !== appData.path);
@@ -256,14 +387,14 @@
         }
 
         closeSwitcher();
-        let activeApp = runningApps[runningApps.length - 1]; // Last item is active
+        let activeApp = runningApps[runningApps.length - 1];
 
         if (activeApp.cardEl) restoreIframeToWindow(activeApp);
 
         requestAnimationFrame(() => {
             activeApp.windowEl.classList.add('active');
             runningApps.forEach(a => a.windowEl.style.zIndex = 10);
-            activeApp.windowEl.style.zIndex = 20;
+            activeApp.windowEl.style.zIndex = 20; 
             homeScreen.classList.add('zoomed-out');
             currentAppPath = activeApp.path;
         });
@@ -273,15 +404,26 @@
         const win = document.createElement('div');
         win.className = 'app-window';
         
+        // --- Fullscreen Grab Handle ---
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'app-drag-handle';
+        win.appendChild(dragHandle);
+        setupFullscreenDrag(dragHandle, win);
+
         if (data.path === "system:tutorial") {
-            win.innerHTML = `
-            <div class="tutorial-content">
+            const content = document.createElement('div');
+            content.className = 'tutorial-content';
+            content.innerHTML = `
                 <div style="font-size:60px; margin-bottom:20px;">ℹ️</div>
                 <h2>How to Use</h2><br>
                 <div class="tutorial-step">1. Swipe Up bar to go Home.</div>
-                <div class="tutorial-step">2. Hold & Swipe Up for Recents.</div>
-                <div class="tutorial-step">3. <b>Hold Card</b> & Swipe Up to Close it.</div>
-            </div>`;
+                <div class="tutorial-step">2. Hold & Swipe Up bar for Recents.</div>
+                <div class="tutorial-step">3. Home Screen: <b>Long Press</b> icon to drag and rearrange.</div>
+                <div class="tutorial-step">4. Recents: <b>Tap Card</b> to launch.</div>
+                <div class="tutorial-step">5. Recents: <b>Hold Card</b> & Swipe Up to Close it.</div>
+                <div class="tutorial-step">6. Fullscreen App: Grab <b>top bar</b> and swipe down to minimize.</div>
+            `;
+            win.appendChild(content);
         } else {
             const iframe = document.createElement('iframe');
             iframe.className = 'app-iframe';
@@ -315,11 +457,57 @@
         if (currentAppPath === path) currentAppPath = null;
     }
 
-    // --- SWITCHER ---
+    // --- FULLSCREEN DRAG LOGIC ---
+    function setupFullscreenDrag(handleEl, windowEl) {
+        let startY = 0;
+        let isDragging = false;
+
+        handleEl.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            windowEl.style.transition = 'none'; // Disable transition during drag
+        });
+
+        handleEl.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const dy = e.touches[0].clientY - startY;
+            
+            if (dy > 0) { // Only allow downward drag
+                e.preventDefault();
+                windowEl.style.transform = `translateY(${dy}px)`;
+            } else if (dy < 0) {
+                windowEl.style.transform = `translateY(0)`;
+            }
+        });
+
+        handleEl.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            windowEl.style.transition = 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)';
+            
+            const dy = e.changedTouches[0].clientY - startY;
+
+            if (dy > 100) { 
+                windowEl.style.transform = `translateY(${windowEl.offsetHeight}px)`;
+                setTimeout(() => {
+                    windowEl.style.transition = 'none';
+                    windowEl.style.transform = 'translate3d(100%, 0, 0)';
+                    minimizeApp(); 
+                    openSwitcher();
+                }, 200);
+
+            } else {
+                // Snap back to fullscreen
+                windowEl.style.transform = 'translateY(0)';
+            }
+        });
+    }
+
+    // --- SWITCHER LOGIC ---
     function openSwitcher() {
         isSwitcherMode = true;
         homeScreen.classList.add('zoomed-out');
-        appSwitcher.style.display = 'flex'; // Make visible
+        appSwitcher.style.display = 'flex';
         recentsCloseBtn.style.display = 'flex';
         emptyRecents.style.display = runningApps.length === 0 ? 'block' : 'none';
 
@@ -358,74 +546,76 @@
             header.className = 'card-header';
             header.innerHTML = `<span style="color:white; font-size:12px; font-weight:bold;">${app.title}</span>`;
             card.appendChild(header);
-
-            // Grip Layer
-            const touchLayer = document.createElement('div');
-            touchLayer.className = 'card-touch-layer';
-            card.appendChild(touchLayer);
-
+            
             // Content
             const content = document.createElement('div');
             content.style.cssText = "width:100%; height:100%; pointer-events:none;"; 
-            while(app.windowEl.firstChild) { content.appendChild(app.windowEl.firstChild); }
+            while(app.windowEl.firstChild) { 
+                 const child = app.windowEl.firstChild;
+                 // Don't move the fullscreen drag handle to the card preview
+                 if (!child.classList || !child.classList.contains('app-drag-handle')) {
+                    content.appendChild(child); 
+                 } else {
+                    app.windowEl.removeChild(child);
+                 }
+            }
             card.appendChild(content);
             
-            // Interaction Logic (FIXED FOR TAP TO FULLSCREEN)
+            // Interaction Logic (Recents Card Gestures)
             let holdTimer = null;
             let isGripped = false;
+            let startX = 0;
             let startY = 0;
 
-            touchLayer.addEventListener('touchstart', (e) => {
+            card.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
-                isGripped = false; // Reset grip state
+                isGripped = false;
                 
-                // Start Hold Timer: if it fires, we transition to grip/drag mode
                 holdTimer = setTimeout(() => {
                     isGripped = true;
-                    // Visual feedback: Shrink card slightly
                     card.style.transform = 'scale(0.95)';
                     if(navigator.vibrate) navigator.vibrate(20);
                 }, 300);
             });
 
-            touchLayer.addEventListener('touchmove', (e) => {
-                // If we move too much vertically before the hold timer fires,
-                // we treat it as an immediate drag (for closing)
-                const deltaY = e.touches[0].clientY - startY;
-                
-                if (!isGripped && Math.abs(deltaY) > 5) { // User started dragging before hold time
+            card.addEventListener('touchmove', (e) => {
+                const dx = e.touches[0].clientX - startX;
+                const dy = e.touches[0].clientY - startY;
+
+                // If vertical movement significantly outweighs horizontal, cancel tap/scroll
+                if (!isGripped && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
                      clearTimeout(holdTimer);
-                     isGripped = true; // Immediately enter grip mode
+                     isGripped = true;
                 }
 
                 if (isGripped) {
-                    e.preventDefault(); // Stop scrolling the list if we're dragging the card
-                    if (deltaY < 0) { // Dragging Up
+                    e.preventDefault();
+                    if (dy < 0) {
                         card.style.transition = 'none';
-                        card.style.transform = `scale(0.95) translateY(${deltaY}px)`;
+                        card.style.transform = `scale(0.95) translateY(${dy}px)`;
                     }
                 }
             });
 
-            touchLayer.addEventListener('touchend', (e) => {
+            card.addEventListener('touchend', (e) => {
                 clearTimeout(holdTimer);
                 
+                const dx = Math.abs(e.changedTouches[0].clientX - startX);
+                const dyEnd = e.changedTouches[0].clientY - startY;
+
                 if (isGripped) {
-                    // Release Logic (Close Gesture)
-                    const dy = e.changedTouches[0].clientY - startY;
-                    if (dy < -100) {
-                        // Swipe Up Successful -> Close
+                    if (dyEnd < -100) {
                         card.style.transition = 'transform 0.3s ease-out';
                         card.style.transform = 'translateY(-100vh)';
                         setTimeout(() => closeApp(app.path), 300);
                     } else {
-                        // Snap Back
                         card.style.transition = 'transform 0.2s ease';
                         card.style.transform = 'scale(1)';
                     }
                     isGripped = false;
-                } else {
-                    // It was a Quick Tap -> Launch Fullscreen
+                } 
+                else if (dx < 10 && Math.abs(dyEnd) < 10) { 
                     launchApp(app);
                 }
             });
@@ -437,11 +627,19 @@
 
     function restoreIframeToWindow(app) {
         if (!app.cardEl) return;
-        const contentDiv = app.cardEl.children[2];
+        // The children are: 0=Header, 1=Content (where iframe/tutorial is)
+        const contentDiv = app.cardEl.children[1]; 
+        
+        // Move content back to app window
         if(contentDiv) {
              while(contentDiv.firstChild) { app.windowEl.appendChild(contentDiv.firstChild); }
         }
-        app.cardEl.remove(); // Remove the card element
+        
+        // The fullscreen drag handle was detached, re-attach it to the front
+        const dragHandle = app.windowEl.querySelector('.app-drag-handle');
+        if (dragHandle) app.windowEl.prepend(dragHandle);
+
+        app.cardEl.remove();
         app.cardEl = null;
     }
 
@@ -469,3 +667,4 @@
 </script>
 </body>
 </html>
+
