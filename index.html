@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Santaslileper OS</title>
   <style>
-    /* --- CORE STYLES & RESET --- */
+    /* --- CORE STYLES --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; 
@@ -15,59 +15,28 @@
         overflow: hidden;
     }
 
-    /* --- THEME: BACKGROUND & OVERLAY --- */
+    /* --- THEME --- */
     .phone { 
         position: relative; width: 100%; height: 100%; max-width: 375px; max-height: 812px;
-        background-color: #111; /* Fallback Dark Slate */
-        /* --- 🎨 OPTIONAL: ADD YOUR BACKGROUND IMAGE HERE --- */
-        /* background-image: url('YOUR_IMAGE_PATH_HERE.jpg'); */
-        background-size: cover;
-        background-position: center;
+        background-color: #050505; /* Deep Black */
+        background-image: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
         overflow: hidden; 
         display: flex; flex-direction: column;
-    }
-    /* Subtle Glow/Overlay Effect */
-    .phone::after {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0, 0, 0, 0.2); /* Semi-opaque dark layer for soft look */
-        z-index: 1; 
-        pointer-events: none;
-    }
-
-    /* --- PHONE FRAME & UI --- */
-    .status-bar { 
-        height: 44px; padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; 
-        padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; 
-        z-index: 100; pointer-events: none;
-        position: absolute; width: 100%; top: 0; left: 0;
+        border: 1px solid #333;
     }
     
-    /* Home Indicator (The Gesture Target and VISUAL Bar) */
-    .home-indicator { 
-        position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; 
-        display: flex; justify-content: center; align-items: center; z-index: 999; 
-        touch-action: none;
-    }
-    /* The visible bar */
-    .home-indicator::before { 
-        content: ''; 
-        display: block; 
-        width: 140px; 
-        height: 5px; 
-        background: rgba(255,255,255,0.7); /* Brighter bar for contrast */
-        border-radius: 3px; 
-    }
-
-    /* --- LAYOUT CONTAINERS --- */
-    /* Desktop Phone styling */
+    /* Desktop Styling */
     @media (min-width: 768px) {
         .phone { height: 812px; border-radius: 50px; box-shadow: 0 0 0 12px #2c2c2e, 0 20px 60px rgba(0,0,0,0.8); }
         .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
     }
     
-    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 2; /* Above the ::after overlay */ }
+    .screen { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 2; }
+    .status-bar { 
+        height: 44px; padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; 
+        padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; 
+        z-index: 100; pointer-events: none; position: absolute; width: 100%; top: 0;
+    }
 
     /* --- HOME SCREEN --- */
     .home-screen { 
@@ -77,7 +46,7 @@
     }
     .home-screen.zoomed-out {
         transform: scale(0.85);
-        filter: brightness(0.7) blur(10px); /* Slightly lighter blur */
+        filter: brightness(0.6) blur(5px);
         pointer-events: none;
     }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
@@ -85,8 +54,7 @@
     /* Icons */
     .app-icon-wrapper { 
         display: flex; flex-direction: column; align-items: center; 
-        transition: transform 0.2s ease;
-        touch-action: none; 
+        transition: transform 0.2s ease; touch-action: none; 
     }
     .app-icon { 
         width: 60px; height: 60px; border-radius: 14px; 
@@ -94,85 +62,99 @@
         font-size: 30px; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         background: linear-gradient(135deg, #333, #555);
     }
-    /* Icon Gradients (kept same) */
-    .app-icon.camera { background: linear-gradient(135deg, #667eea, #764ba2); }
-    .app-icon.mic { background: linear-gradient(135deg, #f093fb, #f5576c); }
-    .app-icon.motion { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-    .app-icon.torch { background: linear-gradient(135deg, #ffd89b, #19547b); }
-    .app-icon.touch { background: linear-gradient(135deg, #a8edea, #fed6e3); }
-    .app-icon.speaker { background: linear-gradient(135deg, #ff9a9e, #fecfef); }
-    
+    .app-icon.info { background: linear-gradient(135deg, #3498db, #2980b9); } /* Tutorial App Color */
     .app-icon:active { filter: brightness(0.8); transform: scale(0.95); }
     .app-label { color: #fff; font-size: 11px; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 
-    /* Dragging Visuals */
-    .app-icon-wrapper.dragging { opacity: 0.5; z-index: 999; }
-    
-    /* --- APP DISPLAY (Running Apps) --- */
+    /* --- RUNNING APPS & WINDOWS --- */
     .app-display { 
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
         z-index: 50; pointer-events: none;
     }
-    
     .app-window {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: #fff;
         transform: translate3d(100%, 0, 0); 
         transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-        pointer-events: auto;
-        overflow: hidden;
+        pointer-events: auto; overflow: hidden;
     }
     .app-window.active { transform: translate3d(0, 0, 0); }
     .app-iframe { width: 100%; height: 100%; border: none; display: block; }
 
-    /* --- APP SWITCHER (Recents) --- */
+    /* --- TUTORIAL APP STYLES --- */
+    .tutorial-content {
+        width: 100%; height: 100%; background: #111; color: white;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 40px; text-align: center;
+    }
+    .tutorial-icon { font-size: 60px; margin-bottom: 20px; animation: bounce 2s infinite; }
+    .tutorial-title { font-size: 28px; font-weight: bold; margin-bottom: 20px; }
+    .tutorial-step { margin-bottom: 15px; font-size: 18px; color: #ccc; opacity: 0; transform: translateY(20px); animation: fadeUp 0.5s forwards; }
+    .tutorial-step:nth-child(2) { animation-delay: 0.2s; }
+    .tutorial-step:nth-child(3) { animation-delay: 0.4s; }
+    .tutorial-step:nth-child(4) { animation-delay: 0.6s; }
+    
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* --- APP SWITCHER (RECENTS) --- */
     .app-switcher {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: transparent;
-        z-index: 40;
-        display: none; 
+        background: transparent; z-index: 40; display: none; 
         overflow-x: auto; overflow-y: hidden;
-        white-space: nowrap;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        padding: 0 40px;
-        pointer-events: auto;
+        white-space: nowrap; scroll-snap-type: x mandatory;
+        padding: 0 40px; pointer-events: auto;
     }
     
-    .switcher-container {
-        display: inline-flex; height: 100%; align-items: center; gap: 20px;
-        padding-right: 40px;
-    }
+    .switcher-container { display: inline-flex; height: 100%; align-items: center; gap: 20px; padding-right: 40px; }
 
     .switcher-card {
-        position: relative;
-        width: 75vw; max-width: 300px; height: 70vh;
+        position: relative; width: 75vw; max-width: 300px; height: 70vh;
         background: #222; border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        scroll-snap-align: center;
-        flex-shrink: 0;
-        transform-origin: center;
-        transition: transform 0.2s;
+        scroll-snap-align: center; flex-shrink: 0;
+        transform-origin: center; transition: transform 0.2s;
         overflow: hidden;
     }
     
     .card-header {
         position: absolute; top: 0; left: 0; width: 100%; height: 40px;
         display: flex; align-items: center; justify-content: center;
-        background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
-        z-index: 10; pointer-events: none;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+        z-index: 20; pointer-events: none;
     }
-    .card-title { color: #fff; font-size: 14px; font-weight: 600; margin-left: 8px; }
-    .card-icon-small { font-size: 16px; }
+    
+    /* Overlay to capture hold events over the iframe */
+    .card-touch-layer {
+        position: absolute; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);
+        z-index: 15; /* Above iframe, below header */
+        /* We rely on JS to toggle pointer-events for this layer */
+    }
 
-    .switcher-iframe {
-        width: 100%; height: 100%; border: none; background: #fff;
-        pointer-events: none;
+    /* Small X button for Recents Menu */
+    .recents-close-x {
+        position: absolute; top: 50px; right: 20px;
+        width: 30px; height: 30px; background: rgba(60,60,60,0.8);
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        color: white; font-weight: bold; font-size: 16px; cursor: pointer;
+        z-index: 200; backdrop-filter: blur(5px);
+        display: none; /* Hidden by default */
     }
 
     .empty-msg {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        color: #fff; font-size: 16px; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        color: #fff; font-size: 16px; pointer-events: none;
+    }
+
+    /* --- GESTURE BAR --- */
+    .home-indicator { 
+        position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; 
+        display: flex; justify-content: center; align-items: center; z-index: 999; 
+        touch-action: none;
+    }
+    .home-indicator::before { 
+        content: ''; display: block; width: 140px; height: 5px; 
+        background: rgba(255,255,255,0.7); border-radius: 3px; 
     }
   </style>
 </head>
@@ -182,10 +164,7 @@
     <div class="notch"></div>
 
     <div class="screen">
-        <div class="status-bar" id="statusBar">
-            <span id="clock">12:00</span>
-            <span>5G 100%</span>
-        </div>
+        <div class="status-bar"><span id="clock">12:00</span><span>5G 100%</span></div>
 
         <div class="home-screen" id="homeScreen">
             <div class="app-grid" id="appGrid"></div>
@@ -199,151 +178,83 @@
             <div class="switcher-container" id="switcherContainer"></div>
         </div>
         
-        <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps. Swipe up again to go Home.</div>
+        <div id="recentsCloseBtn" class="recents-close-x">✕</div>
 
+        <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps</div>
         <div class="home-indicator" id="homeIndicator"></div>
     </div>
 </div>
 
 <script>
-    // --- STATE MANAGEMENT ---
-    const STORAGE_KEY = 'appLauncherOrder_v2';
+    const STORAGE_KEY = 'appLauncherOrder_v3';
     const appGrid = document.getElementById('appGrid');
     const appWindowContainer = document.getElementById('appWindowContainer');
     const appSwitcher = document.getElementById('appSwitcher');
     const switcherContainer = document.getElementById('switcherContainer');
     const homeScreen = document.getElementById('homeScreen');
-    const homeIndicator = document.getElementById('homeIndicator');
     const emptyRecents = document.getElementById('emptyRecents');
-    const statusBar = document.getElementById('statusBar');
+    const recentsCloseBtn = document.getElementById('recentsCloseBtn');
     
     // Core State
     let runningApps = []; 
     let currentAppPath = null;
     let isSwitcherMode = false;
 
-    // --- INITIALIZATION ---
+    // --- TUTORIAL APP DEFINITION ---
+    const TUTORIAL_APP = {
+        id: 999,
+        title: "Info",
+        icon: "ℹ️",
+        path: "system:tutorial",
+        class: "info"
+    };
+
     async function init() {
-        updateClock();
-        setInterval(updateClock, 1000);
+        updateClock(); setInterval(updateClock, 1000);
         await loadApps();
         
-        // Attach Global Gesture Listener to Home Indicator
+        // Home Gesture
+        const indicator = document.getElementById('homeIndicator');
         let startY = 0;
-        homeIndicator.addEventListener('touchstart', e => { 
-            startY = e.touches[0].clientY; 
-            // Prevent initial drag from interfering with home screen
-            e.preventDefault();
-        });
-        homeIndicator.addEventListener('touchend', e => {
-            const deltaY = e.changedTouches[0].clientY - startY;
-            if (deltaY < -40) { // Swiped Up
-                handleHomeGesture();
-            }
+        indicator.addEventListener('touchstart', e => { startY = e.touches[0].clientY; e.preventDefault(); });
+        indicator.addEventListener('touchend', e => {
+            if (e.changedTouches[0].clientY - startY < -40) handleHomeGesture();
         });
         
+        // Recents Close Button
+        recentsCloseBtn.addEventListener('click', closeSwitcher);
+
+        // Switcher Scroll Active Detection
         appSwitcher.addEventListener('scroll', handleSwitcherScroll);
     }
 
-    // --- DATA LOADING & RENDERING ---
     async function loadApps() {
+        // Render Tutorial Icon First
+        renderIcon(TUTORIAL_APP);
+
         try {
             const res = await fetch('apps.json');
-            if (!res.ok) throw new Error("No apps.json found. Create one!");
-            let apps = await res.json();
-            
-            // Apply saved sort order
-            const savedOrder = JSON.parse(localStorage.getItem(STORAGE_KEY));
-            if (savedOrder) {
-                apps.sort((a, b) => {
-                    const idxA = savedOrder.indexOf(a.path);
-                    const idxB = savedOrder.indexOf(b.path);
-                    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-                });
+            if (res.ok) {
+                let apps = await res.json();
+                apps.forEach(renderIcon);
             }
-
-            renderIcons(apps);
-        } catch (e) {
-            console.error("App loading error:", e);
-            appGrid.innerHTML = `<div style="color:white; grid-column:1/-1; text-align:center; padding-top: 50px;">
-                ⚠️ Error loading apps.json. Please ensure the file exists.
-            </div>`;
-        }
+        } catch (e) { console.log("No external apps loaded"); }
     }
 
-    function renderIcons(apps) {
-        appGrid.innerHTML = '';
-        apps.forEach(app => {
-            const el = document.createElement('div');
-            el.className = 'app-icon-wrapper';
-            el.draggable = true;
-            el.dataset.path = app.path;
-            el.innerHTML = `
-                <div class="app-icon ${app.class || ''}">${app.icon}</div>
-                <div class="app-label">${app.title}</div>
-            `;
-            
-            // Launch on click
-            el.addEventListener('click', (e) => {
-                if(!el.classList.contains('dragging')) {
-                    launchApp(app);
-                }
-            });
-
-            // Drag Events
-            el.addEventListener('dragstart', handleDragStart);
-            el.addEventListener('dragover', handleDragOver);
-            el.addEventListener('drop', handleDrop);
-            el.addEventListener('dragend', handleDragEnd); // FIX: Ensure drag state clears
-            
-            appGrid.appendChild(el);
-        });
+    function renderIcon(app) {
+        const el = document.createElement('div');
+        el.className = 'app-icon-wrapper';
+        el.innerHTML = `<div class="app-icon ${app.class || ''}">${app.icon}</div><div class="app-label">${app.title}</div>`;
+        
+        el.addEventListener('click', () => launchApp(app));
+        appGrid.appendChild(el);
     }
 
-    // --- DRAG & DROP LOGIC (FIXED) ---
-    let draggedEl = null;
-    function handleDragStart(e) {
-        draggedEl = this;
-        this.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        if (navigator.vibrate) navigator.vibrate(50); 
-    }
-    function handleDragOver(e) {
-        e.preventDefault();
-        const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
-        if (target && target !== draggedEl) {
-            const rect = target.getBoundingClientRect();
-            const next = (e.clientX - rect.left) / rect.width > 0.5;
-            appGrid.insertBefore(draggedEl, next ? target.nextSibling : target);
-        }
-    }
-    function handleDrop(e) {
-        e.preventDefault();
-        // draggedEl is cleared in handleDragEnd
-    }
-    function handleDragEnd(e) {
-        if (draggedEl) {
-            draggedEl.classList.remove('dragging');
-            draggedEl = null;
-        }
-        // Save Order
-        const newOrder = Array.from(appGrid.children).map(c => c.dataset.path);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newOrder));
-    }
-
-    // --- NAVIGATION CONTROLLER ---
+    // --- NAVIGATION ---
     function handleHomeGesture() {
-        if (currentAppPath) {
-            // App is Open -> Go to Recents
-            minimizeApp();
-            openSwitcher();
-        } else if (isSwitcherMode) {
-            // In Recents -> Go Home
-            closeSwitcher();
-        } else if (runningApps.length > 0) {
-            // On Home, apps are running -> Go to Recents
-            openSwitcher();
-        }
+        if (currentAppPath) { minimizeApp(); openSwitcher(); }
+        else if (isSwitcherMode) closeSwitcher();
+        else if (runningApps.length > 0) openSwitcher();
     }
 
     // --- APP LIFECYCLE ---
@@ -355,19 +266,17 @@
             runningApps.push(app);
         } else {
             runningApps = runningApps.filter(a => a.path !== appData.path);
-            runningApps.push(app); // Move to end (most recent)
+            runningApps.push(app);
         }
 
         closeSwitcher();
-        
-        // Restore iframe if it was in the card
-        if (app.cardEl) restoreIframe(app);
+        // Restore iframe to window container
+        if (app.cardEl) restoreIframeToWindow(app);
 
         requestAnimationFrame(() => {
             app.windowEl.classList.add('active');
             runningApps.forEach(a => a.windowEl.style.zIndex = 10);
             app.windowEl.style.zIndex = 20;
-            
             homeScreen.classList.add('zoomed-out');
             currentAppPath = app.path;
         });
@@ -377,16 +286,28 @@
         const win = document.createElement('div');
         win.className = 'app-window';
         
-        const sandboxRules = "allow-scripts allow-forms allow-popups allow-modals";
+        // Special Handling for Tutorial App
+        if (data.path === "system:tutorial") {
+            win.innerHTML = `
+            <div class="tutorial-content">
+                <div class="tutorial-icon">ℹ️</div>
+                <div class="tutorial-title">Welcome to OS</div>
+                <div class="tutorial-step">1. Swipe up from bottom bar to go Home.</div>
+                <div class="tutorial-step">2. Hold & Swipe up again for Recents.</div>
+                <div class="tutorial-step">3. In Recents: Tap card to Open.</div>
+                <div class="tutorial-step">4. In Recents: <b>Hold Card</b> then Swipe Up to Close.</div>
+            </div>`;
+        } else {
+            // Standard App
+            const iframe = document.createElement('iframe');
+            iframe.className = 'app-iframe';
+            iframe.src = data.path;
+            // Allow forms/scripts but restrict top nav
+            iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals');
+            win.appendChild(iframe);
+        }
         
-        const iframe = document.createElement('iframe');
-        iframe.className = 'app-iframe';
-        iframe.src = data.path;
-        iframe.setAttribute('sandbox', sandboxRules);
-        
-        win.appendChild(iframe);
         appWindowContainer.appendChild(win);
-
         return { ...data, windowEl: win, cardEl: null };
     }
 
@@ -394,7 +315,6 @@
         if (!currentAppPath) return;
         const app = runningApps.find(a => a.path === currentAppPath);
         if (app) app.windowEl.classList.remove('active');
-        
         homeScreen.classList.remove('zoomed-out');
         currentAppPath = null;
     }
@@ -408,177 +328,170 @@
         if (app.cardEl) app.cardEl.remove();
         runningApps.splice(idx, 1);
 
-        if (runningApps.length === 0) {
-            emptyRecents.style.display = 'block';
-        }
+        if (runningApps.length === 0) emptyRecents.style.display = 'block';
         if (currentAppPath === path) currentAppPath = null;
     }
 
-    // --- APP SWITCHER (RECENTS) ---
+    // --- APP SWITCHER LOGIC ---
     function openSwitcher() {
         isSwitcherMode = true;
         homeScreen.classList.add('zoomed-out');
         appSwitcher.style.display = 'flex';
+        recentsCloseBtn.style.display = 'flex';
         emptyRecents.style.display = runningApps.length === 0 ? 'block' : 'none';
-        statusBar.style.pointerEvents = 'none';
 
         renderSwitcherCards();
-        
         setTimeout(() => {
-            // Scroll to end (most recent) - index 0 is at the end of the container array
-            const mostRecentCard = switcherContainer.lastElementChild;
-            if (mostRecentCard) {
-                appSwitcher.scrollLeft = mostRecentCard.offsetLeft - (appSwitcher.clientWidth / 2) + (mostRecentCard.offsetWidth / 2);
+            if (switcherContainer.lastElementChild) {
+                appSwitcher.scrollLeft = switcherContainer.lastElementChild.offsetLeft;
             }
-            handleSwitcherScroll(); 
+            handleSwitcherScroll();
         }, 10);
     }
 
     function closeSwitcher() {
         isSwitcherMode = false;
         appSwitcher.style.display = 'none';
+        recentsCloseBtn.style.display = 'none';
         homeScreen.classList.remove('zoomed-out');
         emptyRecents.style.display = 'none';
-        statusBar.style.pointerEvents = 'auto';
-
-        // Move all iframes back to their window container
-        runningApps.forEach(restoreIframe);
+        runningApps.forEach(restoreIframeToWindow);
     }
 
     function renderSwitcherCards() {
         switcherContainer.innerHTML = '';
-        
-        // Render in REVERSE order (most recent is now last in array, should be last visually for snap)
-        // Note: Running apps are pushed, so array[n-1] is the most recent.
         const reversedApps = [...runningApps].reverse();
 
         reversedApps.forEach(app => {
             const card = document.createElement('div');
             card.className = 'switcher-card';
             
+            // Header
             const header = document.createElement('div');
             header.className = 'card-header';
-            header.innerHTML = `<span class="card-icon-small">${app.icon}</span><span class="card-title">${app.title}</span>`;
+            header.innerHTML = `<span style="color:white; font-size:12px; font-weight:bold;">${app.title}</span>`;
             card.appendChild(header);
 
+            // Touch Layer (The Grip Surface)
+            const touchLayer = document.createElement('div');
+            touchLayer.className = 'card-touch-layer';
+            card.appendChild(touchLayer);
+
+            // Content Area
             const content = document.createElement('div');
-            content.style.width = '100%'; 
-            content.style.height = '100%';
-            content.style.pointerEvents = 'none';
-            content.className = 'card-content-area';
-            
-            // Move iframe from window container to card
-            const iframe = app.windowEl.querySelector('iframe');
-            if (iframe) content.appendChild(iframe);
+            content.style.cssText = "width:100%; height:100%; pointer-events:none;"; 
+            // Move content from window to card
+            while(app.windowEl.firstChild) { content.appendChild(app.windowEl.firstChild); }
             card.appendChild(content);
             
-            // Click to Open
-            card.addEventListener('click', (e) => {
-                const isInteractive = content.style.pointerEvents === 'auto';
-                // Only launch if it's the center card and the click wasn't inside the iframe
-                if (isInteractive && e.target === card) { 
-                    launchApp(app);
+            // --- GESTURE LOGIC ---
+            // 1. Tap to Open
+            // 2. Hold to Grip -> Swipe Up to Close
+            
+            let holdTimer = null;
+            let isGripped = false;
+            let startY = 0;
+
+            // Touch Start on the Overlay
+            touchLayer.addEventListener('touchstart', (e) => {
+                startY = e.touches[0].clientY;
+                // Start Hold Timer
+                holdTimer = setTimeout(() => {
+                    // USER IS HOLDING
+                    isGripped = true;
+                    // Visual feedback: Shrink card
+                    card.style.transform = 'scale(0.95)';
+                    if(navigator.vibrate) navigator.vibrate(20);
+                }, 300); // 300ms hold time
+            });
+
+            touchLayer.addEventListener('touchmove', (e) => {
+                if (!isGripped) {
+                    // If moving before grip time, cancel grip (it's a scroll or tap attempt)
+                    clearTimeout(holdTimer);
+                    return;
+                }
+                
+                // If Gripped, allow dragging card
+                e.preventDefault(); // Stop scrolling the list
+                const dy = e.touches[0].clientY - startY;
+                
+                if (dy < 0) { // Dragging Up
+                    card.style.transition = 'none';
+                    card.style.transform = `scale(0.95) translateY(${dy}px)`;
                 }
             });
 
-            applyFlickLogic(card, app);
+            touchLayer.addEventListener('touchend', (e) => {
+                clearTimeout(holdTimer); // Cancel hold if quick tap
+                
+                if (isGripped) {
+                    // Release Logic
+                    const dy = e.changedTouches[0].clientY - startY;
+                    if (dy < -100) {
+                        // Swipe Up Successful -> Close
+                        card.style.transition = 'transform 0.3s ease-out';
+                        card.style.transform = 'translateY(-100vh)';
+                        setTimeout(() => closeApp(app.path), 300);
+                    } else {
+                        // Snap Back
+                        card.style.transition = 'transform 0.2s ease';
+                        card.style.transform = 'scale(1)';
+                    }
+                    isGripped = false;
+                } else {
+                    // It was a Tap -> Launch
+                    launchApp(app);
+                }
+            });
 
             switcherContainer.appendChild(card);
             app.cardEl = card;
         });
     }
 
-    function restoreIframe(app) {
-        if (!app.cardEl || !app.windowEl) return;
-        const iframe = app.cardEl.querySelector('iframe');
-        if (iframe) {
-            // Reset pointer events for fullscreen use
-            iframe.style.pointerEvents = 'auto'; 
-            app.windowEl.appendChild(iframe);
-            // Clear card reference since it's now visually empty
-            app.cardEl.remove();
-            app.cardEl = null;
+    function restoreIframeToWindow(app) {
+        if (!app.cardEl) return;
+        // Move children back to windowEl
+        // Specifically look inside the content div we created
+        const contentDiv = app.cardEl.children[2]; // 0=Header, 1=TouchLayer, 2=Content
+        if(contentDiv) {
+             while(contentDiv.firstChild) { app.windowEl.appendChild(contentDiv.firstChild); }
         }
+        app.cardEl = null;
     }
 
-    // Handle "Flick Up" to close
-    function applyFlickLogic(card, app) {
-        let startY = 0;
-        let isDragging = false;
-
-        card.addEventListener('touchstart', (e) => {
-            if (card.querySelector('.card-content-area').style.pointerEvents === 'none') return;
-            startY = e.touches[0].clientY;
-            isDragging = true;
-            // Temporarily disable iframe interaction if dragging starts
-            card.querySelector('iframe').style.pointerEvents = 'none'; 
-        });
-
-        card.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const dy = e.touches[0].clientY - startY;
-            if (dy < 0) {
-                e.preventDefault();
-                card.style.transition = 'none';
-                card.style.transform = `translateY(${dy}px) scale(${1 + dy/5000})`;
-            }
-        });
-
-        card.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            const dy = e.changedTouches[0].clientY - startY;
-            
-            // Restore iframe pointer events
-            card.querySelector('iframe').style.pointerEvents = 'auto';
-
-            if (dy < -100) {
-                // Flicked away
-                card.style.transition = 'transform 0.3s ease-out';
-                card.style.transform = `translateY(-100vh)`;
-                setTimeout(() => closeApp(app.path), 300);
-            } else {
-                // Reset
-                card.style.transition = 'transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1)';
-                card.style.transform = 'translateY(0)';
-            }
-        });
-    }
-
-    // Determine which card is centered and make it interactive
     function handleSwitcherScroll() {
         if (!isSwitcherMode) return;
-        
-        const scrollCenter = appSwitcher.scrollLeft + (appSwitcher.clientWidth / 2);
+        const centerLine = appSwitcher.scrollLeft + (appSwitcher.clientWidth / 2);
         
         runningApps.forEach(app => {
             if (!app.cardEl) return;
             const card = app.cardEl;
-            const content = card.querySelector('.card-content-area');
+            const touchLayer = card.querySelector('.card-touch-layer');
+            const center = card.offsetLeft + (card.offsetWidth/2);
+            const dist = Math.abs(center - centerLine);
 
-            const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
-            const dist = Math.abs(cardCenter - scrollCenter);
-            
-            // Threshold: if within 40px of center
-            if (dist < 40) {
-                content.style.pointerEvents = 'auto'; 
-                card.style.transform = 'scale(1)';
-                card.style.opacity = '1';
-                // For debug: card.style.border = '2px solid red';
+            if (dist < 50) {
+                // Active Card:
+                // We keep pointer-events on the touchLayer enabled so we can grab it.
+                // We set opacity to full.
+                card.style.opacity = 1;
+                // NOTE: If you want to interact with the app *inside* the switcher,
+                // you would set touchLayer.style.pointerEvents = 'none' here.
+                // BUT, your request was "Hold to swipe up". 
+                // To support both, we keep the layer but pass clicks through if no hold occurred.
+                // Current implementation: Tap layer -> Launch. Hold layer -> Drag. 
+                // This mimics iOS "screenshot" state in recents.
             } else {
-                content.style.pointerEvents = 'none';
-                card.style.transform = 'scale(0.95)';
-                card.style.opacity = '0.7';
-                // For debug: card.style.border = 'none';
+                card.style.opacity = 0.5;
             }
         });
     }
     
-    // --- UTIL ---
     function updateClock() {
         const now = new Date();
-        document.getElementById('clock').textContent = 
-            now.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+        document.getElementById('clock').textContent = now.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
     }
 
     init();
