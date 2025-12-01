@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Santaslileper OS</title>
   <style>
-    /* --- CORE STYLES --- */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
         font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif; 
@@ -14,8 +13,9 @@
         user-select: none; -webkit-user-select: none; cursor: default;
         overflow: hidden;
     }
-
-    /* --- THEME --- */
+    .phone, .screen, .home-screen, .app-display, .app-window {
+        touch-action: none; /* Disable native swipe gestures */
+    }
     .phone { 
         position: relative; width: 100%; height: 100%; max-width: 375px; max-height: 812px;
         background-color: #050505; 
@@ -24,20 +24,16 @@
         display: flex; flex-direction: column;
         border: 1px solid #333;
     }
-    
     @media (min-width: 768px) {
         .phone { height: 812px; border-radius: 50px; box-shadow: 0 0 0 12px #2c2c2e, 0 20px 60px rgba(0,0,0,0.8); }
         .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 180px; height: 30px; background: #000; border-radius: 0 0 20px 20px; z-index: 100; }
     }
-    
     .screen { position: relative; width: 100%; height: 100%; overflow: hidden; z-index: 2; }
     .status-bar { 
         height: 44px; padding: 0 20px; display: flex; align-items: flex-end; justify-content: space-between; 
         padding-bottom: 8px; color: #fff; font-size: 15px; font-weight: 600; 
         z-index: 100; pointer-events: none; position: absolute; width: 100%; top: 0;
     }
-
-    /* --- HOME SCREEN --- */
     .home-screen { 
         padding: 60px 20px 80px 20px; height: 100%; overflow-y: auto;
         transition: transform 0.4s cubic-bezier(0.32, 0, 0.67, 0), filter 0.4s linear;
@@ -49,11 +45,11 @@
         pointer-events: none;
     }
     .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-
     .app-icon-wrapper { 
         display: flex; flex-direction: column; align-items: center; 
         transition: transform 0.2s ease; touch-action: none; 
     }
+    .app-icon-wrapper.dragging { opacity: 0.5; } /* New Dragging Style */
     .app-icon { 
         width: 60px; height: 60px; border-radius: 14px; 
         display: flex; align-items: center; justify-content: center; 
@@ -63,23 +59,19 @@
     .app-icon.info { background: linear-gradient(135deg, #3498db, #2980b9); }
     .app-icon:active { filter: brightness(0.8); transform: scale(0.95); }
     .app-label { color: #fff; font-size: 11px; margin-top: 5px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-
-    /* --- APP WINDOWS --- */
     .app-display { 
         position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
         z-index: 50; pointer-events: none;
     }
     .app-window {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        background: #fff;
+        background: #000; /* Fixed: Changed from #fff to #000 to prevent white flash on app close */
         transform: translate3d(100%, 0, 0); 
         transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
         pointer-events: auto; overflow: hidden;
     }
     .app-window.active { transform: translate3d(0, 0, 0); }
     .app-iframe { width: 100%; height: 100%; border: none; display: block; }
-
-    /* --- APP SWITCHER (FIXED SCROLLING) --- */
     .app-switcher {
         position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background: transparent; z-index: 40; 
@@ -94,7 +86,6 @@
         padding-right: 20px;
         pointer-events: auto;
     }
-    
     .switcher-container { 
         display: flex; 
         height: 100%; 
@@ -102,7 +93,6 @@
         gap: 20px; 
         min-width: min-content; 
     }
-
     .switcher-card {
         position: relative; width: 75vw; max-width: 300px; height: 70vh;
         background: #222; border-radius: 20px;
@@ -112,20 +102,16 @@
         transform-origin: center; transition: transform 0.2s;
         overflow: hidden;
     }
-    
     .card-header {
         position: absolute; top: 0; left: 0; width: 100%; height: 40px;
         display: flex; align-items: center; justify-content: center;
         background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
         z-index: 20; pointer-events: none;
     }
-    
     .card-touch-layer {
         position: absolute; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);
         z-index: 15;
     }
-
-    /* Small X button for Recents Menu */
     .recents-close-x {
         position: absolute; top: 50px; right: 20px;
         width: 30px; height: 30px; background: rgba(60,60,60,0.8);
@@ -134,21 +120,16 @@
         z-index: 200; backdrop-filter: blur(5px);
         display: none;
     }
-
     .empty-msg {
         position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
         color: #fff; font-size: 16px; pointer-events: none;
     }
-
-    /* --- TUTORIAL --- */
     .tutorial-content {
         width: 100%; height: 100%; background: #111; color: white;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         padding: 40px; text-align: center;
     }
     .tutorial-step { margin-bottom: 15px; font-size: 18px; color: #ccc; }
-
-    /* --- GESTURE BAR --- */
     .home-indicator { 
         position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; 
         display: flex; justify-content: center; align-items: center; z-index: 999; 
@@ -161,91 +142,125 @@
   </style>
 </head>
 <body>
-
 <div class="phone">
     <div class="notch"></div>
     <div class="screen">
         <div class="status-bar"><span id="clock">12:00</span><span>5G 100%</span></div>
-
         <div class="home-screen" id="homeScreen">
             <div class="app-grid" id="appGrid"></div>
         </div>
-
         <div class="app-display" id="appDisplay">
             <div id="appWindowContainer"></div>
         </div>
-
         <div class="app-switcher" id="appSwitcher">
             <div class="switcher-container" id="switcherContainer"></div>
         </div>
-        
         <div id="recentsCloseBtn" class="recents-close-x">✕</div>
         <div id="emptyRecents" class="empty-msg" style="display: none;">No Recent Apps</div>
         <div class="home-indicator" id="homeIndicator"></div>
     </div>
 </div>
-
 <script>
-    const appGrid = document.getElementById('appGrid');
-    const appWindowContainer = document.getElementById('appWindowContainer');
-    const appSwitcher = document.getElementById('appSwitcher');
-    const switcherContainer = document.getElementById('switcherContainer');
-    const homeScreen = document.getElementById('homeScreen');
-    const emptyRecents = document.getElementById('emptyRecents');
-    const recentsCloseBtn = document.getElementById('recentsCloseBtn');
-    
-    let runningApps = []; 
-    let currentAppPath = null;
-    let isSwitcherMode = false;
-
-    // Hardcoded Tutorial
+    const appGrid = document.getElementById('appGrid'), appWindowContainer = document.getElementById('appWindowContainer'), appSwitcher = document.getElementById('appSwitcher'), switcherContainer = document.getElementById('switcherContainer'), homeScreen = document.getElementById('homeScreen'), emptyRecents = document.getElementById('emptyRecents'), recentsCloseBtn = document.getElementById('recentsCloseBtn');
+    let runningApps = [], currentAppPath = null, isSwitcherMode = false;
     const TUTORIAL_APP = { id: 999, title: "Info", icon: "ℹ️", path: "system:tutorial", class: "info" };
+    
+    const LK = 'appLauncherOrder'; /* Local Storage Key for app order */
+    let Dn = null; /* Dragged Node (for drag/drop) */
+
+    function getStoredOrder() {
+        const order = localStorage.getItem(LK);
+        return order ? JSON.parse(order) : [];
+    }
+    
+    function Hds(e) { /* handleDragStart */
+        Dn = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+    function Hdo(e) { /* handleDragOver */
+        e.preventDefault();
+        const target = e.target.closest('.app-icon-wrapper:not(.dragging)');
+        if (target && target !== Dn) {
+            const rect = target.getBoundingClientRect();
+            /* Determine if we insert before or after the target */
+            const next = (e.clientX - rect.left) / rect.width > 0.5;
+            appGrid.insertBefore(Dn, next ? target.nextSibling : target);
+        }
+    }
+    function Hd(e) { e.preventDefault(); } /* handleDrop */
+    function Hde() { /* handleDragEnd */
+        if (Dn) {
+            Dn.classList.remove('dragging');
+            Dn = null;
+        }
+        /* Save new order to local storage */
+        const newOrder = Array.from(appGrid.children).map(t => t.dataset.path);
+        localStorage.setItem(LK, JSON.stringify(newOrder));
+    }
 
     async function init() {
         updateClock(); setInterval(updateClock, 1000);
         await loadApps();
-        
-        // Home Gesture (Swipe Up)
         const indicator = document.getElementById('homeIndicator');
         let startY = 0;
         indicator.addEventListener('touchstart', e => { startY = e.touches[0].clientY; e.preventDefault(); });
         indicator.addEventListener('touchend', e => {
             if (e.changedTouches[0].clientY - startY < -40) handleHomeGesture();
         });
-        
         recentsCloseBtn.addEventListener('click', closeSwitcher);
         appSwitcher.addEventListener('scroll', handleSwitcherScroll);
     }
 
     async function loadApps() {
-        renderIcon(TUTORIAL_APP);
+        let allApps = [TUTORIAL_APP];
         try {
             const res = await fetch('apps.json');
             if (res.ok) {
-                let apps = await res.json();
-                apps.forEach(renderIcon);
+                allApps = allApps.concat(await res.json());
             }
         } catch (e) { console.log("No apps.json"); }
+
+        const storedOrder = getStoredOrder();
+        if (storedOrder.length) {
+            allApps.sort((a, b) => storedOrder.indexOf(a.path) - storedOrder.indexOf(b.path));
+        }
+        
+        appGrid.innerHTML = '';
+        allApps.forEach(renderIcon);
     }
 
     function renderIcon(app) {
         const el = document.createElement('div');
         el.className = 'app-icon-wrapper';
+        el.dataset.path = app.path; /* Path needed for saving order */
+        el.setAttribute('draggable', true); /* Enable native drag */
+        
         el.innerHTML = `<div class="app-icon ${app.class || ''}">${app.icon}</div><div class="app-label">${app.title}</div>`;
-        el.addEventListener('click', () => launchApp(app));
+        
+        el.addEventListener('click', (e) => {
+            /* Prevent launching if it was a drag operation */
+            if(e.currentTarget.classList.contains('dragging')) return; 
+            launchApp(app)
+        });
+        
+        /* Add drag listeners */
+        el.addEventListener('dragstart', Hds);
+        el.addEventListener('dragover', Hdo);
+        el.addEventListener('drop', Hd);
+        el.addEventListener('dragend', Hde);
+
         appGrid.appendChild(el);
     }
 
-    // --- NAVIGATION ---
     function handleHomeGesture() {
         if (currentAppPath) { minimizeApp(); openSwitcher(); }
         else if (isSwitcherMode) closeSwitcher();
         else if (runningApps.length > 0) openSwitcher();
     }
 
-    // --- APP LOGIC ---
     function launchApp(appData) {
-        // Remove existing instance if any (so we push to end/front)
         let existing = runningApps.find(a => a.path === appData.path);
         if (existing) {
             runningApps = runningApps.filter(a => a.path !== appData.path);
@@ -254,12 +269,9 @@
             let newApp = createAppInstance(appData);
             runningApps.push(newApp);
         }
-
         closeSwitcher();
-        let activeApp = runningApps[runningApps.length - 1]; // Last item is active
-
+        let activeApp = runningApps[runningApps.length - 1];
         if (activeApp.cardEl) restoreIframeToWindow(activeApp);
-
         requestAnimationFrame(() => {
             activeApp.windowEl.classList.add('active');
             runningApps.forEach(a => a.windowEl.style.zIndex = 10);
@@ -272,16 +284,8 @@
     function createAppInstance(data) {
         const win = document.createElement('div');
         win.className = 'app-window';
-        
         if (data.path === "system:tutorial") {
-            win.innerHTML = `
-            <div class="tutorial-content">
-                <div style="font-size:60px; margin-bottom:20px;">ℹ️</div>
-                <h2>How to Use</h2><br>
-                <div class="tutorial-step">1. Swipe Up bar to go Home.</div>
-                <div class="tutorial-step">2. Hold & Swipe Up for Recents.</div>
-                <div class="tutorial-step">3. <b>Hold Card</b> & Swipe Up to Close it.</div>
-            </div>`;
+            win.innerHTML = `<div class="tutorial-content"><div style="font-size:60px; margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="tutorial-step">1. Swipe Up bar to go Home.</div><div class="tutorial-step">2. Hold & Swipe Up for Recents.</div><div class="tutorial-step">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="tutorial-step">4. <b>Drag icons</b> on Home Screen to reorder.</div></div>`;
         } else {
             const iframe = document.createElement('iframe');
             iframe.className = 'app-iframe';
@@ -289,7 +293,6 @@
             iframe.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals');
             win.appendChild(iframe);
         }
-        
         appWindowContainer.appendChild(win);
         return { ...data, windowEl: win, cardEl: null };
     }
@@ -306,26 +309,20 @@
         const idx = runningApps.findIndex(a => a.path === path);
         if (idx === -1) return;
         const app = runningApps[idx];
-
         app.windowEl.remove();
         if (app.cardEl) app.cardEl.remove();
         runningApps.splice(idx, 1);
-
         if (runningApps.length === 0) emptyRecents.style.display = 'block';
         if (currentAppPath === path) currentAppPath = null;
     }
 
-    // --- SWITCHER ---
     function openSwitcher() {
         isSwitcherMode = true;
         homeScreen.classList.add('zoomed-out');
-        appSwitcher.style.display = 'flex'; // Make visible
+        appSwitcher.style.display = 'flex';
         recentsCloseBtn.style.display = 'flex';
         emptyRecents.style.display = runningApps.length === 0 ? 'block' : 'none';
-
         renderSwitcherCards();
-        
-        // Scroll to the end (most recent app)
         setTimeout(() => {
             if (switcherContainer.lastElementChild) {
                 const cardWidth = switcherContainer.lastElementChild.offsetWidth;
@@ -348,59 +345,42 @@
 
     function renderSwitcherCards() {
         switcherContainer.innerHTML = '';
-        
         runningApps.forEach(app => {
             const card = document.createElement('div');
             card.className = 'switcher-card';
-            
-            // Header
             const header = document.createElement('div');
             header.className = 'card-header';
             header.innerHTML = `<span style="color:white; font-size:12px; font-weight:bold;">${app.title}</span>`;
             card.appendChild(header);
-
-            // Grip Layer
             const touchLayer = document.createElement('div');
             touchLayer.className = 'card-touch-layer';
             card.appendChild(touchLayer);
-
-            // Content
             const content = document.createElement('div');
             content.style.cssText = "width:100%; height:100%; pointer-events:none;"; 
             while(app.windowEl.firstChild) { content.appendChild(app.windowEl.firstChild); }
             card.appendChild(content);
             
-            // Interaction Logic (FIXED FOR TAP TO FULLSCREEN)
-            let holdTimer = null;
-            let isGripped = false;
-            let startY = 0;
+            let holdTimer = null, isGripped = false, startY = 0;
 
             touchLayer.addEventListener('touchstart', (e) => {
                 startY = e.touches[0].clientY;
-                isGripped = false; // Reset grip state
-                
-                // Start Hold Timer: if it fires, we transition to grip/drag mode
+                isGripped = false;
                 holdTimer = setTimeout(() => {
                     isGripped = true;
-                    // Visual feedback: Shrink card slightly
                     card.style.transform = 'scale(0.95)';
                     if(navigator.vibrate) navigator.vibrate(20);
                 }, 300);
             });
 
             touchLayer.addEventListener('touchmove', (e) => {
-                // If we move too much vertically before the hold timer fires,
-                // we treat it as an immediate drag (for closing)
                 const deltaY = e.touches[0].clientY - startY;
-                
-                if (!isGripped && Math.abs(deltaY) > 5) { // User started dragging before hold time
+                if (!isGripped && Math.abs(deltaY) > 5) {
                      clearTimeout(holdTimer);
-                     isGripped = true; // Immediately enter grip mode
+                     isGripped = true;
                 }
-
                 if (isGripped) {
-                    e.preventDefault(); // Stop scrolling the list if we're dragging the card
-                    if (deltaY < 0) { // Dragging Up
+                    e.preventDefault();
+                    if (deltaY < 0) {
                         card.style.transition = 'none';
                         card.style.transform = `scale(0.95) translateY(${deltaY}px)`;
                     }
@@ -409,23 +389,18 @@
 
             touchLayer.addEventListener('touchend', (e) => {
                 clearTimeout(holdTimer);
-                
                 if (isGripped) {
-                    // Release Logic (Close Gesture)
                     const dy = e.changedTouches[0].clientY - startY;
                     if (dy < -100) {
-                        // Swipe Up Successful -> Close
                         card.style.transition = 'transform 0.3s ease-out';
                         card.style.transform = 'translateY(-100vh)';
                         setTimeout(() => closeApp(app.path), 300);
                     } else {
-                        // Snap Back
                         card.style.transition = 'transform 0.2s ease';
                         card.style.transform = 'scale(1)';
                     }
                     isGripped = false;
                 } else {
-                    // It was a Quick Tap -> Launch Fullscreen
                     launchApp(app);
                 }
             });
@@ -441,20 +416,18 @@
         if(contentDiv) {
              while(contentDiv.firstChild) { app.windowEl.appendChild(contentDiv.firstChild); }
         }
-        app.cardEl.remove(); // Remove the card element
+        app.cardEl.remove();
         app.cardEl = null;
     }
 
     function handleSwitcherScroll() {
         if (!isSwitcherMode) return;
         const centerLine = appSwitcher.scrollLeft + (appSwitcher.clientWidth / 2);
-        
         runningApps.forEach(app => {
             if (!app.cardEl) return;
             const card = app.cardEl;
             const center = card.offsetLeft + (card.offsetWidth/2);
             const dist = Math.abs(center - centerLine);
-
             if (dist < 50) card.style.opacity = 1;
             else card.style.opacity = 0.5;
         });
@@ -469,3 +442,4 @@
 </script>
 </body>
 </html>
+
