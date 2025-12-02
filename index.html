@@ -37,10 +37,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
 @keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
-/* ICONS & COLORS */
+/* ICONS */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
+/* Icon Gradients */
 .ai.files { background: linear-gradient(135deg, #1CB5E0 0%, #000851 100%); }
 .ai.news { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #93a5cf 100%); }
 .ai.info { background: linear-gradient(135deg, #e1eec3 0%, #f05053 100%); }
@@ -67,12 +68,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
 @keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
 
-/* --- APP WINDOW --- */
-.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
-.aw.ac{transform:translate3d(0,0,0)}
-/* App Content Container: Fixed to be black so text is visible */
-.awc{width:100%;height:100%;overflow:hidden;background:#000;position:relative} 
-.aif{width:100%;height:100%;border:none;display:block;background:#fff;}
+/* --- APP WINDOW SYSTEM (Multi-Window) --- */
+#windows-container {position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none;}
+
+.aw {
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    background:#000;
+    transform:translate3d(100%,0,0);
+    transition:transform .4s cubic-bezier(.19,1,.22,1);
+    pointer-events:auto; 
+    overflow:hidden; display:flex; flex-direction:column;
+    z-index: 50;
+}
+.aw.ac { transform:translate3d(0,0,0); }
+
+/* App Content Area */
+.awc { width:100%; height:100%; overflow:hidden; background:#000; position:relative; } 
+.aif { width:100%; height:100%; border:none; display:block; background:#fff; }
 
 /* --- SWITCHER --- */
 .as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto; -webkit-overflow-scrolling: touch;}
@@ -91,7 +103,7 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 #add-panel.open{bottom:0}
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
 
-/* INTERNAL APPS - Styled for Dark Mode */
+/* INTERNAL APPS */
 .tc{padding:60px 20px;color:#fff;text-align:center;background:#000;height:100%;width:100%;overflow-y:auto}
 .ts{margin-bottom:15px;font-size:18px;color:#ccc;text-align:left}
 .fb{padding:10px 20px;background:#007aff;border-radius:10px;border:none;color:white;font-size:16px;margin-top:20px}
@@ -104,7 +116,9 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
     <div class="s">
         <div class="sb"><span id="c">17:55</span><span id="batt">100%</span></div>
         <div class="h" id="h"><div id="ag"></div></div>
-        <div class="aw" id="app-window"><div class="awc" id="awc"></div></div>
+        
+        <div id="windows-container"></div>
+
         <div class="as" id="switcher"><div class="sc" id="scc"></div></div>
         <div id="rcb" class="rcx" onclick="closeSwitcher()">✕</div>
         <div id="edit-ui">
@@ -261,52 +275,67 @@ function getWidgetHTML(type, cols) {
     return "Widget";
 }
 
-// --- APP LOGIC ---
+// --- NEW APP LOGIC (Multi-Window like Backup) ---
 function launchApp(appData) {
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
-        existing = { ...appData, dom: createInternalAppDOM(appData) };
+        // Create full window structure
+        const win = createAppWindow(appData);
+        existing = { ...appData, win: win, content: win.querySelector('.awc') };
+        document.getElementById("windows-container").appendChild(win);
         runningApps.push(existing);
     }
+    
+    // Restore content if it was in a card
     restoreContentToWindow(existing);
 
-    const awc = document.getElementById("awc");
-    awc.innerHTML = ''; 
-    awc.appendChild(existing.dom);
-    
     requestAnimationFrame(() => {
-        document.getElementById("app-window").classList.add("ac");
+        // Z-Index Management: Bring this one to top
+        runningApps.forEach(a => a.win.style.zIndex = 50);
+        existing.win.style.zIndex = 60;
+        
+        // Slide in
+        existing.win.classList.add("ac");
         document.getElementById("h").classList.add("zo");
     });
+    
     currentApp = existing;
     if(isSwitcherMode) closeSwitcher();
 }
 
-function createInternalAppDOM(data) {
+function createAppWindow(data) {
     const w = document.createElement("div");
-    w.style.width = "100%"; w.style.height = "100%";
-    
-    // --- FIXED: Handle System Apps so they aren't white screens ---
+    w.className = 'aw';
+    const wc = document.createElement("div");
+    wc.className = 'awc';
+
+    // Internal App Logic
     if(data.path === "system:settings") {
-        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
+        wc.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
     } 
     else if(data.path === "system:tutorial") {
-        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div></div>`;
+        wc.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div></div>`;
     }
     else if(data.path.startsWith("system:")) {
-        // Generic Placeholder for other system apps (Mortis, AI, etc)
         const name = data.title || "App";
         const icon = data.icon || "📱";
-        w.innerHTML = `<div class="tc" style="display:flex;flex-direction:column;justify-content:center;height:100%"><div style="font-size:80px;margin-bottom:20px;opacity:0.8">${icon}</div><h1 style="margin-bottom:10px">${name}</h1><p style="color:#666">System Application</p></div>`;
+        wc.innerHTML = `<div class="tc" style="display:flex;flex-direction:column;justify-content:center;height:100%"><div style="font-size:80px;margin-bottom:20px;opacity:0.8">${icon}</div><h1 style="margin-bottom:10px">${name}</h1><p style="color:#666">System Application</p></div>`;
     }
     else {
-        // External URL (iframe)
+        // External URL / HTML File
         const i = document.createElement("iframe");
         i.className = "aif"; 
         i.src = data.path; 
-        w.appendChild(i);
+        wc.appendChild(i);
     }
+    w.appendChild(wc);
     return w;
+}
+
+function minimizeApp() {
+    if(!currentApp) return;
+    currentApp.win.classList.remove("ac"); // Slide out
+    currentApp = null;
 }
 
 function resetFactory() {
@@ -316,15 +345,13 @@ function resetFactory() {
     }
 }
 
-function minimizeApp() {
-    if(!currentApp) return;
-    document.getElementById("app-window").classList.remove("ac");
-    currentApp = null;
-}
-
 function closeApp(app) {
     const idx = runningApps.indexOf(app);
-    if(idx > -1) { runningApps.splice(idx, 1); app.dom.remove(); if(app.cardEl) app.cardEl.remove(); }
+    if(idx > -1) { 
+        runningApps.splice(idx, 1); 
+        app.win.remove(); // Remove window
+        if(app.cardEl) app.cardEl.remove(); 
+    }
     if(runningApps.length === 0) closeSwitcher();
 }
 
@@ -338,6 +365,7 @@ function openSwitcher() {
     document.getElementById("rcb").style.display = 'flex';
     h.classList.add("zo");
     sc.innerHTML = '';
+    
     runningApps.forEach(app => {
         const card = document.createElement("div");
         card.className = "scd";
@@ -347,12 +375,16 @@ function openSwitcher() {
         card.appendChild(header);
         
         const contentHolder = document.createElement("div");
-        // FIXED: Dark background ensures content looks right
         contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
         
-        // Move live DOM into card (The "Like in Backup" logic)
-        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
-        contentHolder.appendChild(app.dom);
+        // --- MOVE CONTENT FROM WINDOW TO CARD ---
+        // This is exactly how backup.html did it
+        const winContent = app.win.querySelector('.awc');
+        if (winContent) {
+            while (winContent.firstChild) {
+                contentHolder.appendChild(winContent.firstChild);
+            }
+        }
         
         card.appendChild(contentHolder);
         
@@ -366,7 +398,18 @@ function openSwitcher() {
 }
 
 function restoreContentToWindow(app) {
-    if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
+    // If we are in card mode, move children back to window
+    if(app.cardEl) {
+        const contentHolder = app.cardEl.children[1]; // The content div
+        const winContent = app.win.querySelector('.awc');
+        if(contentHolder && winContent) {
+            while(contentHolder.firstChild) {
+                winContent.appendChild(contentHolder.firstChild);
+            }
+        }
+        app.cardEl.remove();
+        app.cardEl = null;
+    }
 }
 
 function closeSwitcher() {
@@ -374,6 +417,9 @@ function closeSwitcher() {
     document.getElementById("switcher").style.display = 'none';
     document.getElementById("rcb").style.display = 'none';
     document.getElementById("h").classList.remove("zo");
+    
+    // Ensure content is back in windows if we just close switcher without picking app
+    runningApps.forEach(restoreContentToWindow);
 }
 
 function setupSwitcherGestures(touchLayer, card, app) {
@@ -387,24 +433,19 @@ function setupSwitcherGestures(touchLayer, card, app) {
     }, {passive:false});
 
     touchLayer.addEventListener('touchmove', (e) => {
-        if(isHorizontal) return; // If scrolling left/right, ignore vertical
-        
+        if(isHorizontal) return;
         const cx = e.touches[0].clientX;
         const cy = e.touches[0].clientY;
         const dx = cx - startX;
         const dy = cy - startY;
 
-        // Determine axis
         if(!isVertical && !isHorizontal) {
-            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
-                isHorizontal = true;
-            } else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
-                isVertical = true;
-            }
+            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) isHorizontal = true;
+            else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) isVertical = true;
         }
 
         if(isVertical) {
-            e.preventDefault(); // Stop scrolling, start moving card
+            e.preventDefault();
             if(dy < 0) {
                  card.style.transform = `scale(0.9) translateY(${dy}px)`;
                  card.style.opacity = `${1 - Math.abs(dy)/500}`;
@@ -426,12 +467,9 @@ function setupSwitcherGestures(touchLayer, card, app) {
                 card.style.opacity = "1";
             }
         } else if(!isHorizontal) {
-             // If we didn't scroll much in either direction, treat as tap
              const dy = e.changedTouches[0].clientY - startY;
              const dx = e.changedTouches[0].clientX - startX;
-             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-                 launchApp(app);
-             }
+             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) launchApp(app);
         }
     });
 }
