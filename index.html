@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>OS</title>
+<title>Santaslileper OS</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
 
 <style>
 /* --- CORE --- */
@@ -12,79 +15,74 @@ body,html{touch-action:none;overscroll-behavior:none;height:100%;overflow:hidden
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;user-select:none;-webkit-user-select:none}
 
 .p{position:relative;width:100%;height:100%;background-color:#050505;overflow:hidden;display:flex;flex-direction:column}
-@media(min-width:768px){
-    .p{max-width:375px;max-height:812px;margin:20px auto;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e;border:1px solid #333}
-}
+@media(min-width:768px){.p{max-width:375px;max-height:812px;margin:20px auto;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e;border:1px solid #333}}
 
 /* --- SYSTEM UI --- */
 .s{position:relative;width:100%;height:100%;z-index:2}
 .sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
 
-/* HOME INDICATOR */
-.hi {
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 40px;
-    display: flex; justify-content: center; align-items: center;
-    z-index: 10000;
-    pointer-events: auto; touch-action: none;
-}
+/* HOME INDICATOR (FORCE ON TOP) */
+.hi {position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; display: flex; justify-content: center; align-items: center; z-index: 10000; pointer-events: auto; touch-action: none;}
 .hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px;box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
 
 /* --- GRID SYSTEM --- */
 .h{position:absolute;top:0;left:0;right:0;bottom:0;padding-top:60px;transition:transform .4s,filter .4s;overflow-y:auto;overflow-x:hidden;display:block}
 .h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
-
 #ag{position:relative;width:100%;min-height:100vh;padding-bottom:200px}
 
+/* ITEMS */
 .grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
 .grid-item.resizing{transition:none;z-index:100;opacity:.9;background:rgba(44,44,46,.9)!important;border:1px solid #007aff!important;border-radius:20px}
 .edit-mode .grid-item:not(.resizing):not(.dragging){animation:jiggle .3s infinite linear;cursor:grab}
 .edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
 @keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
-/* --- ICONS --- */
+/* ICONS & COLORS (MATCHING YOUR IMAGE) */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
-/* Custom Gradients to match image */
-.ai.blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-.ai.purple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
-.ai.orange { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); }
-.ai.pink { background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%); }
-.ai.dark-blue { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
-.ai.yellow { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); } /* Actually orange/yellow in image */
-.ai.themes { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.ai.cyan { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
-.ai.grey { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color: #333; }
-.ai.green { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+.ai.files { background: linear-gradient(135deg, #1CB5E0 0%, #000851 100%); } /* Blue/Dark Blue */
+.ai.news { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #93a5cf 100%); } /* Pink/Blueish */
+.ai.info { background: linear-gradient(135deg, #e1eec3 0%, #f05053 100%); } /* Orangeish */
+.ai.chat { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); } /* Pink */
+.ai.mortis { background: linear-gradient(135deg, #434343 0%, #000000 100%); border: 1px solid #444; } /* Black/Grey */
+.ai.ai-learn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); } /* Orange/Yellow */
+.ai.themes { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); } /* Yellow/Pink */
+.ai.test { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); } /* Cyan/Blue */
+.ai.grapple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); } /* Purple */
+.ai.cycles { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); } /* Cyan/Teal */
+.ai.settings { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color:#333; } /* Grey */
+.ai.calc { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); } /* Bright Blue */
 
 .al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* --- WIDGETS --- */
+/* WIDGETS */
 .widget{background:0 0;backdrop-filter:none;border:none;border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;transition:background .3s,border .3s,backdrop-filter .3s}
 .edit-mode .widget{background:rgba(30,41,59,.6);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 15px rgba(0,0,0,.3)}
 .widget-content{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:10px;text-align:center;width:100%;height:100%;overflow:hidden;text-shadow:0 2px 8px rgba(0,0,0,.6)}
 .del-btn{position:absolute;top:-8px;left:-8px;width:24px;height:24px;background:#ff3b30;border-radius:50%;display:none;z-index:20;color:#fff;font-weight:700;font-size:16px;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.3)}
 .resize-handle{position:absolute;bottom:0;right:0;width:40px;height:40px;z-index:30;display:none;touch-action:none}
-.resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
+.resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px}
 .edit-mode .del-btn,.edit-mode .resize-handle{display:block}
 .loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
 @keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
 
-/* --- APP WINDOW --- */
+/* --- APP WINDOW (THE CONTAINER) --- */
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
 .aw.ac{transform:translate3d(0,0,0)}
 .awc{width:100%;height:100%;overflow:hidden;background:#fff;position:relative} 
 .aif{width:100%;height:100%;border:none;display:block;}
 
-/* --- SWITCHER --- */
+/* --- SWITCHER (LIVE CARDS) --- */
 .as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
 .sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
+/* The Card */
 .scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#222;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;overflow:hidden;transform:scale(1);transition:transform 0.2s}
 .ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
 .ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:200;} 
 .rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;z-index:200;display:none}
 
-/* UI PANELS */
+/* UI */
 #edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
 .edit-mode #edit-ui{opacity:1;pointer-events:auto}
 button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border:none;border-radius:20px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3)}
@@ -100,7 +98,7 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 
 <div class="p" id="phone">
     <div class="s">
-        <div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
+        <div class="sb"><span id="c">17:55</span><span id="batt">100%</span></div>
         <div class="h" id="h"><div id="ag"></div></div>
         <div class="aw" id="app-window"><div class="awc" id="awc"></div></div>
         <div class="as" id="switcher"><div class="sc" id="scc"></div></div>
@@ -132,44 +130,40 @@ let items = [];
 let runningApps = []; 
 let currentApp = null; 
 let isSwitcherMode = false;
-const STORAGE_KEY = 'os_layout_v2'; // Changed key to force refresh
+const STORAGE_KEY = 'os_layout_final_v1';
 
-// --- INITIAL LAYOUT CONFIGURATION ---
+// --- INITIAL LAYOUT CONFIGURATION (MATCHING IMAGE.PNG) ---
 const defaultWidgets = [
     { type: 'widget', subtype: 'clock', x: 0, y: 0, cols: 2, rows: 2 },
-    { type: 'widget', subtype: 'weather', x: 2 * (SCREEN_W/4), y: 0, cols: 2, rows: 2 }
+    { type: 'widget', subtype: 'weather', x: 0, y: 0, cols: 2, rows: 2 } // X calced later
 ];
 
 const defaultApps = [
     // Row 1
-    { title: "Files", icon: "🗃️", class: "blue", path: "system:files" },
-    { title: "News", icon: "📰", class: "purple", path: "system:news" },
-    { title: "Info", icon: "ℹ️", class: "orange", path: "system:tutorial" },
-    { title: "Chat", icon: "💬", class: "pink", path: "system:chat" },
+    { title: "Files", icon: "🗃️", class: "files", path: "system:files" },
+    { title: "News", icon: "📰", class: "news", path: "system:news" },
+    { title: "Info", icon: "ℹ️", class: "info", path: "system:tutorial" },
+    { title: "Chat", icon: "💬", class: "chat", path: "system:chat" },
     // Row 2
-    { title: "Mortis", icon: "☠️", class: "dark-blue", path: "system:mortis" },
-    { title: "AI Learn", icon: "🤖", class: "themes", path: "system:ai" },
+    { title: "Mortis", icon: "☠️", class: "mortis", path: "system:mortis" },
+    { title: "AI Learn", icon: "🤖", class: "ai-learn", path: "system:ai" },
     { title: "Themes", icon: "🎨", class: "themes", path: "system:themes" },
-    { title: "Test 3k", icon: "🚧", class: "cyan", path: "system:test" },
+    { title: "Test 3k", icon: "🚧", class: "test", path: "system:test" },
     // Row 3
-    { title: "Grapple", icon: "🎮", class: "purple", path: "system:game" },
-    { title: "Cycles", icon: "⏱️", class: "cyan", path: "system:clock" },
-    { title: "Settings", icon: "⚙️", class: "grey", path: "system:settings" },
-    { title: "Calc", icon: "🧮", class: "green", path: "system:calc" }
+    { title: "Grapple", icon: "🎮", class: "grapple", path: "system:game" },
+    { title: "Cycles", icon: "⏱️", class: "cycles", path: "system:clock" },
+    { title: "Settings", icon: "⚙️", class: "settings", path: "system:settings" },
+    { title: "Calc", icon: "🧮", class: "calc", path: "system:calc" }
 ];
 
 function init() {
     updateClock(); setInterval(updateClock, 1000);
 
-    // --- PERSISTENCE LOAD OR DEFAULT ---
     const savedLayout = localStorage.getItem(STORAGE_KEY);
-    
     if (savedLayout) {
         try {
             const layoutData = JSON.parse(savedLayout);
-            layoutData.forEach(itemData => {
-                createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData);
-            });
+            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
         } catch(e) { loadDefaultApps(); }
     } else {
         loadDefaultApps();
@@ -194,24 +188,18 @@ function init() {
 }
 
 function loadDefaultApps() {
-    // 1. Add Widgets (Hardcoded Top positions)
-    defaultWidgets.forEach(w => {
-        // Recalculate X based on current screen width
-        const x = w.subtype === 'weather' ? 2 * COL_WIDTH : 0;
-        createItem(w.type, x, w.y, w.cols, w.rows, w);
-    });
+    // Top Widgets
+    createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
+    createItem('widget', 2 * COL_WIDTH, 0, 2, 2, {subtype:'weather'});
 
-    // 2. Add Apps in Grid (Starting at Row 3, approx Y=200)
+    // Apps starting at Row 2 (approx 200px down)
     let startRow = 2; 
     defaultApps.forEach((app, index) => {
         const col = index % 4;
         const row = startRow + Math.floor(index / 4);
-        const x = col * COL_WIDTH;
-        const y = row * ROW_HEIGHT;
-        createItem('app', x, y, 1, 1, app);
+        createItem('app', col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
     });
-    
-    saveLayout(); // Save initial state
+    saveLayout();
 }
 
 function saveLayout() {
@@ -237,7 +225,7 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
 
     if (type === "app") {
         el.classList.add("aiw");
-        el.innerHTML = `<div class="ai ${data.class||'i'}">${data.icon}</div><div class="al">${data.title}</div>`;
+        el.innerHTML = `<div class="ai ${data.class||'files'}">${data.icon}</div><div class="al">${data.title}</div>`;
         el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
         el.classList.add("widget");
@@ -245,13 +233,11 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
         el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
     }
     document.getElementById("ag").appendChild(el);
-    
     const itemObj = { 
         el: el, type: type, subtype: data.subtype, 
         x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
         title: data.title, icon: data.icon, path: data.path, class: data.class
     };
-    
     updateVisualPosition(itemObj);
     setupDrag(itemObj);
     if(type === "widget") setupResize(itemObj);
@@ -274,22 +260,27 @@ function addWidget(type) {
 }
 
 function getWidgetHTML(type, cols) {
-    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"28px"};font-weight:300" id="w-clock">12:00</h1><div style="font-size:12px;opacity:0.7;margin-top:-5px">NEW YORK</div>`;
-    if(type === "weather") return `<div style="font-size:30px">⛈️</div><div style="font-size:18px;font-weight:bold">16°</div><div style="font-size:10px;opacity:0.7">Heavy Rain</div>`;
-    if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" class="photo-cover">';
-    if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold">DEC</div>`;
+    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NEW YORK</div>`;
+    if(type === "weather") return `<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
+    if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
+    if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
     return "Widget";
 }
 
+// --- APP LAUNCHING & LIVE LOGIC ---
 function launchApp(appData) {
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
         existing = { ...appData, dom: createInternalAppDOM(appData) };
         runningApps.push(existing);
     }
+    // FIX: Move content back to main window if it was in card
     restoreContentToWindow(existing);
+
     const awc = document.getElementById("awc");
-    awc.innerHTML = ''; awc.appendChild(existing.dom);
+    awc.innerHTML = ''; 
+    awc.appendChild(existing.dom);
+    
     requestAnimationFrame(() => {
         document.getElementById("app-window").classList.add("ac");
         document.getElementById("h").classList.add("zo");
@@ -330,6 +321,7 @@ function closeApp(app) {
     if(runningApps.length === 0) closeSwitcher();
 }
 
+// --- SWITCHER (FIXED: MOVES DOM) ---
 function openSwitcher() {
     isSwitcherMode = true;
     const s = document.getElementById("switcher");
@@ -346,11 +338,16 @@ function openSwitcher() {
         header.className = "ch";
         header.innerHTML = `<span style="color:#fff;font-size:12px;font-weight:bold">${app.title}</span>`;
         card.appendChild(header);
+        
         const contentHolder = document.createElement("div");
         contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#fff";
-        if(app.dom.firstChild) { while(app.dom.firstChild) { contentHolder.appendChild(app.dom.firstChild); } } 
-        else { contentHolder.appendChild(app.dom); }
+        
+        // --- KEY FIX: Move the live DOM into the card ---
+        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
+        contentHolder.appendChild(app.dom);
+        
         card.appendChild(contentHolder);
+        
         const touchLayer = document.createElement("div");
         touchLayer.className = "ctl";
         card.appendChild(touchLayer);
@@ -361,10 +358,8 @@ function openSwitcher() {
 }
 
 function restoreContentToWindow(app) {
-    if(app.cardEl) {
-        const contentHolder = app.cardEl.children[1]; 
-        if(contentHolder) { while(contentHolder.firstChild) { app.dom.appendChild(contentHolder.firstChild); } }
-    }
+    // If app is launching, ensure its DOM is removed from any card
+    if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
 }
 
 function closeSwitcher() {
@@ -372,7 +367,7 @@ function closeSwitcher() {
     document.getElementById("switcher").style.display = 'none';
     document.getElementById("rcb").style.display = 'none';
     document.getElementById("h").classList.remove("zo");
-    runningApps.forEach(restoreContentToWindow);
+    // Apps stay in memory, but next launchApp will grab the DOM
 }
 
 function setupSwitcherGestures(touchLayer, card, app) {
@@ -397,6 +392,7 @@ function setupSwitcherGestures(touchLayer, card, app) {
     });
 }
 
+// --- UTILS ---
 function updateVisualPosition(item) {
     const offsetX = (item.cols * COL_WIDTH - item.w) / 2;
     const offsetY = (item.rows * ROW_HEIGHT - item.h) / 2;
