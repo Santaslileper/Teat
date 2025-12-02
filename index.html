@@ -5,13 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
 <title>OS</title>
 
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
-
 <style>
-/* --- CORE STYLES --- */
+/* --- CORE --- */
 *{margin:0;padding:0;box-sizing:border-box}
 body,html{touch-action:none;overscroll-behavior:none;height:100%;overflow:hidden;background:#000}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;user-select:none;-webkit-user-select:none}
@@ -25,23 +20,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .s{position:relative;width:100%;height:100%;z-index:2}
 .sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
 
-/* --- CRITICAL FIX: HOME INDICATOR Z-INDEX --- */
+/* HOME INDICATOR - FIXED Z-INDEX */
 .hi {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 40px; /* Touch area size */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000; /* FIXED: Must be higher than iframe (z-50) */
-    pointer-events: auto; /* Ensure it catches touches */
-    touch-action: none;
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 40px;
+    display: flex; justify-content: center; align-items: center;
+    z-index: 10000; /* FORCE TOP */
+    pointer-events: auto; touch-action: none;
 }
 .hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px;box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
 
-/* --- APP GRID --- */
+/* --- GRID SYSTEM (WIDGETS) --- */
 .h{position:absolute;top:0;left:0;right:0;bottom:0;padding-top:60px;transition:transform .4s,filter .4s;overflow-y:auto;overflow-x:hidden;display:block}
 .h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
 
@@ -49,16 +37,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 
 .grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
 .grid-item.resizing{transition:none;z-index:100;opacity:.9;background:rgba(44,44,46,.9)!important;border:1px solid #007aff!important;border-radius:20px}
-
 .edit-mode .grid-item:not(.resizing):not(.dragging){animation:jiggle .3s infinite linear;cursor:grab}
 .edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
 @keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
-/* --- APP ICONS --- */
+/* --- ICONS --- */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
-/* COLOR MAPPINGS FOR YOUR CLASSES */
+/* Colors from your JSON */
 .ai.motion { background: linear-gradient(135deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%); }
 .ai.torch { background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 52%, #2BFF88 90%); }
 .ai.speaker { background: linear-gradient(135deg, #FEE140 0%, #FA709A 100%); }
@@ -78,35 +65,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .resize-handle{position:absolute;bottom:0;right:0;width:40px;height:40px;z-index:30;display:none;touch-action:none}
 .resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
 .edit-mode .del-btn,.edit-mode .resize-handle{display:block}
-
-/* LOADING SPINNER */
 .loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
 @keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
 
-/* --- INTERFACE: EDIT & ADD PANELS --- */
+/* --- APP WINDOW --- */
+.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
+.aw.ac{transform:translate3d(0,0,0)}
+/* Holds the Active App Content */
+.awc{width:100%;height:100%;overflow:hidden;background:#fff;position:relative} 
+.aif{width:100%;height:100%;border:none;display:block;}
+
+/* --- SWITCHER (LIVE CARDS) --- */
+.as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
+.sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
+.scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#222;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;overflow:hidden;transform:scale(1);transition:transform 0.2s}
+.ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
+/* Touch layer sits ON TOP of iframe in switcher to capture swipes */
+.ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:200;} 
+
+.rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;z-index:200;display:none}
+
+/* EDIT UI & PANEL */
 #edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
 .edit-mode #edit-ui{opacity:1;pointer-events:auto}
 button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border:none;border-radius:20px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3)}
-
 #add-panel{position:fixed;bottom:-400px;left:0;width:100%;height:350px;background:#1c1c1e;border-radius:20px 20px 0 0;z-index:300;transition:bottom .3s;padding:20px;display:flex;flex-direction:column;gap:10px}
 #add-panel.open{bottom:0}
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
 
-/* --- APP WINDOW & SWITCHER --- */
-.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
-.aw.ac{transform:translate3d(0,0,0)}
-.awc{width:100%;height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
-.aif{width:100%;height:100%;border:none;display:block;background: #fff;}
-
-/* Switcher */
-.as{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(20px);z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
-.sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
-.scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#222;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;overflow:hidden;transform:scale(1);transition:transform 0.2s}
-.ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
-.rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;z-index:200;display:none}
-
-/* Settings & Internal */
-.tc{padding:60px 20px 20px 20px;color:#fff;text-align:center}.sg{margin-bottom:25px}.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;margin-bottom:8px;text-align:left;padding-left:15px}.so{background:#1c1c1e;border-radius:10px;overflow:hidden}.si{padding:12px 15px;border-bottom:1px solid #2c2c2e;display:flex;justify-content:space-between;align-items:center;color:#fff}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
+/* INTERNAL APP STYLES */
+.tc{padding:60px 20px;color:#fff;text-align:center;background:#111;height:100%;width:100%}.sg{margin-bottom:25px}.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;margin-bottom:8px;text-align:left;padding-left:15px}.so{background:#1c1c1e;border-radius:10px;overflow:hidden}.si{padding:12px 15px;border-bottom:1px solid #2c2c2e;display:flex;justify-content:space-between;align-items:center;color:#fff}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
 </style>
 </head>
 <body>
@@ -145,7 +133,7 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 </div>
 
 <script>
-// --- CONFIG & STATE ---
+// --- CONFIG ---
 const COL_COUNT=4, ROW_HEIGHT=100;
 let SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
 let COL_WIDTH = SCREEN_W / COL_COUNT;
@@ -153,8 +141,8 @@ let isEditMode = false;
 let items = []; 
 let runningApps = []; 
 let currentApp = null; 
+let isSwitcherMode = false;
 
-// --- YOUR APPS (Hardcoded so they work instantly) ---
 const myApps = [
   { "id": 998, "title": "Settings", "icon": "⚙️", "path": "system:settings", "class": "st" },
   { "id": 999, "title": "Info", "icon": "ℹ️", "path": "system:tutorial", "class": "i" },
@@ -170,39 +158,28 @@ const myApps = [
   { "id": 3000, "title": "Test 3k", "icon": "🚧", "path": "page3000.html", "class": "torch" }
 ];
 
-// --- INITIALIZATION ---
 function init() {
-    updateClock();
-    setInterval(updateClock, 1000);
-    
-    // 1. Load Your Apps
+    updateClock(); setInterval(updateClock, 1000);
+    // Populate Grid
     myApps.forEach(appData => {
         const spot = findNextEmptySpot(1, 1);
         createItem("app", spot.x, spot.y, 1, 1, appData);
     });
 
-    // 2. GLOBAL SWIPE UP LOGIC (Fixes the iframe issue)
+    // --- HOME GESTURE LOGIC ---
     const hi = document.getElementById("hi");
-    let touchStartY = 0;
-    
-    // Listen for touch start
-    hi.addEventListener("touchstart", (e) => {
-        touchStartY = e.touches[0].clientY;
-        e.stopPropagation(); // Stop grid from stealing this
-    }, {passive: false});
-    
-    // Listen for touch end
+    let startY = 0;
+    hi.addEventListener("touchstart", (e) => { 
+        startY = e.touches[0].clientY; 
+        e.stopPropagation(); 
+    }, {passive:false});
+
     hi.addEventListener("touchend", (e) => {
-        const touchEndY = e.changedTouches[0].clientY;
-        const diff = touchEndY - touchStartY;
+        const diff = e.changedTouches[0].clientY - startY;
+        if(diff < -30) handleHomeGesture();
+    }, {passive:false});
 
-        // If swiped UP (negative difference)
-        if(diff < -30) {
-            handleHomeGesture();
-        }
-    }, {passive: false});
-
-    // Long Press on Grid
+    // Edit Mode Trigger (Long Press)
     const grid = document.getElementById("ag");
     let pressTimer;
     grid.addEventListener("touchstart", e => {
@@ -213,63 +190,46 @@ function init() {
     grid.addEventListener("touchend", () => clearTimeout(pressTimer));
 }
 
-// --- THE SWIPE HANDLER ---
 function handleHomeGesture() {
     if(currentApp) {
-        // If an app is open, close it (Go Home)
-        closeApp();
-    } else {
-        // If already home, open App Switcher
-        if(runningApps.length > 0 && !isEditMode) {
-            openSwitcher();
-        }
+        // Active App -> Go to Switcher
+        minimizeApp();
+        openSwitcher();
+    } else if(isSwitcherMode) {
+        // Switcher Open -> Close Switcher
+        closeSwitcher();
+    } else if(runningApps.length > 0 && !isEditMode) {
+        // Home Screen -> Open Switcher
+        openSwitcher();
     }
 }
 
-// --- CORE GRID FUNCTIONS ---
+// --- WIDGET GRID SYSTEM ---
 function createItem(type, x, y, wUnit, hUnit, data={}) {
     const el = document.createElement("div");
     el.classList.add("grid-item");
-    
     const wPx = wUnit * COL_WIDTH - (type === "app" ? 0 : 15);
     const hPx = hUnit * ROW_HEIGHT - (type === "app" ? 10 : 15);
 
     if (type === "app") {
         el.classList.add("aiw");
-        // Use data.class directly here
         el.innerHTML = `<div class="ai ${data.class||'i'}">${data.icon}</div><div class="al">${data.title}</div>`;
         el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
         el.classList.add("widget");
-        el.innerHTML = `
-            <div class="del-btn">×</div>
-            <div class="resize-handle"></div>
-            <div class="widget-content">
-                ${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}
-            </div>`;
+        el.innerHTML = `<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}</div>`;
         el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
     }
-
     document.getElementById("ag").appendChild(el);
-
-    const itemObj = {
-        el: el,
-        type: type,
-        subtype: data.subtype,
-        x: x, y: y, w: wPx, h: hPx,
-        cols: wUnit, rows: hUnit
-    };
-
+    const itemObj = { el: el, type: type, subtype: data.subtype, x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit };
     updateVisualPosition(itemObj);
     setupDrag(itemObj);
     if(type === "widget") setupResize(itemObj);
-    
     items.push(itemObj);
     updateContainerHeight();
     return itemObj;
 }
 
-// --- WIDGET LOGIC ---
 function addWidget(type) {
     closeAddPanel();
     const spot = findNextEmptySpot(2, 2);
@@ -277,7 +237,6 @@ function addWidget(type) {
     resolveCollisions(widgetItem);
     updateVisualPosition(widgetItem);
     toggleEdit(true);
-
     setTimeout(() => {
         widgetItem.subtype = type;
         widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, 2);
@@ -288,204 +247,185 @@ function addWidget(type) {
 }
 
 function getWidgetHTML(type, cols) {
-    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"28px"};font-weight:300" id="w-clock">12:00</h1><span style="font-size:12px;text-transform:uppercase;opacity:0.8">New York</span>`;
-    if(type === "weather") return `<div style="display:flex;${cols>=3?"flex-direction:row; gap:20px":"flex-direction:column"};align-items:center;justify-content:center;width:100%"><div style="font-size:35px">⛈️</div><div style="text-align:center"><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.8">Heavy Rain</div></div></div>`;
+    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"28px"};font-weight:300" id="w-clock">12:00</h1>`;
+    if(type === "weather") return `<div style="font-size:35px">⛈️</div><div>16°</div>`;
     if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" class="photo-cover">';
-    if(type === "calendar") {
-        let n=""; if(cols>1) for(let e=1;e<=14;e++) n+=`<div class="${4===e?"cal-day cal-today":"cal-day"}">${e}</div>`;
-        return `<div style="${cols>=3?"font-size:16px;margin-bottom:5px":"font-size:12px;color:#ff3b30;font-weight:bold"}">DECEMBER</div><div class="cal-grid" style="display:${cols>1?"grid":"none"}"><div style="color:#ff3b30">S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>${n}</div>`
-    }
+    if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold">DEC</div>`;
     return "Widget";
 }
 
-// --- APP LAUNCHING ---
+// --- APP LAUNCHING & LIVE LOGIC ---
+
 function launchApp(appData) {
-    const aw = document.getElementById("app-window");
-    const awc = document.getElementById("awc");
-    const h = document.getElementById("h");
-    
-    // Check if running
+    // 1. Check if already running
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
+        // Create new container
         existing = { ...appData, dom: createInternalAppDOM(appData) };
         runningApps.push(existing);
     }
     
-    // Render
-    awc.innerHTML = '';
+    // 2. IMPORTANT: Move the DOM element into the main Window (in case it was in a card)
+    restoreContentToWindow(existing);
+
+    // 3. Clear the window container and append this app
+    const awc = document.getElementById("awc");
+    awc.innerHTML = ''; 
     awc.appendChild(existing.dom);
     
-    // Animate
+    // 4. Show Window
     requestAnimationFrame(() => {
-        aw.classList.add("ac");
-        h.classList.add("zo");
+        document.getElementById("app-window").classList.add("ac");
+        document.getElementById("h").classList.add("zo");
     });
     currentApp = existing;
+    if(isSwitcherMode) closeSwitcher();
 }
 
 function createInternalAppDOM(data) {
     const w = document.createElement("div");
-    w.style.height = "100%";
-    w.style.width = "100%";
+    w.style.width = "100%"; w.style.height = "100%";
     
     if(data.path === "system:settings") {
-        w.innerHTML = `
-        <div class="tc">
-            <div style="font-size:60px;margin-bottom:20px">⚙️</div>
-            <h2>Settings</h2>
-            <div class="sg">
-                <div class="sh">General</div>
-                <div class="so">
-                    <div class="si">Theme <select onchange="document.body.style.background=this.value"><option value="#000">Dark</option><option value="#fff">Light</option></select></div>
-                </div>
-            </div>
-            <button class="fb db" onclick="resetLayout()">Reset Layout</button>
-        </div>`;
+        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><button class="fb db" onclick="location.reload()">Reset OS</button></div>`;
     } else if(data.path === "system:tutorial") {
-        w.innerHTML = `<div class="tc"><h2>How To</h2><p>Hold icons to edit.</p><p>Use + to add widgets.</p><p>Swipe up to go home.</p></div>`;
+        w.innerHTML = `<div class="tc"><h2>How To</h2><p>Swipe up to home.</p><p>Use + for widgets.</p></div>`;
     } else {
         const i = document.createElement("iframe");
         i.className = "aif";
-        // If it's a test page, it might 404, so we act nicely
         i.src = data.path; 
         w.appendChild(i);
     }
     return w;
 }
 
-function closeApp() {
+function minimizeApp() {
     if(!currentApp) return;
     document.getElementById("app-window").classList.remove("ac");
-    document.getElementById("h").classList.remove("zo");
     currentApp = null;
 }
 
-function resetLayout() {
-    if(confirm("Reset Layout?")) { items=[]; document.getElementById("ag").innerHTML=''; init(); }
+function closeApp(app) {
+    const idx = runningApps.indexOf(app);
+    if(idx > -1) {
+        runningApps.splice(idx, 1);
+        app.dom.remove(); // Destroy DOM
+        if(app.cardEl) app.cardEl.remove();
+    }
+    if(runningApps.length === 0) closeSwitcher();
 }
 
-// --- SWITCHER ---
+// --- SWITCHER: LIVE CARD LOGIC ---
 function openSwitcher() {
+    isSwitcherMode = true;
     const s = document.getElementById("switcher");
     const sc = document.getElementById("scc");
     const h = document.getElementById("h");
-    const rcb = document.getElementById("rcb");
     
     s.style.display = 'flex';
-    rcb.style.display = 'flex';
+    document.getElementById("rcb").style.display = 'flex';
     h.classList.add("zo");
     
     sc.innerHTML = '';
+    
     runningApps.forEach(app => {
         const card = document.createElement("div");
         card.className = "scd";
-        card.innerHTML = `<div class="ch"><span>${app.title}</span></div>`;
         
-        // Add snapshot or color
-        const bg = document.createElement('div');
-        bg.style.cssText = "width:100%;height:100%;background:#333;display:flex;align-items:center;justify-content:center;font-size:50px";
-        bg.innerHTML = app.icon;
-        card.appendChild(bg);
+        // Header
+        const header = document.createElement("div");
+        header.className = "ch";
+        header.innerHTML = `<span style="color:#fff;font-size:12px;font-weight:bold">${app.title}</span>`;
+        card.appendChild(header);
 
-        card.onclick = () => { closeSwitcher(); launchApp(app); };
+        // Content Holder (Pointer events none so you don't click inside iframe while swiping)
+        const contentHolder = document.createElement("div");
+        contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#fff";
+        
+        // --- LIVE MOVE: Move the existing DOM node into this card ---
+        if(app.dom.firstChild) {
+            while(app.dom.firstChild) { contentHolder.appendChild(app.dom.firstChild); }
+        } else {
+            // If app.dom is the container itself, append children
+            contentHolder.appendChild(app.dom);
+        }
+        card.appendChild(contentHolder);
+        
+        // Touch Layer (Captures swipes)
+        const touchLayer = document.createElement("div");
+        touchLayer.className = "ctl";
+        card.appendChild(touchLayer);
+
+        setupSwitcherGestures(touchLayer, card, app);
+        
         sc.appendChild(card);
+        app.cardEl = card; 
     });
 }
 
+// Moves content back from Card to Main App Object
+function restoreContentToWindow(app) {
+    if(app.cardEl) {
+        const contentHolder = app.cardEl.children[1]; 
+        if(contentHolder) {
+            while(contentHolder.firstChild) { app.dom.appendChild(contentHolder.firstChild); }
+        }
+    }
+}
+
 function closeSwitcher() {
+    isSwitcherMode = false;
     document.getElementById("switcher").style.display = 'none';
     document.getElementById("rcb").style.display = 'none';
     document.getElementById("h").classList.remove("zo");
+    
+    // Put everything back
+    runningApps.forEach(restoreContentToWindow);
 }
 
-// --- DRAG, DROP & RESIZE ---
-function setupDrag(item){
-    let startX, startY, startLeft, startTop;
-    const onStart = (e) => {
-        if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
+function setupSwitcherGestures(touchLayer, card, app) {
+    let startY = 0;
+    let isGripped = false;
+    let holdTimer;
+
+    touchLayer.addEventListener('touchstart', (e) => {
+        startY = e.touches[0].clientY;
+        holdTimer = setTimeout(() => {
+            isGripped = true;
+            if(navigator.vibrate) navigator.vibrate(20);
+            card.style.transform = "scale(0.9)";
+        }, 200);
+    });
+
+    touchLayer.addEventListener('touchmove', (e) => {
+        const diff = e.touches[0].clientY - startY;
+        if(Math.abs(diff) > 10) clearTimeout(holdTimer);
+        
+        if(isGripped) {
             e.preventDefault();
-            item.el.classList.add("dragging");
-            startX = e.touches?e.touches[0].clientX:e.clientX;
-            startY = e.touches?e.touches[0].clientY:e.clientY;
-            startLeft = parseFloat(item.el.style.left);
-            startTop = parseFloat(item.el.style.top);
-            document.addEventListener("touchmove", onMove, {passive:false});
-            document.addEventListener("touchend", onEnd);
-            document.addEventListener("mousemove", onMove);
-            document.addEventListener("mouseup", onEnd);
+            if(diff < 0) card.style.transform = `scale(0.9) translateY(${diff}px)`;
         }
-    };
-    const onMove = (e) => {
-        e.preventDefault();
-        const clientX = e.touches?e.touches[0].clientX:e.clientX;
-        const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        item.el.style.left = startLeft + (clientX - startX) + "px";
-        item.el.style.top = startTop + (clientY - startY) + "px";
-    };
-    const onEnd = () => {
-        document.removeEventListener("touchmove", onMove);
-        document.removeEventListener("touchend", onEnd);
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onEnd);
-        item.el.classList.remove("dragging");
-        const left = parseFloat(item.el.style.left);
-        const top = parseFloat(item.el.style.top);
-        let col = Math.round(left / COL_WIDTH);
-        let row = Math.round(top / ROW_HEIGHT);
-        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
-        item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
-        resolveCollisions(item);
-        updateVisualPosition(item);
-        updateContainerHeight();
-    };
-    item.el.addEventListener("touchstart", onStart, {passive:false});
-    item.el.addEventListener("mousedown", onStart);
-}
+    });
 
-function setupResize(item){
-    const handle = item.el.querySelector(".resize-handle");
-    let startX, startY, startW, startH;
-    const onStart = (e) => {
-        e.stopPropagation(); e.preventDefault();
-        item.el.classList.add("resizing");
-        startX = e.touches?e.touches[0].clientX:e.clientX;
-        startY = e.touches?e.touches[0].clientY:e.clientY;
-        startW = item.w; startH = item.h;
-        document.addEventListener("touchmove", onMove, {passive:false});
-        document.addEventListener("touchend", onEnd);
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onEnd);
-    };
-    const onMove = (e) => {
-        e.preventDefault();
-        const clientX = e.touches?e.touches[0].clientX:e.clientX;
-        const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH);
-        let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
-        if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4;
-        if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
-        const pxW = newCols * COL_WIDTH - 15;
-        const pxH = newRows * ROW_HEIGHT - 15;
-        item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
-        if(newCols !== item.cols || newRows !== item.rows) {
-            item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
-            if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
-            if(item.subtype === "clock") updateClock();
-            resolveCollisions(item);
-            updateVisualPosition(item);
-            updateContainerHeight();
+    touchLayer.addEventListener('touchend', (e) => {
+        clearTimeout(holdTimer);
+        if(isGripped) {
+            const diff = e.changedTouches[0].clientY - startY;
+            if(diff < -100) {
+                // Swipe Up -> Close App
+                card.style.transition = "transform 0.3s ease";
+                card.style.transform = "translateY(-100vh)";
+                setTimeout(() => closeApp(app), 300);
+            } else {
+                // Reset
+                card.style.transform = "scale(1)";
+            }
+            isGripped = false;
+        } else {
+            // Tap -> Open App
+            launchApp(app);
         }
-    };
-    const onEnd = () => {
-        document.removeEventListener("touchmove", onMove);
-        document.removeEventListener("touchend", onEnd);
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onEnd);
-        item.el.classList.remove("resizing");
-        updateVisualPosition(item);
-    };
-    handle.addEventListener("touchstart", onStart, {passive:false});
-    handle.addEventListener("mousedown", onStart);
+    });
 }
 
 // --- UTILS ---
@@ -495,7 +435,6 @@ function updateVisualPosition(item) {
     item.el.style.left = (item.x + offsetX) + "px";
     item.el.style.top = (item.y + offsetY) + "px";
 }
-
 function resolveCollisions(movedItem) {
     items.filter(i => i !== movedItem).forEach(other => {
         if(rectIntersect(movedItem, other)) {
@@ -506,13 +445,11 @@ function resolveCollisions(movedItem) {
         }
     });
 }
-
 function rectIntersect(i1, i2) {
     const margin = 10;
     return (i1.x + margin < i2.x + i2.cols * COL_WIDTH) && (i1.x + i1.cols * COL_WIDTH - margin > i2.x) &&
            (i1.y + margin < i2.y + i2.rows * ROW_HEIGHT) && (i1.y + i1.rows * ROW_HEIGHT - margin > i2.y);
 }
-
 function findNextEmptySpot(cols, rows, currentItems = items) {
     let rowIdx = 0;
     while(true) {
@@ -522,23 +459,75 @@ function findNextEmptySpot(cols, rows, currentItems = items) {
             const collision = currentItems.some(i => testX < i.x + i.cols * COL_WIDTH && testX + cols * COL_WIDTH > i.x && testY < i.y + i.rows * ROW_HEIGHT && testY + rows * ROW_HEIGHT > i.y);
             if(!collision) return {x: testX, y: testY};
         }
-        rowIdx++;
-        if(rowIdx > 500) return {x:0, y:0};
+        rowIdx++; if(rowIdx > 500) return {x:0, y:0};
     }
 }
-
 function updateContainerHeight() {
-    let max = 0;
-    items.forEach(i => { const bottom = i.y + i.h; if(bottom > max) max = bottom; });
+    let max = 0; items.forEach(i => { const bottom = i.y + i.h; if(bottom > max) max = bottom; });
     document.getElementById("ag").style.minHeight = (max + 300) + "px";
 }
-
 function toggleEdit(val) { isEditMode = val; document.body.classList.toggle("edit-mode", val); closeAddPanel(); }
 function openAddPanel(){ document.getElementById("add-panel").classList.add("open"); }
 function closeAddPanel(){ document.getElementById("add-panel").classList.remove("open"); }
 function deleteItem(el) { const idx = items.findIndex(i => i.el === el); if(idx > -1) { items.splice(idx, 1); el.remove(); updateContainerHeight(); }}
 function updateClock() { const d = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById("c").innerText = d; document.querySelectorAll("#w-clock").forEach(e => e.innerText = d); }
-
+function setupDrag(item){
+    let startX, startY, startLeft, startTop;
+    const onStart = (e) => {
+        if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
+            e.preventDefault(); item.el.classList.add("dragging");
+            startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
+            startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
+            document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+            document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
+        }
+    };
+    const onMove = (e) => {
+        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
+    };
+    const onEnd = () => {
+        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
+        item.el.classList.remove("dragging");
+        const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
+        let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
+        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
+        item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
+        resolveCollisions(item); updateVisualPosition(item); updateContainerHeight();
+    };
+    item.el.addEventListener("touchstart", onStart, {passive:false}); item.el.addEventListener("mousedown", onStart);
+}
+function setupResize(item){
+    const handle = item.el.querySelector(".resize-handle");
+    let startX, startY, startW, startH;
+    const onStart = (e) => {
+        e.stopPropagation(); e.preventDefault(); item.el.classList.add("resizing");
+        startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
+        startW = item.w; startH = item.h;
+        document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+        document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
+    };
+    const onMove = (e) => {
+        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
+        if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4; if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
+        const pxW = newCols * COL_WIDTH - 15; const pxH = newRows * ROW_HEIGHT - 15;
+        item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
+        if(newCols !== item.cols || newRows !== item.rows) {
+            item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
+            if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
+            if(item.subtype === "clock") updateClock();
+            resolveCollisions(item); updateVisualPosition(item); updateContainerHeight();
+        }
+    };
+    const onEnd = () => {
+        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
+        item.el.classList.remove("resizing"); updateVisualPosition(item);
+    };
+    handle.addEventListener("touchstart", onStart, {passive:false}); handle.addEventListener("mousedown", onStart);
+}
 window.addEventListener("resize", () => {
     SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
     COL_WIDTH = SCREEN_W / COL_COUNT;
@@ -549,7 +538,6 @@ window.addEventListener("resize", () => {
         updateVisualPosition(i);
     });
 });
-
 init();
 </script>
 </body>
