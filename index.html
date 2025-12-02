@@ -123,417 +123,425 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 
 <script>
 // --- CONFIG ---
-const COL_COUNT=4, ROW_HEIGHT=100;
-let SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
-let COL_WIDTH = SCREEN_W / COL_COUNT;
-let isEditMode = false;
-let items = []; 
-let runningApps = []; 
-let currentApp = null; 
-let isSwitcherMode = false;
-const STORAGE_KEY = 'os_layout_final_v3';
+const c=4,R=100;
+let S=document.getElementById("ag").clientWidth||window.innerWidth;
+let C=S/c;
+let E=false;
+let I=[]; 
+let A=[]; 
+let U=null; 
+let M=false;
+const K='os_layout_final_v3';
 
 // --- INITIAL LAYOUT ---
-const defaultApps = [
-    { title: "Files", icon: "🗃️", class: "files", path: "system:files" },
-    { title: "News", icon: "📰", class: "news", path: "system:news" },
-    { title: "Info", icon: "ℹ️", class: "info", path: "system:tutorial" },
-    { title: "Chat", icon: "💬", class: "chat", path: "system:chat" },
-    { title: "Mortis", icon: "☠️", class: "mortis", path: "system:mortis" },
-    { title: "AI Learn", icon: "🤖", class: "ai-learn", path: "system:ai" },
-    { title: "Themes", icon: "🎨", class: "themes", path: "system:themes" },
-    { title: "Test 3k", icon: "🚧", class: "test", path: "system:test" },
-    { title: "Grapple", icon: "🎮", class: "grapple", path: "system:game" },
-    { title: "Cycles", icon: "⏱️", class: "cycles", path: "system:clock" },
-    { title: "Settings", icon: "⚙️", class: "settings", path: "system:settings" },
-    { title: "Calc", icon: "🧮", class: "calc", path: "system:calc" }
+const D=[
+    {title:"Files",icon:"🗃️",class:"files",path:"system:files"},
+    {title:"News",icon:"📰",class:"news",path:"system:news"},
+    {title:"Info",icon:"ℹ️",class:"info",path:"system:tutorial"},
+    {title:"Chat",icon:"💬",class:"chat",path:"system:chat"},
+    {title:"Mortis",icon:"☠️",class:"mortis",path:"system:mortis"},
+    {title:"AI Learn",icon:"🤖",class:"ai-learn",path:"system:ai"},
+    {title:"Themes",icon:"🎨",class:"themes",path:"system:themes"},
+    {title:"Test 3k",icon:"🚧",class:"test",path:"system:test"},
+    {title:"Grapple",icon:"🎮",class:"grapple",path:"system:game"},
+    {title:"Cycles",icon:"⏱️",class:"cycles",path:"system:clock"},
+    {title:"Settings",icon:"⚙️",class:"settings",path:"system:settings"},
+    {title:"Calc",icon:"🧮",class:"calc",path:"system:calc"}
 ];
 
-function init() {
-    updateClock(); setInterval(updateClock, 1000);
-
-    const savedLayout = localStorage.getItem(STORAGE_KEY);
-    if (savedLayout) {
-        try {
-            const layoutData = JSON.parse(savedLayout);
-            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
-        } catch(e) { loadDefaultApps(); }
-    } else {
-        loadDefaultApps();
+function i(){
+    u();setInterval(u,1000);
+    const s=localStorage.getItem(K);
+    if(s){
+        try{
+            JSON.parse(s).forEach(e=>g(e.type,e.x,e.y,e.cols,e.rows,e));
+        }catch(e){d();}
+    }else{
+        d();
     }
-
-    // --- HOME GESTURES ---
-    const hi = document.getElementById("hi");
-    let startY = 0;
-    hi.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; e.stopPropagation(); }, {passive:false});
-    hi.addEventListener("touchend", (e) => {
-        if(e.changedTouches[0].clientY - startY < -30) handleHomeGesture();
-    }, {passive:false});
-
-    // Edit Mode
-    const grid = document.getElementById("ag");
-    let pressTimer;
-    grid.addEventListener("touchstart", e => {
-        if(e.target === grid || e.target.classList.contains('aiw')) {
-            pressTimer = setTimeout(() => toggleEdit(true), 800);
+    const e=document.getElementById("hi");
+    let t=0;
+    e.addEventListener("touchstart",e=>{t=e.touches[0].clientY;e.stopPropagation();},{passive:false});
+    e.addEventListener("touchend",e=>{if(e.changedTouches[0].clientY-t<-30)h();},{passive:false});
+    const r=document.getElementById("ag");
+    let o;
+    r.addEventListener("touchstart",e=>{
+        if(e.target===r||e.target.classList.contains('aiw')){
+            o=setTimeout(()=>p(true),800);
         }
     });
-    grid.addEventListener("touchend", () => clearTimeout(pressTimer));
+    r.addEventListener("touchend",()=>clearTimeout(o));
 }
 
-function loadDefaultApps() {
-    createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
-    createItem('widget', 2 * COL_WIDTH, 0, 2, 2, {subtype:'weather'});
-    let startRow = 2; 
-    defaultApps.forEach((app, index) => {
-        const col = index % 4;
-        const row = startRow + Math.floor(index / 4);
-        createItem('app', col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
+function d(){
+    g('widget',0,0,2,2,{subtype:'clock'});
+    g('widget',2*C,0,2,2,{subtype:'weather'});
+    let e=2; 
+    D.forEach((t,r)=>{
+        const o=r%4;
+        const s=e+Math.floor(r/4);
+        g('app',o*C,s*R,1,1,t);
     });
-    saveLayout();
+    s();
 }
 
-function saveLayout() {
-    const layout = items.map(i => ({
-        type: i.type, subtype: i.subtype, x: i.x, y: i.y, cols: i.cols, rows: i.rows,
-        title: i.title, icon: i.icon, path: i.path, class: i.class
+function s(){
+    const e=I.map(i=>({
+        type:i.type,subtype:i.subtype,x:i.x,y:i.y,cols:i.cols,rows:i.rows,
+        title:i.title,icon:i.icon,path:i.path,class:i.class
     }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+    localStorage.setItem(K,JSON.stringify(e));
 }
 
-function handleHomeGesture() {
-    if(currentApp) { minimizeApp(); openSwitcher(); }
-    else if(isSwitcherMode) { closeSwitcher(); }
-    else if(runningApps.length > 0 && !isEditMode) { openSwitcher(); }
+function h(){
+    if(U){m();o();}
+    else if(M){f();}
+    else if(A.length>0&&!E){o();}
 }
 
 // --- GRID ENGINE ---
-function createItem(type, x, y, wUnit, hUnit, data={}) {
-    const el = document.createElement("div");
-    el.classList.add("grid-item");
-    const wPx = wUnit * COL_WIDTH - (type === "app" ? 0 : 15);
-    const hPx = hUnit * ROW_HEIGHT - (type === "app" ? 10 : 15);
+function g(e,t,r,o,s,a={}){
+    const n=document.createElement("div");
+    n.classList.add("grid-item");
+    const l=o*C-(e==="app"?0:15);
+    const d=s*R-(e==="app"?10:15);
 
-    if (type === "app") {
-        el.classList.add("aiw");
-        el.innerHTML = `<div class="ai ${data.class||'files'}">${data.icon}</div><div class="al">${data.title}</div>`;
-        el.onclick = () => { if(!isEditMode) launchApp(data); };
-    } else {
-        el.classList.add("widget");
-        el.innerHTML = `<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}</div>`;
-        el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
+    if(e==="app"){
+        n.classList.add("aiw");
+        n.innerHTML=`<div class="ai ${a.class||'files'}">${a.icon}</div><div class="al">${a.title}</div>`;
+        n.onclick=()=>{if(!E)j(a);};
+    }else{
+        n.classList.add("widget");
+        n.innerHTML=`<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${a.subtype==='loading'?'<div class="loader"></div>':w(a.subtype,o)}</div>`;
+        n.querySelector(".del-btn").onclick=e=>{e.stopPropagation();z(n);};
     }
-    document.getElementById("ag").appendChild(el);
-    const itemObj = { 
-        el: el, type: type, subtype: data.subtype, 
-        x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
-        title: data.title, icon: data.icon, path: data.path, class: data.class
+    document.getElementById("ag").appendChild(n);
+    const p={ 
+        el:n,type:e,subtype:a.subtype, 
+        x:t,y:r,w:l,h:d,cols:o,rows:s,
+        title:a.title,icon:a.icon,path:a.path,class:a.class
     };
-    updateVisualPosition(itemObj);
-    setupDrag(itemObj);
-    if(type === "widget") setupResize(itemObj);
-    items.push(itemObj);
-    updateContainerHeight();
-    return itemObj;
+    v(p);
+    b(p);
+    if(e==="widget")rZ(p);
+    I.push(p);
+    cI(p);
+    return p;
 }
 
-function addWidget(type) {
-    closeAddPanel();
-    const spot = findNextEmptySpot(2, 2);
-    const widgetItem = createItem("widget", spot.x, spot.y, 2, 2, { subtype: "loading" });
-    resolveCollisions(widgetItem); updateVisualPosition(widgetItem); toggleEdit(true);
-    setTimeout(() => {
-        widgetItem.subtype = type;
-        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, 2);
-        if(type === 'clock') updateClock();
-        resolveCollisions(widgetItem); updateVisualPosition(widgetItem); saveLayout();
-    }, 1000);
+function a(e){
+    cP();
+    const t=fN(2,2);
+    const r=g("widget",t.x,t.y,2,2,{subtype:"loading"});
+    rE(r);v(r);p(true);
+    setTimeout(()=>{
+        r.subtype=e;
+        r.el.querySelector(".widget-content").innerHTML=w(e,2);
+        if(e==='clock')u();
+        rE(r);v(r);s();
+    },1000);
 }
 
-function getWidgetHTML(type, cols) {
-    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NEW YORK</div>`;
-    if(type === "weather") return `<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
-    if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
-    if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
-    return "Widget";
+function w(e,t){
+    if(e==="clock")return`<h1 style="margin:0;font-size:${t>=3?"48px":"34px"};font-weight:300" id="w-clock">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NEW YORK</div>`;
+    if(e==="weather")return`<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
+    if(e==="photo")return'<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
+    if(e==="calendar")return`<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
+    return"Widget";
 }
 
 // --- APP LOGIC ---
-function launchApp(appData) {
-    let existing = runningApps.find(a => a.path === appData.path);
-    if(!existing) {
-        existing = { ...appData, dom: createInternalAppDOM(appData) };
-        runningApps.push(existing);
+function j(e){
+    let t=A.find(t=>t.path===e.path);
+    if(!t){
+        t={...e,dom:k(e)};
+        A.push(t);
     }
-    restoreContentToWindow(existing);
+    y(t);
 
-    const awc = document.getElementById("awc");
-    awc.innerHTML = ''; 
-    awc.appendChild(existing.dom);
+    const r=document.getElementById("awc");
+    r.innerHTML=''; 
+    r.appendChild(t.dom);
     
-    requestAnimationFrame(() => {
+    requestAnimationFrame(()=>{
         document.getElementById("app-window").classList.add("ac");
         document.getElementById("h").classList.add("zo");
+        document.getElementById("hi").style.display='none'; // HIDE HI
     });
-    currentApp = existing;
-    if(isSwitcherMode) closeSwitcher();
+    U=t;
+    if(M)f();
 }
 
-function createInternalAppDOM(data) {
-    const w = document.createElement("div");
-    w.style.width = "100%"; w.style.height = "100%";
-    if(data.path === "system:settings") {
-        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
-    } else {
-        const i = document.createElement("iframe");
-        i.className = "aif"; i.src = data.path.includes("system") ? "about:blank" : data.path; 
-        w.appendChild(i);
+function k(e){
+    const t=document.createElement("div");
+    t.style.width="100%";t.style.height="100%";
+    if(e.path==="system:settings"){
+        t.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
+    }else{
+        const r=document.createElement("iframe");
+        r.className="aif";r.src=e.path.includes("system")?"about:blank":e.path; 
+        t.appendChild(r);
     }
-    return w;
+    return t;
 }
 
-function resetFactory() {
-    if(confirm("Reset layout to default?")) {
-        localStorage.removeItem(STORAGE_KEY);
+function r(){
+    if(confirm("Reset layout to default?")){
+        localStorage.removeItem(K);
         location.reload();
     }
 }
 
-function minimizeApp() {
-    if(!currentApp) return;
+function m(){
+    if(!U)return;
     document.getElementById("app-window").classList.remove("ac");
-    currentApp = null;
+    document.getElementById("h").classList.remove("zo");
+    document.getElementById("hi").style.display='flex'; // SHOW HI
+    U=null;
 }
 
-function closeApp(app) {
-    const idx = runningApps.indexOf(app);
-    if(idx > -1) { runningApps.splice(idx, 1); app.dom.remove(); if(app.cardEl) app.cardEl.remove(); }
-    if(runningApps.length === 0) closeSwitcher();
+function t(e){
+    const t=A.indexOf(e);
+    if(t>-1){A.splice(t,1);e.dom.remove();if(e.cardEl)e.cardEl.remove();}
+    if(A.length===0)f();
 }
 
 // --- SWITCHER ---
-function openSwitcher() {
-    isSwitcherMode = true;
-    const s = document.getElementById("switcher");
-    const sc = document.getElementById("scc");
-    const h = document.getElementById("h");
-    s.style.display = 'flex';
-    document.getElementById("rcb").style.display = 'flex';
-    h.classList.add("zo");
-    sc.innerHTML = '';
-    runningApps.forEach(app => {
-        const card = document.createElement("div");
-        card.className = "scd";
-        const header = document.createElement("div");
-        header.className = "ch";
-        header.innerHTML = `<span style="color:#fff;font-size:12px;font-weight:bold">${app.title}</span>`;
-        card.appendChild(header);
+function o(){
+    M=true;
+    const e=document.getElementById("switcher");
+    const t=document.getElementById("scc");
+    const r=document.getElementById("h");
+    e.style.display='flex';
+    document.getElementById("rcb").style.display='flex';
+    r.classList.add("zo");
+    document.getElementById("hi").style.display='none'; // HIDE HI
+    t.innerHTML='';
+    A.forEach(e=>{
+        const r=document.createElement("div");
+        r.className="scd";
+        const o=document.createElement("div");
+        o.className="ch";
+        o.innerHTML=`<span style="color:#fff;font-size:12px;font-weight:bold">${e.title}</span>`;
+        r.appendChild(o);
         
-        const contentHolder = document.createElement("div");
-        // FIXED: Dark background for cards so internal apps show up
-        contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
+        const s=document.createElement("div");
+        s.style.cssText="width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
         
-        // Move live DOM into card
-        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
-        contentHolder.appendChild(app.dom);
+        if(e.dom.parentNode)e.dom.parentNode.removeChild(e.dom);
+        s.appendChild(e.dom);
         
-        card.appendChild(contentHolder);
+        r.appendChild(s);
         
-        const touchLayer = document.createElement("div");
-        touchLayer.className = "ctl";
-        card.appendChild(touchLayer);
-        setupSwitcherGestures(touchLayer, card, app);
-        sc.appendChild(card);
-        app.cardEl = card; 
+        const a=document.createElement("div");
+        a.className="ctl";
+        r.appendChild(a);
+        x(a,r,e);
+        t.appendChild(r);
+        e.cardEl=r; 
     });
 }
 
-function restoreContentToWindow(app) {
-    if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
+function y(e){
+    if(e.dom.parentNode)e.dom.parentNode.removeChild(e.dom);
 }
 
-function closeSwitcher() {
-    isSwitcherMode = false;
-    document.getElementById("switcher").style.display = 'none';
-    document.getElementById("rcb").style.display = 'none';
+function f(){
+    M=false;
+    document.getElementById("switcher").style.display='none';
+    document.getElementById("rcb").style.display='none';
     document.getElementById("h").classList.remove("zo");
+    document.getElementById("hi").style.display='flex'; // SHOW HI
 }
 
-function setupSwitcherGestures(touchLayer, card, app) {
-    let startX = 0, startY = 0, isVertical = false, isHorizontal = false;
+function x(e,t,r){
+    let o=0,s=0,a=false,n=false;
     
-    touchLayer.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isVertical = false;
-        isHorizontal = false;
-    }, {passive:false});
+    e.addEventListener('touchstart',e=>{
+        o=e.touches[0].clientX;
+        s=e.touches[0].clientY;
+        a=false;
+        n=false;
+    },{passive:false});
 
-    touchLayer.addEventListener('touchmove', (e) => {
-        if(isHorizontal) return; // If scrolling left/right, ignore vertical
+    e.addEventListener('touchmove',e=>{
+        if(n)return; 
         
-        const cx = e.touches[0].clientX;
-        const cy = e.touches[0].clientY;
-        const dx = cx - startX;
-        const dy = cy - startY;
+        const c=e.touches[0].clientX;
+        const i=e.touches[0].clientY;
+        const l=c-o;
+        const d=i-s;
 
-        // Determine axis
-        if(!isVertical && !isHorizontal) {
-            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
-                isHorizontal = true;
-            } else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
-                isVertical = true;
+        if(!a&&!n){
+            if(Math.abs(l)>Math.abs(d)&&Math.abs(l)>5){
+                n=true;
+            }else if(Math.abs(d)>Math.abs(l)&&Math.abs(d)>5){
+                a=true;
             }
         }
 
-        if(isVertical) {
-            e.preventDefault(); // Stop scrolling, start moving card
-            if(dy < 0) {
-                 card.style.transform = `scale(0.9) translateY(${dy}px)`;
-                 card.style.opacity = `${1 - Math.abs(dy)/500}`;
+        if(a){
+            e.preventDefault(); 
+            if(d<0){
+                 t.style.transform=`scale(0.9) translateY(${d}px)`;
+                 t.style.opacity=`${1-Math.abs(d)/500}`;
             }
         }
-    }, {passive:false});
+    },{passive:false});
 
-    touchLayer.addEventListener('touchend', (e) => {
-        if(isVertical) {
-            const dy = e.changedTouches[0].clientY - startY;
-            if(dy < -100) {
-                card.style.transition = "transform 0.3s ease, opacity 0.3s";
-                card.style.transform = "translateY(-100vh)";
-                card.style.opacity = "0";
-                setTimeout(() => closeApp(app), 300);
-            } else {
-                card.style.transition = "transform 0.2s ease, opacity 0.2s";
-                card.style.transform = "scale(1)";
-                card.style.opacity = "1";
+    e.addEventListener('touchend',e=>{
+        if(a){
+            const d=e.changedTouches[0].clientY-s;
+            if(d<-100){
+                t.style.transition="transform 0.3s ease, opacity 0.3s";
+                t.style.transform="translateY(-100vh)";
+                t.style.opacity="0";
+                setTimeout(()=>t(r),300);
+            }else{
+                t.style.transition="transform 0.2s ease, opacity 0.2s";
+                t.style.transform="scale(1)";
+                t.style.opacity="1";
             }
-        } else if(!isHorizontal) {
-             // If we didn't scroll much in either direction, treat as tap
-             const dy = e.changedTouches[0].clientY - startY;
-             const dx = e.changedTouches[0].clientX - startX;
-             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-                 launchApp(app);
+        }else if(!n){
+             const d=e.changedTouches[0].clientY-s;
+             const c=e.changedTouches[0].clientX-o;
+             if(Math.abs(c)<10&&Math.abs(d)<10){
+                 j(r);
              }
         }
     });
 }
 
 // --- UTILS ---
-function updateVisualPosition(item) {
-    const offsetX = (item.cols * COL_WIDTH - item.w) / 2;
-    const offsetY = (item.rows * ROW_HEIGHT - item.h) / 2;
-    item.el.style.left = (item.x + offsetX) + "px";
-    item.el.style.top = (item.y + offsetY) + "px";
+function v(e){
+    const t=(e.cols*C-e.w)/2;
+    const r=(e.rows*R-e.h)/2;
+    e.el.style.left=(e.x+t)+"px";
+    e.el.style.top=(e.y+r)+"px";
 }
-function resolveCollisions(movedItem) {
-    items.filter(i => i !== movedItem).forEach(other => {
-        if(rectIntersect(movedItem, other)) {
-            const others = items.filter(x => x !== other);
-            const nextSpot = findNextEmptySpot(other.cols, other.rows, others);
-            other.x = nextSpot.x; other.y = nextSpot.y;
-            updateVisualPosition(other);
+
+function rE(e){
+    I.filter(t=>t!==e).forEach(t=>{
+        if(rI(e,t)){
+            const r=I.filter(e=>e!==t);
+            const o=fN(t.cols,t.rows,r);
+            t.x=o.x;t.y=o.y;
+            v(t);
         }
     });
 }
-function rectIntersect(i1, i2) {
-    const margin = 10;
-    return (i1.x + margin < i2.x + i2.cols * COL_WIDTH) && (i1.x + i1.cols * COL_WIDTH - margin > i2.x) &&
-           (i1.y + margin < i2.y + i2.rows * ROW_HEIGHT) && (i1.y + i1.rows * ROW_HEIGHT - margin > i2.y);
+
+function rI(e,t){
+    const r=10;
+    return(e.x+r<t.x+t.cols*C)&&(e.x+e.cols*C-r>t.x)&&
+           (e.y+r<t.y+t.rows*R)&&(e.y+e.rows*R-r>t.y);
 }
-function findNextEmptySpot(cols, rows, currentItems = items) {
-    let rowIdx = 0;
-    while(true) {
-        for(let colIdx = 0; colIdx < COL_COUNT; colIdx++) {
-            if(colIdx + cols > COL_COUNT) continue; 
-            const testX = colIdx * COL_WIDTH; const testY = rowIdx * ROW_HEIGHT;
-            const collision = currentItems.some(i => testX < i.x + i.cols * COL_WIDTH && testX + cols * COL_WIDTH > i.x && testY < i.y + i.rows * ROW_HEIGHT && testY + rows * ROW_HEIGHT > i.y);
-            if(!collision) return {x: testX, y: testY};
+
+function fN(e,t,r=I){
+    let o=0;
+    while(true){
+        for(let s=0;s<c;s++){
+            if(s+e>c)continue; 
+            const a=s*C;const n=o*R;
+            const l=r.some(t=>a<t.x+t.cols*C&&a+e*C>t.x&&n<t.y+t.rows*R&&n+t*R>t.y);
+            if(!l)return{x:a,y:n};
         }
-        rowIdx++; if(rowIdx > 500) return {x:0, y:0};
+        o++;if(o>500)return{x:0,y:0};
     }
 }
-function updateContainerHeight() {
-    let max = 0; items.forEach(i => { const bottom = i.y + i.h; if(bottom > max) max = bottom; });
-    document.getElementById("ag").style.minHeight = (max + 300) + "px";
+
+function cI(e){
+    let t=0;I.forEach(e=>{const r=e.y+e.h;if(r>t)t=r;});
+    document.getElementById("ag").style.minHeight=(t+300)+"px";
 }
-function toggleEdit(val) { isEditMode = val; document.body.classList.toggle("edit-mode", val); closeAddPanel(); }
-function openAddPanel(){ document.getElementById("add-panel").classList.add("open"); }
-function closeAddPanel(){ document.getElementById("add-panel").classList.remove("open"); }
-function deleteItem(el) { 
-    const idx = items.findIndex(i => i.el === el); 
-    if(idx > -1) { items.splice(idx, 1); el.remove(); updateContainerHeight(); saveLayout(); } 
+
+function p(t){E=t;document.body.classList.toggle("edit-mode",t);cP();}
+
+function oP(){document.getElementById("add-panel").classList.add("open");}
+
+function cP(){document.getElementById("add-panel").classList.remove("open");}
+
+function z(e){ 
+    const t=I.findIndex(t=>t.el===e); 
+    if(t>-1){I.splice(t,1);e.remove();cI();s();} 
 }
-function updateClock() { const d = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById("c").innerText = d; document.querySelectorAll("#w-clock").forEach(e => e.innerText = d); }
+
+function u(){ 
+    const e=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); 
+    document.getElementById("c").innerText=e; 
+    document.querySelectorAll("#w-clock").forEach(t=>t.innerText=e); 
+}
 
 // --- DRAG/RESIZE HANDLERS ---
-function setupDrag(item){
-    let startX, startY, startLeft, startTop;
-    const onStart = (e) => {
-        if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
-            e.preventDefault(); item.el.classList.add("dragging");
-            startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
-            startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
-            document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
-            document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
+function b(e){
+    let t,r,o,s;
+    const a=(a)=>{
+        if(E&&!a.target.className.includes("resize-handle")&&!a.target.className.includes("del-btn")){
+            a.preventDefault();e.el.classList.add("dragging");
+            t=a.touches?a.touches[0].clientX:a.clientX;r=a.touches?a.touches[0].clientY:a.clientY;
+            o=parseFloat(e.el.style.left);s=parseFloat(e.el.style.top);
+            document.addEventListener("touchmove",n,{passive:false});document.addEventListener("touchend",l);
+            document.addEventListener("mousemove",n);document.addEventListener("mouseup",l);
         }
     };
-    const onMove = (e) => {
-        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
+    const n=(t)=>{
+        t.preventDefault();const r=t.touches?t.touches[0].clientX:t.clientX;const a=t.touches?t.touches[0].clientY:t.clientY;
+        e.el.style.left=o+(r-t)+"px";e.el.style.top=s+(a-r)+"px";
     };
-    const onEnd = () => {
-        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
-        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
-        item.el.classList.remove("dragging");
-        const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
-        let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
-        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
-        item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
-        resolveCollisions(item); updateVisualPosition(item); updateContainerHeight(); saveLayout();
+    const l=()=>{
+        document.removeEventListener("touchmove",n);document.removeEventListener("touchend",l);
+        document.removeEventListener("mousemove",n);document.removeEventListener("mouseup",l);
+        e.el.classList.remove("dragging");
+        const t=parseFloat(e.el.style.left);const r=parseFloat(e.el.style.top);
+        let o=Math.round(t/C);let s=Math.round(r/R);
+        if(o<0)o=0;if(o>c-e.cols)o=c-e.cols;if(s<0)s=0;
+        e.x=o*C;e.y=s*R;
+        rE(e);v(e);cI();s();
     };
-    item.el.addEventListener("touchstart", onStart, {passive:false}); item.el.addEventListener("mousedown", onStart);
+    e.el.addEventListener("touchstart",a,{passive:false});e.el.addEventListener("mousedown",a);
 }
-function setupResize(item){
-    const handle = item.el.querySelector(".resize-handle");
-    let startX, startY, startW, startH;
-    const onStart = (e) => {
-        e.stopPropagation(); e.preventDefault(); item.el.classList.add("resizing");
-        startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
-        startW = item.w; startH = item.h;
-        document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
-        document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
+
+function rZ(e){
+    const t=e.el.querySelector(".resize-handle");
+    let r,o,s,a;
+    const n=(n)=>{
+        n.stopPropagation();n.preventDefault();e.el.classList.add("resizing");
+        r=n.touches?n.touches[0].clientX:n.clientX;o=n.touches?n.touches[0].clientY:n.clientY;
+        s=e.w;a=e.h;
+        document.addEventListener("touchmove",l,{passive:false});document.addEventListener("touchend",d);
+        document.addEventListener("mousemove",l);document.addEventListener("mouseup",d);
     };
-    const onMove = (e) => {
-        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
-        if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4; if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
-        const pxW = newCols * COL_WIDTH - 15; const pxH = newRows * ROW_HEIGHT - 15;
-        item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
-        if(newCols !== item.cols || newRows !== item.rows) {
-            item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
-            if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
-            if(item.subtype === "clock") updateClock();
-            resolveCollisions(item); updateVisualPosition(item); updateContainerHeight();
+    const l=(t)=>{
+        t.preventDefault();const r=t.touches?t.touches[0].clientX:t.clientX;const o=t.touches?t.touches[0].clientY:t.clientY;
+        let n=Math.round((s+(r-t))/C);let l=Math.round((a+(o-r))/R);
+        if(n<1)n=1;if(n>4)n=4;if(l<1)l=1;if(l>6)l=6;
+        const p=n*C-15;const h=l*R-15;
+        e.el.style.width=p+"px";e.el.style.height=h+"px";
+        if(n!==e.cols||l!==e.rows){
+            e.cols=n;e.rows=l;e.w=p;e.h=h;
+            if(e.subtype!=='loading')e.el.querySelector(".widget-content").innerHTML=w(e.subtype,e.cols);
+            if(e.subtype==="clock")u();
+            rE(e);v(e);cI();
         }
     };
-    const onEnd = () => {
-        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
-        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
-        item.el.classList.remove("resizing"); updateVisualPosition(item); saveLayout();
+    const d=()=>{
+        document.removeEventListener("touchmove",l);document.removeEventListener("touchend",d);
+        document.removeEventListener("mousemove",l);document.removeEventListener("mouseup",d);
+        e.el.classList.remove("resizing");v(e);s();
     };
-    handle.addEventListener("touchstart", onStart, {passive:false}); handle.addEventListener("mousedown", onStart);
+    t.addEventListener("touchstart",n,{passive:false});t.addEventListener("mousedown",n);
 }
-window.addEventListener("resize", () => {
-    SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
-    COL_WIDTH = SCREEN_W / COL_COUNT;
-    items.forEach(i => {
-        const col = Math.round(i.x / (SCREEN_W/COL_COUNT)); 
-        i.x = col * COL_WIDTH; i.w = i.cols * COL_WIDTH - (i.type==="app"?0:15);
-        updateVisualPosition(i);
+
+window.addEventListener("resize",()=>{
+    S=document.getElementById("ag").clientWidth||window.innerWidth;
+    C=S/c;
+    I.forEach(e=>{
+        const t=Math.round(e.x/(S/c)); 
+        e.x=t*C;e.w=e.cols*C-(e.type==="app"?0:15);
+        v(e);
     });
 });
-init();
+i();
 </script>
 </body>
 </html>
