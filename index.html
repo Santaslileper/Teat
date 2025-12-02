@@ -6,8 +6,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
 <title>Santaslileper OS</title>
 
-<!-- PWA Meta Tags -->
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -67,6 +65,41 @@ html{height:-webkit-fill-available}
 select,button,input{font-family:inherit}
 .pwa-prompt{position:fixed;bottom:20px;left:20px;right:20px;background:rgba(0,122,255,.95);color:#fff;padding:15px;border-radius:12px;font-size:14px;z-index:10000;display:none;backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
 .pwa-prompt button{background:#fff;color:#007aff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;margin-top:10px;cursor:pointer}
+
+/* --- WIDGET CSS START --- */
+:root{--accent:#3b82f6;--panel:#1e293b;--glass:rgba(255,255,255,.05);--grid:12px}
+#widgetContainer{position:absolute;top:0;left:0;right:0;bottom:0;padding:var(--grid);transition:background .3s}
+body.edit-mode #widgetContainer{background-image:radial-gradient(rgba(59,130,246,.3) 1px,transparent 1px);background-size:24px 24px;bottom:80px}
+.widget{position:absolute;min-width:120px;min-height:100px;border-radius:16px;background:rgba(30,41,59,.7);backdrop-filter:blur(10px);box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);border:1px solid rgba(255,255,255,.05);overflow:hidden;touch-action:none;transition:transform .2s,box-shadow .2s,width .2s,height .2s,left .2s,top .2s;display:flex;flex-direction:column;z-index:10}
+.widget-inner{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.title-bar{display:none}
+.resize-handle{display:none}
+.content{padding:16px;height:100%;overflow-y:auto;flex-grow:1} /* Added overflow-y:auto and flex-grow */
+body.edit-mode .widget{border:1px solid rgba(59,130,246,.5);background:rgba(30,41,59,.9);animation:wiggle .4s infinite alternate ease-in-out;cursor:grab;z-index:20}
+body.edit-mode .widget.dragging{animation:none;transform:scale(1.05);box-shadow:0 20px 25px -5px rgba(0,0,0,.5);z-index:100;transition:none;opacity:.9}
+body.edit-mode .title-bar{display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 8px;background:rgba(255,255,255,.05);cursor:grab;font-size:12px;font-weight:600;color:#94a3b8}
+body.edit-mode .delete-btn{width:20px;height:20px;background:#ef4444;border-radius:50%;display:grid;place-items:center;color:white;font-weight:bold;font-size:10px;cursor:pointer}
+body.edit-mode .resize-handle{display:block;position:absolute;width:20px;height:20px;z-index:30}
+.resize-handle.se{bottom:0;right:0;cursor:se-resize}
+.resize-handle.se::after{content:'';position:absolute;bottom:4px;right:4px;width:8px;height:8px;border-right:2px solid #3b82f6;border-bottom:2px solid #3b82f6;border-radius:2px}
+@keyframes wiggle{0%{transform:rotate(-1deg)}100%{transform:rotate(1deg)}}
+#editToolbar{position:fixed;bottom:-100px;left:0;right:0;height:70px;background:rgba(15,23,42,.9);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;gap:20px;transition:bottom .3s cubic-bezier(.4,0,.2,1);z-index:200}
+body.edit-mode #editToolbar{bottom:0}
+.btn{padding:10px 24px;border-radius:30px;border:none;font-weight:600;font-size:14px;cursor:pointer;transition:transform .1s}
+.btn:active{transform:scale(.95)}
+.btn-primary{background:#3b82f6;color:white}
+.btn-secondary{background:rgba(255,255,255,.1);color:#e2e8f0}
+#addPanel{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);width:300px;background:var(--panel);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;opacity:0;pointer-events:none;transition:.2s;z-index:300;box-shadow:0 25px 50px -12px rgba(0,0,0,.5)}
+#addPanel.open{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+.widget-option{padding:12px;margin:8px 0;background:var(--glass);border-radius:8px;cursor:pointer}
+.widget-option:hover{background:rgba(255,255,255,.1)}
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:.2s;z-index:250}
+#overlay.open{opacity:1;pointer-events:auto}
+.clock-display{text-align:center;display:flex;flex-direction:column;justify-content:center;height:100%}
+.clock-time{font-weight:300;line-height:1;font-size:clamp(1.5vh, 6vh, 40px)} /* Dynamic Font Size */
+.clock-date{font-size:.9em;color:#94a3b8;margin-top:4px}
+.weather-display{display:flex;align-items:center;justify-content:center;height:100%;font-size:1.2em;gap:8px}
+/* --- WIDGET CSS END --- */
 </style>
 
 </head>
@@ -80,7 +113,30 @@ select,button,input{font-family:inherit}
 <div class="s">
 <div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
 <div class="h" id="h"><div class="ag" id="ag"></div></div>
-<div class="ad" id="ad"><div id="awc"></div></div>
+<div class="ad" id="ad">
+  <div id="widgetContainer">
+    <div class="widget" style="left:24px;top:24px;width:280px;height:140px;">
+      <div class="title-bar"><span>Clock</span><div class="delete-btn">×</div></div>
+      <div class="resize-handle se"></div>
+      <div class="widget-inner">
+        <div class="clock-display"><div class="clock-time" data-clock>00:00</div><div class="clock-date" data-date>Mon, Jan 1</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="editToolbar">
+    <button class="btn btn-secondary" id="btnAddWidget">+ Add Widget</button>
+    <button class="btn btn-primary" id="btnDone">Done</button>
+  </div>
+
+  <div id="overlay"></div>
+  <div id="addPanel">
+    <h3 style="margin-top:0">Add Widget</h3>
+    <div class="widget-option" data-type="text">📝 Note Widget</div>
+    <div class="widget-option" data-type="clock">⏰ Clock Widget</div>
+    <div class="widget-option" data-type="weather">☁️ Weather Widget</div>
+  </div>
+
+<div id="awc"></div></div>
 <div class="as" id="as"><div class="sc" id="scc"></div></div>
 <div id="rcb" class="rcx">✕</div>
 <div id="er" class="em" style="display:none">No Recent Apps</div>
@@ -116,7 +172,26 @@ ri2w=a=>{if(!a.ce)return;const cd=a.ce.children[2];if(cd){const fc=a.we.firstChi
 hss=_=>{if(!S.sw)return;const cl=E.as.scrollLeft+(E.as.clientWidth/2);S.r.forEach(a=>{if(!a.ce)return;const c=a.ce,cn=c.offsetLeft+(c.offsetWidth/2),d=Math.abs(cn-cl);c.style.opacity=d<50?1:.5})},
 uc=_=>{const n=new Date();g('c').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})},
 initFullscreen=_=>{const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);const isChrome=/CriOS/.test(navigator.userAgent);const isSafari=isIOS&&/Safari/.test(navigator.userAgent)&&!/CriOS/.test(navigator.userAgent);const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone&&!gv(K.pw,'')){const prompt=g('pwaPrompt'),text=g('promptText');if(isChrome&&isIOS){text.innerHTML='<strong>📱 Best Experience</strong><br>Open in Safari → Share → Add to Home Screen for fullscreen mode!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}else if(isSafari){text.innerHTML='<strong>📱 Add to Home Screen</strong><br>Tap Share button → Add to Home Screen for the best experience!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}}if(isIOS&&isChrome){window.scrollTo(0,1);setTimeout(()=>window.scrollTo(0,1),100)}let hasInteracted=false;const tryFullscreen=()=>{if(hasInteracted)return;hasInteracted=true;const elem=D.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{})}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen().catch(()=>{})}};D.addEventListener('touchstart',tryFullscreen,{once:true});D.addEventListener('click',tryFullscreen,{once:true})},
-init=async()=>{uc();setInterval(uc,1e3);at();af();ab();await loadApps();initFullscreen();let sy=0;E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});E.rcb.addEventListener('click',cs);E.as.addEventListener('scroll',hss)};
+init=async()=>{uc();setInterval(uc,1e3);at();af();ab();await loadApps();initFullscreen();let sy=0;E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});E.rcb.addEventListener('click',cs);E.as.addEventListener('scroll',hss})};
+
+// --- WIDGET JS START (Minified) ---
+const WC=g('widgetContainer'),TB=g('editToolbar'),O=g('overlay'),AP=g('addPanel'),GRID=12;let isEditing=false,LP=null;const N=v=>Math.round(v/GRID)*GRID,R=e=>({l:parseFloat(e.style.left),t:parseFloat(e.style.top),r:parseFloat(e.style.left)+parseFloat(e.style.width),b:parseFloat(e.style.top)+parseFloat(e.style.height)}),
+CC=t=>{const r1=R(t),W=qa('.widget');for(let w of W)if(w!==t){const r2=R(w);if(!(r1.r<=r2.l||r1.l>=r2.r||r1.b<=r2.t||r1.t>=r2.b))return true}return false},
+GB=()=>{const r=WC.getBoundingClientRect();return{w:r.width,h:r.height}},
+C=w=>{const b=GB(),l=parseFloat(w.style.left),t=parseFloat(w.style.top),wd=parseFloat(w.style.width),h=parseFloat(w.style.height);w.style.left=N(l<0?0:l+wd>b.w?b.w-wd:l)+'px';w.style.top=N(t<0?0:t+h>b.h?b.h-h:t)+'px'},
+SF=w=>{const b=GB(),wd=parseFloat(w.style.width),h=parseFloat(w.style.height);let x=N(b.w/2-wd/2),y=N(b.h/2-h/2);if(x<0)x=0;if(y<0)y=0;let sy=y;for(let i=0;i<20;i++){w.style.left=x+'px';w.style.top=sy+'px';if(sy<0)break;if(!CC(w))return{left:x,top:sy};sy-=GRID}return{left:x,top:y}},
+IW=w=>{let sx,sy,sl,st,sw,sh,iDR=false,iDS=false,oL,oT;w.querySelector('.delete-btn').addEventListener('click',e=>{e.stopPropagation();w.remove()});w.querySelector('.resize-handle').addEventListener('pointerdown',e=>{if(!isEditing)return;e.stopPropagation();iDS=true;w.classList.add('resizing');sx=e.clientX;sy=e.clientY;sw=parseFloat(w.style.width);sh=parseFloat(w.style.height);oL=parseFloat(w.style.left);oT=parseFloat(w.style.top);e.currentTarget.setPointerCapture(e.pointerId)});w.addEventListener('pointerdown',e=>{if(e.target.closest('.delete-btn')||e.target.closest('.resize-handle')||e.target.closest('#addPanel')||e.target.closest('#editToolbar'))return;sx=e.clientX;sy=e.clientY;sl=parseFloat(w.style.left);st=parseFloat(w.style.top);oL=sl;oT=st;if(!isEditing){LP=setTimeout(()=>SET(true),600)}else{iDR=true;w.classList.add('dragging');w.setPointerCapture(e.pointerId)}});w.addEventListener('pointermove',e=>{if(LP&&(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10)){clearTimeout(LP);LP=null}if(iDS){const dx=e.clientX-sx,dy=e.clientY-sy;w.style.width=N(Math.max(120,sw+dx))+'px';w.style.height=N(Math.max(100,sh+dy))+'px'}else if(iDR){const dx=e.clientX-sx,dy=e.clientY-sy;w.style.left=(sl+dx)+'px';w.style.top=(st+dy)+'px'}});w.addEventListener('pointerup',e=>{if(LP){clearTimeout(LP);LP=null}if(!isEditing&&e.currentTarget===w&&!iDR&&!iDS){console.log('Widget Tapped:',w.querySelector('.title-bar')?.textContent||'Unknown');return}if(iDS){iDS=false;w.classList.remove('resizing');C(w);if(CC(w)){w.style.width=sw+'px';w.style.height=sh+'px';w.style.left=oL+'px';w.style.top=oT+'px'}}if(iDR){iDR=false;w.classList.remove('dragging');w.style.left=N(parseFloat(w.style.left))+'px';w.style.top=N(parseFloat(w.style.top))+'px';C(w);if(CC(w)){w.style.transition='all .3s ease-out';w.style.left=oL+'px';w.style.top=oT+'px';setTimeout(()=>{w.style.transition=''},300)}}})},
+SET=a=>{isEditing=a;if(a){D.body.classList.add('edit-mode')}else{D.body.classList.remove('edit-mode');CAP()}},
+WC.addEventListener('pointerdown',e=>{if(e.target===WC&&!isEditing){LP=setTimeout(()=>SET(true),600)}});WC.addEventListener('pointerup',()=>{if(LP)clearTimeout(LP)});
+g('btnDone').addEventListener('click',()=>SET(false));g('btnAddWidget').addEventListener('click',()=>{AP.classList.add('open');O.classList.add('open')});
+const CAP=()=>{AP.classList.remove('open');O.classList.remove('open')};O.addEventListener('click',CAP);
+const WT={text:()=>`<div class="content" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white"><h4>📝 Note</h4><p>This is a scrollable note widget. You can type a very long message and scroll to read all of it!</p><p>Scrolling is now enabled for all text widgets, so content won't get cramped.</p></div>`,clock:()=>`<div class="clock-display"><div class="clock-time" data-clock>--:--</div><div class="clock-date" data-date>--</div></div>`,weather:()=>`<div class="weather-display" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"><span>🌧️</span><span>12°C</span></div>`};
+qa('.widget-option').forEach(opt=>{opt.addEventListener('click',e=>{CW(e.currentTarget.dataset.type);CAP()})});
+const CW=t=>{const w=ce('div');w.className='widget';w.style.width='280px';w.style.height='140px';WC.appendChild(w);const p=SF(w);w.style.left=p.left+'px';w.style.top=p.top+'px';w.innerHTML=`<div class="title-bar"><span>${t.toUpperCase()}</span><div class="delete-btn">×</div></div><div class="resize-handle se"></div><div class="widget-inner">${WT[t]()}</div>`;IW(w);UAC()};
+const UAC=()=>{const n=new Date(),t=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),d=n.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});qa('[data-clock]').forEach(e=>e.textContent=t);qa('[data-date]').forEach(e=>e.textContent=d)};
+setInterval(UAC,1e3);qa('.widget').forEach(IW);UAC();
+// --- WIDGET JS END ---
+
 init();
 </script>
 </body>
