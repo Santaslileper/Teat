@@ -275,22 +275,51 @@ function j(e){
 function k(e){
     const t=document.createElement("div");
     t.style.width="100%";t.style.height="100%";
+    let content = '';
 
-    if(e.path==="system:settings"){
-        t.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
-    } 
-    // MODIFIED: Inject content for system apps
-    else if (e.path.startsWith("system:")) {
-        t.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">${e.icon}</div><h2>${e.title}</h2><p style="opacity:0.7;">System app content loaded successfully.</p></div>`;
+    switch (e.path) {
+        case "system:settings":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
+            break;
+        case "system:files":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🗃️</div><h2>Files</h2><p style="opacity:0.7;">Your documents and media are stored here.</p></div>`;
+            break;
+        case "system:tutorial":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">ℹ️</div><h2>Info</h2><p style="opacity:0.7;">A step-by-step OS guide.</p></div>`;
+            break;
+        case "system:chat":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">💬</div><h2>Chat</h2><p style="opacity:0.7;">Messaging interface initialized.</p></div>`;
+            break;
+        case "system:mortis":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">☠️</div><h2>Mortis</h2><p style="opacity:0.7;">Mortis Protocol is active. Welcome.</p></div>`;
+            break;
+        case "system:ai":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🤖</div><h2>AI Learn</h2><p style="opacity:0.7;">Processing new data models...</p></div>`;
+            break;
+        case "system:themes":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎨</div><h2>Themes</h2><p style="opacity:0.7;">Select a new visual style for the OS.</p></div>`;
+            break;
+        case "system:test":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🚧</div><h2>Test 3k</h2><p style="opacity:0.7;">Diagnostic systems running.</p></div>`;
+            break;
+        case "system:game":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎮</div><h2>Grapple</h2><p style="opacity:0.7;">Ready to start a new game.</p></div>`;
+            break;
+        case "system:clock":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⏱️</div><h2>Cycles</h2><p style="opacity:0.7;">Alarm and Timer functions active.</p></div>`;
+            break;
+        case "system:calc":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🧮</div><h2>Calc</h2><p style="opacity:0.7;">Calculator app ready.</p></div>`;
+            break;
+        default:
+            const r=document.createElement("iframe");
+            r.className="aif";
+            r.src=e.path; 
+            t.appendChild(r);
+            return t;
     }
-    // END MODIFICATION
-    else {
-        const r=document.createElement("iframe");
-        r.className="aif";
-        // For external/live URLs (like the News app)
-        r.src=e.path; 
-        t.appendChild(r);
-    }
+    
+    t.innerHTML = content;
     return t;
 }
 
