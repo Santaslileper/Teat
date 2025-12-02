@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -22,30 +22,54 @@ html{height:-webkit-fill-available}
 @media(min-width:768px){.p{height:812px;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e,0 20px 60px rgba(0,0,0,.8)}.n{position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:30px;background:#000;border-radius:0 0 20px 20px;z-index:100}}
 .s{position:relative;width:100%;height:100%;overflow:hidden;z-index:2}
 .sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
+/* GRID CONTAINER */
 .h{padding:60px 20px 80px 20px;height:100%;overflow-y:auto;transition:transform .4s cubic-bezier(.32,0,.67,0),filter .4s linear;will-change:transform,filter}
 .h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
-.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-.aiw{display:flex;flex-direction:column;align-items:center;transition:transform .2s ease;touch-action:none}
+.ag{position:relative;width:100%;min-height:100vh;padding-bottom:200px} /* GRID CONTAINER FOR ABSOLUTE POSITIONING */
+
+/* GRID ITEMS (Icons & Widgets) */
+.grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
+.grid-item.resizing{transition:none;z-index:100;opacity:.9;background:rgba(44,44,46,.9)!important;border:1px solid #007aff!important;border-radius:20px}
+.edit-mode .grid-item:not(.resizing):not(.dragging){animation:jiggle .3s infinite linear;cursor:grab}
+.edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
+@keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
+
+/* ICONS */
+.aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
+.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8)}
 .ai.i{background:linear-gradient(135deg,#3498db,#2980b9)}
 .ai.st{background:linear-gradient(135deg,#95a5a6,#7f8c8d)}
 .ai:active{filter:brightness(.8);transform:scale(.95)}
-.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8)}
+
+/* WIDGETS */
+.widget{background:0 0;backdrop-filter:none;border:none;border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;transition:background .3s,border .3s,backdrop-filter .3s}
+.edit-mode .widget{background:rgba(30,41,59,.6);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 15px rgba(0,0,0,.3)}
+.widget-content{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:10px;text-align:center;width:100%;height:100%;overflow:hidden;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.del-btn{position:absolute;top:-8px;left:-8px;width:24px;height:24px;background:#ff3b30;border-radius:50%;display:none;z-index:20;color:#fff;font-weight:700;font-size:16px;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.3)}
+.resize-handle{position:absolute;bottom:0;right:0;width:40px;height:40px;z-index:30;display:none;touch-action:none}
+.resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px}
+.edit-mode .del-btn,.edit-mode .resize-handle{display:block}
+.loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
+@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
+.torch-on {background:#ffc107!important;} /* Style for torch button active state */
+
+/* --- APP WINDOW --- */
 .ad{position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;pointer-events:none}
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column}
 .aw.ac{transform:translate3d(0,0,0)}
 .awc{width:100%;height:100%;overflow:auto;touch-action:pan-y pan-x;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative}
 .aif{width:100%;min-height:calc(100vh - 80px);border:none;display:block}
+
+/* --- SWITCHER --- */
 .as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
 .sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
 .scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#222;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;transform-origin:center;transition:transform .2s;overflow:hidden}
-
-/* CSS for Scaled App Content */
 .card-content-holder {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    padding-top: 40px; /* Space for the header */
+    padding-top: 40px; 
     background: #000;
     overflow: hidden;
 }
@@ -61,11 +85,25 @@ html{height:-webkit-fill-available}
 .ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:15}
 .rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;z-index:200;backdrop-filter:blur(5px);display:none}
 .em{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;pointer-events:none}
-.tc{width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;text-align:center;overflow-y:auto}
-.ts{margin-bottom:15px;font-size:18px;color:#ccc}
+
+/* HOME INDICATOR */
 .hi{position:absolute;bottom:0;left:0;width:100%;height:40px;display:flex;justify-content:center;align-items:center;z-index:999;touch-action:none;pointer-events:auto}
 .hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px}
 .aw .hi{z-index:1000;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,rgba(0,0,0,.6) 60%,transparent 100%)}
+
+/* EDIT UI (Hidden when not in edit mode) */
+#edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
+.edit-mode #edit-ui{opacity:1;pointer-events:auto}
+button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border:none;border-radius:20px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3)}
+
+/* ADD WIDGET MODAL */
+#add-panel{position:fixed;bottom:-400px;left:0;width:100%;height:350px;background:#1c1c1e;border-radius:20px 20px 0 0;z-index:300;transition:bottom .3s;padding:20px;display:flex;flex-direction:column;gap:10px}
+#add-panel.open{bottom:0}
+.add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
+
+/* Settings Styles (Unchanged) */
+.tc{width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;text-align:center;overflow-y:auto}
+.ts{margin-bottom:15px;font-size:18px;color:#ccc}
 .sg{width:100%;max-width:320px;margin-bottom:25px}
 .sh{font-size:13px;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:left;padding:0 15px}
 .so{background:#1c1c1e;border-radius:10px;overflow:hidden}
@@ -76,13 +114,10 @@ html{height:-webkit-fill-available}
 .sr select,.sr input{padding:6px 10px;font-size:14px;border-radius:6px;background:#2c2c2e;color:#fff;border:1px solid #3a3a3c}
 .sr input[type="file"]{display:none}
 .fb{padding:8px 15px;font-size:14px;border-radius:6px;background:#007aff;color:#fff;border:none;cursor:pointer}
-.fb:active{background:#0051d5}
 .db{background:#ff3b30}
-.db:active{background:#d32f2f}
 .bgp{width:100px;height:60px;border-radius:6px;background-size:cover;background-position:center;border:2px solid #3a3a3c;cursor:pointer}
 select,button,input{font-family:inherit}
-.pwa-prompt{position:fixed;bottom:20px;left:20px;right:20px;background:rgba(0,122,255,.95);color:#fff;padding:15px;border-radius:12px;font-size:14px;z-index:10000;display:none;backdrop-filter:blur(10px);box-shadow:0 4px 20px rgba(0,0,0,.3)}
-.pwa-prompt button{background:#fff;color:#007aff;border:none;padding:8px 16px;border-radius:8px;font-weight:600;margin-top:10px;cursor:pointer}
+.pwa-prompt{position:fixed;bottom:20px;left:20px;right:20px;background:rgba(0,122,255,.95);color:#fff;padding:15px;border-radius:12px;font-size:14px;z-index:10000;display:none}
 </style>
 
 </head>
@@ -91,55 +126,251 @@ select,button,input{font-family:inherit}
   <div id="promptText"></div>
   <button onclick="document.getElementById('pwaPrompt').style.display='none'">Got it</button>
 </div>
-<div class="p" id="phone">
-<div class="n"></div>
-<div class="s">
-<div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
-<div class="h" id="h"><div class="ag" id="ag"></div></div>
-<div class="ad" id="ad"><div id="awc"></div></div>
-<div class="as" id="as"><div class="sc" id="scc"></div></div>
-<div id="rcb" class="rcx">✕</div>
-<div id="er" class="em" style="display:none">No Recent Apps</div>
-<div class="hi" id="hi"></div>
-</div>
-</div>
-<script>
-// --- CORE UTILITIES & CONFIG ---
-const D=document,g=n=>D.getElementById(n),q=s=>D.querySelector(s),qa=s=>D.querySelectorAll(s),ce=t=>D.createElement(t),
-L=localStorage,K={o:'appLauncherOrder',t:'appLauncherTheme',f:'appLauncherFont',bg:'appLauncherBg',bb:'appLauncherBattery',pw:'pwaPromptShown'},
-E={ag:g('ag'),awc:g('awc'),as:g('as'),scc:g('scc'),h:g('h'),er:g('er'),rcb:g('rcb'),p:g('phone'),hi:g('hi'),batt:g('batt'), ad:g('ad')},
-A=[
-    {id:1,title:"Files",icon:"🗃️",path:"/files.html",class:"i"},
-    {id:2,title:"Chat",icon:"💬",path:"/chat.html",class:"i"},
-    {id:999,title:"Info",icon:"ℹ️",path:"system:tutorial",class:"i"},
-    {id:998,title:"Settings",icon:"⚙️",path:"system:settings",class:"st"}
-], // Added a couple of placeholder apps for testing external paths
-S={r:[],c:null,sw:0,dn:null,dr:0,dc:null,ds:{x:0,y:0}},
 
-// --- SETTINGS LOGIC ---
+<div class="p" id="phone">
+    <div class="n"></div>
+    <div class="s">
+        <div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
+        <div class="h" id="h"><div class="ag" id="ag"></div></div>
+        <div class="ad" id="ad"><div id="awc"></div></div>
+        <div class="as" id="as"><div class="sc" id="scc"></div></div>
+        <div id="rcb" class="rcx">✕</div>
+        <div id="er" class="em" style="display:none">No Recent Apps</div>
+        <div id="edit-ui">
+            <button class="ui-btn" onclick="openAddPanel()">+ Widget</button>
+            <button class="ui-btn" style="background:#007aff" onclick="toggleEdit(false)">Done</button>
+        </div>
+        <div class="hi" id="hi"></div>
+    </div>
+</div>
+
+<div id="add-panel">
+    <h3 style="color:#fff;margin-bottom:10px">Add Widget</h3>
+    <div class="add-opt" onclick="addWidget('torch')">🔦 Torch Button (1x1)</div>
+    <div class="add-opt" onclick="addWidget('clock')">⏰ Clock (2x2)</div>
+    <div class="add-opt" onclick="addWidget('weather')">☁️ Weather (2x2)</div>
+    <div class="add-opt" onclick="addWidget('calendar')">📅 Calendar (2x2)</div>
+    <div class="add-opt" onclick="addWidget('photo')">🖼️ Photo (4x2)</div>
+    <div class="add-opt" style="background:#3a3a3c;justify-content:center" onclick="closeAddPanel()">Cancel</div>
+</div>
+
+<script>
+// --- CONFIG & UTILITIES ---
+const D=document,g=n=>D.getElementById(n),q=s=>D.querySelector(s),qa=s=>D.querySelectorAll(s),ce=t=>D.createElement(t),
+L=localStorage,K={o:'appLauncherOrder',t:'appLauncherTheme',f:'appLauncherFont',bg:'appLauncherBg',bb:'appLauncherBattery',pw:'pwaPromptShown', layout: 'os_layout_v4'},
+E={ag:g('ag'),awc:g('awc'),as:g('as'),scc:g('scc'),h:g('h'),er:g('er'),rcb:g('rcb'),p:g('phone'),hi:g('hi'),batt:g('batt'), ad:g('ad')},
+S={r:[],c:null,sw:0,dn:null,dr:0,dc:null,ds:{x:0,y:0}},
 gv=(k,d)=>L.getItem(k)||d,sv=(k,v)=>L.setItem(k,v),
+COL_COUNT=4, ROW_HEIGHT=100;
+let SCREEN_W = E.ag.clientWidth || 335; // 375 - (20px padding * 2) = 335
+let COL_WIDTH = SCREEN_W / COL_COUNT;
+let isEditMode = false;
+let items = [];
+let isTorchOn = false;
+
+// Default Apps and Initial Widgets
+const defaultApps = [
+    { type: 'widget', subtype: 'clock', x: 0, y: 0, cols: 2, rows: 2 },
+    { type: 'widget', subtype: 'weather', x: 2, y: 0, cols: 2, rows: 2 },
+    { type: 'app', title: "Files", icon: "🗃️", path: "/files.html", class: "i" },
+    { type: 'app', title: "Chat", icon: "💬", path: "/chat.html", class: "i" },
+    { type: 'app', title: "Info", icon: "ℹ️", path: "system:tutorial", class: "i" },
+    { type: 'app', title: "Settings", icon: "⚙️", path: "system:settings", class: "st" }
+];
+
+// --- SETTINGS LOGIC (Unchanged) ---
 gt=_=>gv(K.t,'dark'),gf=_=>gv(K.f,'system'),gb=_=>gv(K.bg,''),gbb=_=>gv(K.bb,'show'),
 at=_=>{const t=gt(),p=E.p,h=E.h,bg=gb(),m={light:['linear-gradient(135deg,#e0e0e0,#f5f5f5)','#000'],blue:['linear-gradient(135deg,#1e3c72,#2a5298)','#fff'],purple:['linear-gradient(135deg,#2d1b69,#5b3a9d)','#fff'],green:['linear-gradient(135deg,#0f2027,#203a43,#2c5364)','#fff'],red:['linear-gradient(135deg,#c31432,#240b36)','#fff'],orange:['linear-gradient(135deg,#f46b45,#eea849)','#fff'],pink:['linear-gradient(135deg,#ff9a9e,#fecfef)','#000']};if(bg){p.style.background='#000';p.style.backgroundImage=`url(${bg})`;p.style.backgroundSize='cover';p.style.backgroundPosition='center'}else if(m[t]){p.style.backgroundImage='none';p.style.background=m[t][0];h.style.color=m[t][1];qa('.al').forEach(l=>l.style.color=m[t][1])}else{p.style.backgroundImage='radial-gradient(circle at center,#1a1a1a 0%,#000 100%)';p.style.backgroundColor='#050505'}},
 af=_=>{const f=gf(),m={system:'-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif',serif:'Georgia,"Times New Roman",serif',mono:'"Courier New",Courier,monospace',rounded:'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'};D.body.style.fontFamily=m[f]||m.system},
 ab=_=>{const bb=gbb();E.batt.style.display=bb==='hide'?'none':'block'},
+uc=_=>{const n=new Date();g('c').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); qa("#w-clock").forEach(e => e.innerText = n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));},
 
-// --- ICON DRAG LOGIC ---
-up=(x,y)=>{if(S.dc){S.dc.style.left=(x-30)+'px';S.dc.style.top=(y-30)+'px'}},
-hts=function(e){const t=e.touches[0];S.ds={x:t.clientX,y:t.clientY};S.dr=0;this.dataset.ht=setTimeout(()=>{S.dr=1;S.dn=this;if(navigator.vibrate)navigator.vibrate(50);S.dc=this.cloneNode(!0);Object.assign(S.dc.style,{position:'fixed',zIndex:'1000',pointerEvents:'none',opacity:'.8',transform:'scale(1.1)',transition:'none'});D.body.appendChild(S.dc);this.style.opacity='.3';up(t.clientX,t.clientY)},300)},
-htm=function(e){if(S.dr&&S.dn){e.preventDefault();const t=e.touches[0];up(t.clientX,t.clientY);const el=D.elementFromPoint(t.clientX,t.clientY),tg=el?.closest('.aiw:not([style*="opacity: 0.3"])');if(tg&&tg!==S.dn){const r=tg.getBoundingClientRect(),nx=(t.clientX-r.left)/r.width>.5;E.ag.insertBefore(S.dn,nx?tg.nextSibling:tg)}}else{const t=e.touches[0],d=Math.abs(t.clientX-S.ds.x)+Math.abs(t.clientY-S.ds.y);if(d>10)clearTimeout(this.dataset.ht)}},
-hte=function(e){clearTimeout(this.dataset.ht);if(S.dr&&S.dn){e.preventDefault();S.dn.style.opacity='1';if(S.dc){S.dc.remove();S.dc=null}sv(K.o,JSON.stringify(Array.from(E.ag.children).map(t=>t.dataset.path)));S.dn=null;S.dr=0}},
+// --- LAYOUT PERSISTENCE (Adapted for Widgets + Icons) ---
+function saveLayout() {
+    const layout = items.map(i => {
+        const base = { type: i.type, x: i.x, y: i.y };
+        if (i.type === 'app') {
+            return { ...base, title: i.title, icon: i.icon, path: i.path, class: i.class };
+        } else { // widget
+            return { ...base, subtype: i.subtype, cols: i.cols, rows: i.rows, isTorchOn: i.subtype === 'torch' ? i.isTorchOn : undefined };
+        }
+    });
+    sv(K.layout, JSON.stringify(layout));
+}
 
-// --- APP & WINDOW MANAGEMENT ---
+function loadLayout() {
+    const savedLayout = gv(K.layout, null);
+    if (savedLayout) {
+        try {
+            const layoutData = JSON.parse(savedLayout);
+            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols || 1, itemData.rows || 1, itemData));
+            // Initialize torch state from saved data
+            const torchItem = items.find(i => i.subtype === 'torch');
+            if (torchItem) isTorchOn = torchItem.isTorchOn || false;
 
-ri=a=>{const el=ce('div');el.className='aiw';el.dataset.path=a.path;el.innerHTML=`<div class="ai ${a.class||''}">${a.icon}</div><div class="al">${a.title}</div>`;el.addEventListener('click',()=>{if(!S.dr)la(a)});el.addEventListener('touchstart',hts);el.addEventListener('touchmove',htm);el.addEventListener('touchend',hte);E.ag.appendChild(el)},
-loadApps=async()=>{try{const r=await fetch('apps.json');if(r.ok)A.push(...await r.json())}catch(e){}const o=gv(K.o,''),or=o?JSON.parse(o):[];if(or.length)A.sort((a,b)=>or.indexOf(a.path)-or.indexOf(b.path));E.ag.innerHTML='';A.forEach(ri)},
+        } catch(e) { console.error("Failed to load layout:", e); loadDefaultLayout(); }
+    } else {
+        loadDefaultLayout();
+    }
+    updateContainerHeight();
+}
+
+function loadDefaultLayout() {
+    let appIndex = 0;
+    let widgetIndex = 0;
+    
+    // Clear the current items array
+    items.length = 0;
+    E.ag.innerHTML = '';
+    
+    // Create Default Widgets (from the start of the defaultApps array)
+    defaultApps.filter(d => d.type === 'widget').forEach(w => {
+        createItem(w.type, w.x * COL_WIDTH, w.y * ROW_HEIGHT, w.cols, w.rows, w);
+    });
+
+    // Create Default Icons/Apps
+    let startRow = 2; // Start icons below 2x2 widgets
+    defaultApps.filter(d => d.type === 'app').forEach((app, index) => {
+        const col = index % COL_COUNT;
+        const row = startRow + Math.floor(index / COL_COUNT);
+        createItem(app.type, col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
+    });
+    saveLayout();
+}
+
+// --- GRID ENGINE ---
+function createItem(type, x, y, wUnit, hUnit, data={}) {
+    const el = ce("div");
+    el.classList.add("grid-item");
+    const wPx = wUnit * COL_WIDTH - (type === "app" ? 0 : 15);
+    const hPx = hUnit * ROW_HEIGHT - (type === "app" ? 10 : 15);
+    
+    // Base data object for storage
+    const itemObj = { 
+        el, type, x, y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
+        title: data.title, icon: data.icon, path: data.path, class: data.class,
+        subtype: data.subtype
+    };
+
+    if (type === "app") {
+        el.classList.add("aiw");
+        el.innerHTML = `<div class="ai ${data.class||''}">${data.icon}</div><div class="al">${data.title}</div>`;
+        el.onclick = () => { if(!S.dr) la(itemObj); }; // Use la (launcher) logic for icons
+        setupDrag(itemObj); // Only icons use icon drag logic
+    } else { // widget
+        el.classList.add("widget");
+        el.style.width = wPx + "px";
+        el.style.height = hPx + "px";
+        el.innerHTML = `<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}</div>`;
+        
+        // Custom interaction for Torch widget
+        if(data.subtype === 'torch') {
+            itemObj.isTorchOn = data.isTorchOn || false;
+            el.onclick = (e) => { 
+                if(!isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")) toggleTorch(el); 
+            };
+            if (itemObj.isTorchOn) el.classList.add('torch-on');
+        }
+
+        el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
+        setupWidgetDrag(itemObj); // Use widget drag logic
+        setupResize(itemObj);
+    }
+    E.ag.appendChild(el);
+    updateVisualPosition(itemObj);
+    items.push(itemObj);
+    return itemObj;
+}
+
+// --- WIDGET MANAGEMENT ---
+function toggleEdit(val) { 
+    isEditMode = val; 
+    D.body.classList.toggle("edit-mode", val); 
+    closeAddPanel(); 
+}
+function openAddPanel(){ g("add-panel").classList.add("open"); }
+function closeAddPanel(){ g("add-panel").classList.remove("open"); }
+function deleteItem(el) { 
+    const idx = items.findIndex(i => i.el === el); 
+    if(idx > -1) { 
+        if (items[idx].subtype === 'torch') isTorchOn = false;
+        items.splice(idx, 1); 
+        el.remove(); 
+        updateContainerHeight(); 
+        saveLayout(); 
+    } 
+}
+
+function addWidget(type) {
+    closeAddPanel();
+    const w = (type === 'torch' ? 1 : (type === 'photo' ? 4 : 2));
+    const h = (type === 'torch' ? 1 : 2);
+    
+    const spot = findNextEmptySpot(w, h);
+    const widgetItem = createItem("widget", spot.x, spot.y, w, h, { subtype: "loading" });
+    
+    resolveCollisions(widgetItem); updateVisualPosition(widgetItem); toggleEdit(true);
+    
+    setTimeout(() => {
+        widgetItem.subtype = type;
+        widgetItem.cols = w;
+        widgetItem.rows = h;
+        widgetItem.w = w * COL_WIDTH - 15;
+        widgetItem.h = h * ROW_HEIGHT - 15;
+        widgetItem.el.style.width = widgetItem.w + "px";
+        widgetItem.el.style.height = widgetItem.h + "px";
+        
+        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, w);
+        if(type === 'clock') uc();
+        
+        if(type === 'torch') {
+            widgetItem.isTorchOn = isTorchOn;
+            widgetItem.el.onclick = (e) => { 
+                if(!isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")) toggleTorch(widgetItem.el); 
+            };
+            if(isTorchOn) widgetItem.el.classList.add('torch-on');
+        }
+
+        resolveCollisions(widgetItem); updateVisualPosition(widgetItem); saveLayout();
+    }, 500);
+}
+
+function toggleTorch(el) {
+    isTorchOn = !isTorchOn;
+    
+    items.filter(i => i.subtype === 'torch').forEach(item => {
+        item.isTorchOn = isTorchOn;
+        item.el.classList.toggle('torch-on', isTorchOn);
+    });
+
+    // Optional: Visually show the 'torch'
+    E.p.style.backgroundColor = isTorchOn ? '#fff' : '#050505';
+    E.h.style.backgroundImage = isTorchOn ? 'none' : E.h.style.backgroundImage;
+    E.p.style.backgroundImage = isTorchOn ? 'none' : E.p.style.backgroundImage;
+    E.p.style.transition = 'background-color 0.2s';
+
+    E.p.classList.toggle('torch-active', isTorchOn);
+    E.sb.style.color = isTorchOn ? '#000' : '#fff';
+    
+    saveLayout(); 
+}
+
+function getWidgetHTML(type, cols) {
+    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NOW</div>`;
+    if(type === "weather") return `<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
+    if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
+    if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
+    if(type === "torch") return `<div style="font-size:30px;color:rgba(0,0,0,0.8);line-height:60px">🔦</div>`;
+    return "Widget";
+}
+
+// --- APP LAUNCHER LOGIC (Adapted from App Launcher Only version) ---
 
 ca=d=>{
     const w=ce('div'),wc=ce('div');
     w.className='aw';
     wc.className='awc';
     
-    // Set App Content
     if(d.path==="system:tutorial"){
         wc.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div><div class="ts" style="margin-top:20px;color:#007aff;">💡 <b>For fullscreen:</b> Add to Home Screen!</div></div>`;
     }else if(d.path==="system:settings"){
@@ -158,22 +389,20 @@ ca=d=>{
             ra.addEventListener('click',()=>{if(confirm('Reset ALL settings to default?')){L.clear();location.reload()}});
         },100);
     }else{
-        // Iframe content
         const i=ce('iframe');
         i.className='aif';i.src=d.path;i.setAttribute('sandbox','allow-scripts allow-forms allow-popups allow-modals allow-same-origin');
         wc.appendChild(i);
     }
 
-    const ih=ce('div');ih.className='hi'; // Home indicator
+    const ih=ce('div');ih.className='hi';
     let sy=0;
     ih.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});
     ih.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});
     
     w.appendChild(wc);
     w.appendChild(ih);
-    E.ad.appendChild(w); // Append to the App Display layer
+    E.ad.appendChild(w); 
     
-    // Store the content element for easy transfer
     return{...d, we:w, ce:null, appContentEl: wc}
 },
 
@@ -183,9 +412,9 @@ la=async a=>{
     if(ex){S.r=S.r.filter(x=>x.path!==a.path);S.r.push(ex)}
     else {ac = ca(a); S.r.push(ac);}
     
-    if(ac.ce) moveContentFromCard(ac); // Restore content if coming from card
+    if(ac.ce) moveContentFromCard(ac);
     
-    cs(); // Close the switcher first
+    cs();
     
     requestAnimationFrame(()=>{
         ac.we.classList.add('ac');
@@ -197,15 +426,12 @@ la=async a=>{
     })
 },
 
+// Switcher and App Closing Logic (using DOM transfer for live cards)
 hg=_=>{if(S.c){ma();os()}else if(S.sw)cs();else if(S.r.length>0)os()},
-
 ma=_=>{if(!S.c)return;const a=S.r.find(x=>x.path===S.c);if(a)a.we.classList.remove('ac');E.h.classList.remove('zo');S.c=null},
-
 cla=p=>{
     const i=S.r.findIndex(x=>x.path===p);if(i===-1)return;
     const a=S.r[i];
-    
-    // Ensure content is restored/detached before deletion
     if(a.ce) moveContentFromCard(a); 
 
     a.we.remove();
@@ -216,18 +442,13 @@ cla=p=>{
     if(S.c===p) S.c=null;
 },
 
-// --- SWITCHER LOGIC ---
-
 moveContentToCard=a=>{
     if(!a.ce || !a.appContentEl) return;
-    
-    const appContentEl = a.appContentEl; // The .awc div
+    const appContentEl = a.appContentEl;
     const cardContentHolder = a.ce.querySelector('.card-content-holder');
-    
     const scaledWrapper = ce('div');
     scaledWrapper.style.cssText = 'transform: scale(0.35); transform-origin: top left; width: 375px; height: 812px;';
     scaledWrapper.className = 'scaled-app-content';
-    
     appContentEl.style.width = '100%';
     appContentEl.style.height = '100%';
     appContentEl.style.overflow = 'auto';
@@ -235,13 +456,11 @@ moveContentToCard=a=>{
     appContentEl.parentNode.removeChild(appContentEl);
     scaledWrapper.appendChild(appContentEl);
     cardContentHolder.appendChild(scaledWrapper);
-
     a.scaledWrapper = scaledWrapper;
 },
 
 moveContentFromCard=a=>{
     if(!a.appContentEl || !a.scaledWrapper) return;
-    
     const appWindow = a.we; 
     const appContentEl = a.appContentEl;
     const scaledWrapper = a.scaledWrapper;
@@ -249,7 +468,6 @@ moveContentFromCard=a=>{
     if(scaledWrapper){
         scaledWrapper.removeChild(appContentEl);
         appWindow.insertBefore(appContentEl, appWindow.querySelector('.hi')); 
-        
         scaledWrapper.remove();
         delete a.scaledWrapper;
     }
@@ -267,21 +485,11 @@ os=_=>{
 rsc=_=>{
     E.scc.innerHTML='';
     S.r.forEach(a=>{
-        const c=ce('div');
-        c.className='scd';
-        
-        const h=ce('div');
-        h.className='ch';
-        h.innerHTML=`<span style="color:#fff;font-size:12px;font-weight:bold">${a.title}</span>`;
-        c.appendChild(h);
-        
-        const cardContentHolder = ce('div');
-        cardContentHolder.className = 'card-content-holder';
-        c.appendChild(cardContentHolder);
-
-        const tl=ce('div');
-        tl.className='ctl';
-        c.appendChild(tl);
+        const c=ce('div'); c.className='scd';
+        const h=ce('div'); h.className='ch';
+        h.innerHTML=`<span style="color:#fff;font-size:12px;font-weight:bold">${a.title}</span>`; c.appendChild(h);
+        const cardContentHolder = ce('div'); cardContentHolder.className = 'card-content-holder'; c.appendChild(cardContentHolder);
+        const tl=ce('div'); tl.className='ctl'; c.appendChild(tl);
         
         a.ce=c;
         moveContentToCard(a); 
@@ -296,18 +504,13 @@ rsc=_=>{
                 if(dy<-100){
                     c.style.transition='transform .3s ease-out';
                     c.style.transform='translateY(-100vh)';
-                    setTimeout(()=>{
-                        moveContentFromCard(a);
-                        cla(a.path)
-                    },300);
+                    setTimeout(()=>{moveContentFromCard(a);cla(a.path)},300);
                 }else{
                     c.style.transition='transform .2s ease';
                     c.style.transform='scale(1)'
                 }
                 gr=0;
-            }else {
-                la(a)
-            }
+            }else {la(a)}
         });
         E.scc.appendChild(c);
     })
@@ -328,10 +531,238 @@ cs=_=>{
 
 hss=_=>{if(!S.sw)return;const cl=E.as.scrollLeft+(E.as.clientWidth/2);S.r.forEach(a=>{if(!a.ce)return;const c=a.ce,cn=c.offsetLeft+(c.offsetWidth/2),d=Math.abs(cn-cl);c.style.opacity=d<50?1:.5})},
 
+// --- GRID POSITIONING & DRAG/RESIZE HANDLERS (Re-added) ---
+function updateVisualPosition(item) {
+    const offsetX = (item.cols * COL_WIDTH - item.w) / 2;
+    const offsetY = (item.rows * ROW_HEIGHT - item.h) / 2;
+    item.el.style.left = (item.x + offsetX) + "px";
+    item.el.style.top = (item.y + offsetY) + "px";
+}
+function resolveCollisions(movedItem) {
+    items.filter(i => i !== movedItem).forEach(other => {
+        const otherWidth = other.cols * COL_WIDTH;
+        const otherHeight = other.rows * ROW_HEIGHT;
+        
+        if (rectIntersect(movedItem, other)) {
+            const others = items.filter(x => x !== other && x !== movedItem);
+            // Calculate coordinates based on grid units
+            const nextSpot = findNextEmptySpot(other.cols, other.rows, others);
+            other.x = nextSpot.x;
+            other.y = nextSpot.y;
+            updateVisualPosition(other);
+        }
+    });
+}
+function rectIntersect(i1, i2) {
+    const margin = i1.type === 'app' ? 20 : 10;
+    const i1W = i1.cols * COL_WIDTH;
+    const i1H = i1.rows * ROW_HEIGHT;
+    const i2W = i2.cols * COL_WIDTH;
+    const i2H = i2.rows * ROW_HEIGHT;
+
+    return (i1.x + margin < i2.x + i2W) && 
+           (i1.x + i1W - margin > i2.x) &&
+           (i1.y + margin < i2.y + i2H) && 
+           (i1.y + i1H - margin > i2.y);
+}
+function findNextEmptySpot(cols, rows, currentItems = items) {
+    let rowIdx = 0;
+    while(true) {
+        for(let colIdx = 0; colIdx < COL_COUNT; colIdx++) {
+            if(colIdx + cols > COL_COUNT) continue; 
+            const testX = colIdx * COL_WIDTH; const testY = rowIdx * ROW_HEIGHT;
+            
+            const collision = currentItems.some(i => {
+                const iW = i.cols * COL_WIDTH;
+                const iH = i.rows * ROW_HEIGHT;
+                const testW = cols * COL_WIDTH;
+                const testH = rows * ROW_HEIGHT;
+                
+                return testX < i.x + iW && testX + testW > i.x && 
+                       testY < i.y + iH && testY + testH > i.y;
+            });
+            
+            if(!collision) return {x: testX, y: testY};
+        }
+        rowIdx++; if(rowIdx > 500) return {x:0, y:0};
+    }
+}
+function updateContainerHeight() {
+    let max = 0; 
+    items.forEach(i => { 
+        const bottom = i.y + (i.rows * ROW_HEIGHT); 
+        if(bottom > max) max = bottom; 
+    });
+    E.ag.style.minHeight = (max + 150) + "px";
+}
+
+// Icon Drag Setup (for Apps)
+function setupDrag(item){
+    let startX, startY, startLeft, startTop;
+    const onStart = (e) => {
+        if(!isEditMode && item.type === 'app') {
+            // Initiate long press detection for reordering
+            e.preventDefault(); 
+            item.el.dataset.ht = setTimeout(() => {
+                toggleEdit(true);
+                startDrag(e, item);
+            }, 300);
+            return;
+        }
+        if(isEditMode) startDrag(e, item);
+    };
+
+    const startDrag = (e, item) => {
+        e.preventDefault(); 
+        item.el.classList.add("dragging");
+        startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
+        startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
+        document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+    }
+    
+    const onMove = (e) => {
+        e.preventDefault(); 
+        const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
+        
+        // Simple collision feedback or reordering logic here could be added
+    };
+    
+    const onEnd = () => {
+        clearTimeout(item.el.dataset.ht);
+
+        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        item.el.classList.remove("dragging");
+
+        // Calculate final grid position
+        const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
+        let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
+        
+        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
+        
+        item.x = col * COL_WIDTH; 
+        item.y = row * ROW_HEIGHT;
+        
+        // Finalize position and resolve collisions
+        resolveCollisions(item); 
+        updateVisualPosition(item); 
+        updateContainerHeight(); 
+        saveLayout();
+    };
+
+    item.el.addEventListener("touchstart", onStart, {passive:false}); 
+    item.el.addEventListener("touchend", () => clearTimeout(item.el.dataset.ht));
+
+}
+
+// Widget Drag Setup (for Widgets)
+function setupWidgetDrag(item){
+    let startX, startY, startLeft, startTop;
+    const onStart = (e) => {
+        if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
+            e.preventDefault(); 
+            item.el.classList.add("dragging");
+            startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
+            startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
+            document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+        }
+    };
+    const onMove = (e) => {
+        e.preventDefault(); 
+        const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
+    };
+    const onEnd = () => {
+        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        item.el.classList.remove("dragging");
+        
+        const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
+        let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
+        
+        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
+        
+        item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
+        resolveCollisions(item); updateVisualPosition(item); updateContainerHeight(); saveLayout();
+    };
+    item.el.addEventListener("touchstart", onStart, {passive:false});
+}
+
+function setupResize(item){
+    const handle = item.el.querySelector(".resize-handle");
+    let startX, startY, startW, startH;
+    const onStart = (e) => {
+        e.stopPropagation(); e.preventDefault(); item.el.classList.add("resizing");
+        startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
+        startW = item.w; startH = item.h;
+        document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+    };
+    const onMove = (e) => {
+        e.preventDefault(); 
+        const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); 
+        let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
+        
+        // Constraints
+        if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4; if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
+        if(item.subtype === 'torch') { newCols = 1; newRows = 1; } // Torch is fixed 1x1
+
+        const pxW = newCols * COL_WIDTH - 15; const pxH = newRows * ROW_HEIGHT - 15;
+        item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
+        
+        if(newCols !== item.cols || newRows !== item.rows) {
+            item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
+            if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
+            if(item.subtype === "clock") uc();
+            resolveCollisions(item); updateVisualPosition(item); updateContainerHeight();
+        }
+    };
+    const onEnd = () => {
+        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        item.el.classList.remove("resizing"); updateVisualPosition(item); saveLayout();
+    };
+    handle.addEventListener("touchstart", onStart, {passive:false});
+}
+
+
 // --- INITIALIZATION ---
-uc=_=>{const n=new Date();g('c').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})},
-initFullscreen=_=>{const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);const isChrome=/CriOS/.test(navigator.userAgent);const isSafari=isIOS&&/Safari/.test(navigator.userAgent)&&!/CriOS/.test(navigator.userAgent);const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone&&!gv(K.pw,'')){const prompt=g('pwaPrompt'),text=g('promptText');if(isChrome&&isIOS){text.innerHTML='<strong>📱 Best Experience</strong><br>Open in Safari → Share → Add to Home Screen for fullscreen mode!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}else if(isSafari){text.innerHTML='<strong>📱 Add to Home Screen</strong><br>Tap Share button → Add to Home Screen for the best experience!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}}if(isIOS&&isChrome){window.scrollTo(0,1);setTimeout(()=>window.scrollTo(0,1),100)}let hasInteracted=false;const tryFullscreen=()=>{if(hasInteracted)return;hasInteracted=true;const elem=D.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{})}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen().catch(()=>{})}};D.addEventListener('touchstart',tryFullscreen,{once:true});D.addEventListener('click',tryFullscreen,{once:true})},
-init=async()=>{uc();setInterval(uc,1e3);at();af();ab();await loadApps();initFullscreen();let sy=0;E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});E.rcb.addEventListener('click',cs);E.as.addEventListener('scroll',hss)};
+init=async()=>{
+    SCREEN_W = E.ag.clientWidth || 335;
+    COL_WIDTH = SCREEN_W / COL_COUNT;
+
+    uc();setInterval(uc,1e3);
+    
+    // Load persisted layout/apps first
+    loadLayout(); 
+    
+    at();af();ab();
+    initFullscreen();
+    
+    // Gestures
+    let sy=0;
+    E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});
+    E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});
+    E.rcb.addEventListener('click',cs);
+    E.as.addEventListener('scroll',hss);
+
+    // Initial edit mode check on background long press
+    E.h.addEventListener("touchstart", e => {
+        if (e.target.id === 'h' || e.target.classList.contains('ag')) {
+            e.target.dataset.pressTimer = setTimeout(() => {
+                toggleEdit(true);
+            }, 800);
+        }
+    });
+    E.h.addEventListener("touchend", e => {
+        clearTimeout(e.target.dataset.pressTimer);
+        if (g("add-panel").classList.contains("open")) {
+            closeAddPanel();
+        }
+    });
+};
+
+// --- PWA INIT (Unchanged) ---
+initFullscreen=_=>{const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);const isChrome=/CriOS/.test(navigator.userAgent);const isSafari=isIOS&&/Safari/.test(navigator.userAgent)&&!/CriOS/.test(navigator.userAgent);const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone&&!gv(K.pw,'')){const prompt=g('pwaPrompt'),text=g('promptText');if(isChrome&&isIOS){text.innerHTML='<strong>📱 Best Experience</strong><br>Open in Safari → Share → Add to Home Screen for fullscreen mode!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}else if(isSafari){text.innerHTML='<strong>📱 Add to Home Screen</strong><br>Tap Share button → Add to Home Screen for the best experience!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}}if(isIOS&&isChrome){window.scrollTo(0,1);setTimeout(()=>window.scrollTo(0,1),100)}let hasInteracted=false;const tryFullscreen=()=>{if(hasInteracted)return;hasInteracted=true;const elem=D.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{})}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen().catch(()=>{})}};D.addEventListener('touchstart',tryFullscreen,{once:true});D.addEventListener('click',tryFullscreen,{once:true})};
+
 init();
 </script>
 </body>
