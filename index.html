@@ -136,7 +136,7 @@ const K='os_layout_final_v3';
 // --- INITIAL LAYOUT ---
 const D=[
     {title:"Files",icon:"🗃️",class:"files",path:"system:files"},
-    {title:"News",icon:"📰",class:"news",path:"system:news"},
+    {title:"News",icon:"📰",class:"news",path:"https://www.google.com/search?q=latest+news&igu=1"}, // FIXED: Using a live URL
     {title:"Info",icon:"ℹ️",class:"info",path:"system:tutorial"},
     {title:"Chat",icon:"💬",class:"chat",path:"system:chat"},
     {title:"Mortis",icon:"☠️",class:"mortis",path:"system:mortis"},
@@ -279,7 +279,9 @@ function k(e){
         t.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
     }else{
         const r=document.createElement("iframe");
-        r.className="aif";r.src=e.path.includes("system")?"about:blank":e.path; 
+        r.className="aif";
+        // FIXED: Only block if path starts with 'system:' AND is not a recognized external protocol
+        r.src=e.path.startsWith("system:")?"about:blank":e.path; 
         t.appendChild(r);
     }
     return t;
