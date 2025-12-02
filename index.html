@@ -37,7 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
 @keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
-/* ICONS & COLORS */
+/* ICONS & COLORS (These classes are now referenced by the new app list) */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
@@ -133,20 +133,19 @@ let U=null;
 let M=false;
 const K='os_layout_final_v3';
 
-// --- INITIAL LAYOUT ---
+// --- INITIAL LAYOUT (UPDATED TO HARCODED NEW LIST) ---
 const D=[
-    {title:"Files",icon:"🗃️",class:"files",path:"system:files"},
-    {title:"News",icon:"📰",class:"news",path:"https://www.google.com/search?q=latest+news&igu=1"}, 
-    {title:"Info",icon:"ℹ️",class:"info",path:"system:tutorial"},
-    {title:"Chat",icon:"💬",class:"chat",path:"system:chat"},
-    {title:"Mortis",icon:"☠️",class:"mortis",path:"system:mortis"},
-    {title:"AI Learn",icon:"🤖",class:"ai-learn",path:"system:ai"},
-    {title:"Themes",icon:"🎨",class:"themes",path:"system:themes"},
-    {title:"Test 3k",icon:"🚧",class:"test",path:"system:test"},
-    {title:"Grapple",icon:"🎮",class:"grapple",path:"system:game"},
-    {title:"Cycles",icon:"⏱️",class:"cycles",path:"system:clock"},
-    {title:"Settings",icon:"⚙️",class:"settings",path:"system:settings"},
-    {title:"Calc",icon:"🧮",class:"calc",path:"system:calc"}
+    { "title": "🎮 Grapple Ascent", "icon": "🎮", "path": "page3.html", "class": "motion" },
+    { "title": "🧮 Smart Calculator", "icon": "🧮", "path": "page4.html", "class": "torch" },
+    { "title": "🤖 AI Learning Platform", "icon": "🤖", "path": "page6.html", "class": "speaker" },
+    { "title": "📰 News Reader Pro", "icon": "📰", "path": "page9.html", "class": "news" },
+    { "title": "⏱️ Cycle Counter", "icon": "⏱️", "path": "page11.html", "class": "touch" },
+    { "title": "🎨 Theme Switcher", "icon": "🎨", "path": "page13.html", "class": "speaker" },
+    { "title": "🗃️ Files Manager", "icon": "🗃️", "path": "page17.html", "class": "camera" },
+    { "title": "☠️ Mortis Cloud", "icon": "☠️", "path": "page67.html", "class": "camera" },
+    { "title": "💬 Secure Chat", "icon": "💬", "path": "page69.html", "class": "mic" },
+    { "title": "🚧 Test Page 3000", "icon": "🚧", "path": "page3000.html", "class": "test" },
+    { "title": "⚙️ Settings", "icon": "⚙️", "path": "settings.html", "class": "settings" } // Added custom settings entry
 ];
 
 function i(){
@@ -154,6 +153,7 @@ function i(){
     const s=localStorage.getItem(K);
     if(s){
         try{
+            // Note: If old layout is loaded, it might use the old class names/paths which won't match the new system
             JSON.parse(s).forEach(e=>g(e.type,e.x,e.y,e.cols,e.rows,e));
         }catch(e){d();}
     }else{
@@ -207,8 +207,9 @@ function g(e,t,r,o,s,a={}){
     const d=s*R-(e==="app"?10:15);
 
     if(e==="app"){
-        n.classList.add("aiw");
+        // Ensure the correct class is used for coloring the icon background
         n.innerHTML=`<div class="ai ${a.class||'files'}">${a.icon}</div><div class="al">${a.title}</div>`;
+        n.classList.add("aiw");
         n.onclick=()=>{if(!E)j(a);};
     }else{
         n.classList.add("widget");
@@ -266,57 +267,63 @@ function j(e){
     requestAnimationFrame(()=>{
         document.getElementById("app-window").classList.add("ac");
         document.getElementById("h").classList.add("zo");
-        // Removed: document.getElementById("hi").style.display='none'; 
     });
     U=t;
     if(M)f();
 }
 
+// MODIFIED: Handles all custom page paths as internal content, except for a live URL (News)
 function k(e){
     const t=document.createElement("div");
     t.style.width="100%";t.style.height="100%";
     let content = '';
 
+    // If path is a recognizable live URL (like the News app), load it in an iframe.
+    if (e.path.startsWith("http") || e.path === "page9.html") { // Assuming page9.html should be the live news reader
+        const r=document.createElement("iframe");
+        r.className="aif";
+        // Check if it's the specific page9.html placeholder path, if so, substitute a live URL.
+        r.src=e.path === "page9.html" ? "https://www.google.com/search?q=latest+news&igu=1" : e.path; 
+        t.appendChild(r);
+        return t;
+    }
+
+    // Handle internal app content based on the title or path
     switch (e.path) {
-        case "system:settings":
+        case "settings.html":
             content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
             break;
-        case "system:files":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🗃️</div><h2>Files</h2><p style="opacity:0.7;">Your documents and media are stored here.</p></div>`;
+        case "page17.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🗃️</div><h2>Files Manager</h2><p style="opacity:0.7;">Your documents and media are stored here.</p></div>`;
             break;
-        case "system:tutorial":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">ℹ️</div><h2>Info</h2><p style="opacity:0.7;">A step-by-step OS guide.</p></div>`;
+        case "page69.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">💬</div><h2>Secure Chat</h2><p style="opacity:0.7;">Messaging interface initialized.</p></div>`;
             break;
-        case "system:chat":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">💬</div><h2>Chat</h2><p style="opacity:0.7;">Messaging interface initialized.</p></div>`;
+        case "page67.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">☠️</div><h2>Mortis Cloud</h2><p style="opacity:0.7;">Mortis Protocol is active. Welcome.</p></div>`;
             break;
-        case "system:mortis":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">☠️</div><h2>Mortis</h2><p style="opacity:0.7;">Mortis Protocol is active. Welcome.</p></div>`;
+        case "page6.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🤖</div><h2>AI Learning Platform</h2><p style="opacity:0.7;">Processing new data models...</p></div>`;
             break;
-        case "system:ai":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🤖</div><h2>AI Learn</h2><p style="opacity:0.7;">Processing new data models...</p></div>`;
+        case "page13.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎨</div><h2>Theme Switcher</h2><p style="opacity:0.7;">Select a new visual style for the OS.</p></div>`;
             break;
-        case "system:themes":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎨</div><h2>Themes</h2><p style="opacity:0.7;">Select a new visual style for the OS.</p></div>`;
+        case "page3.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎮</div><h2>Grapple Ascent</h2><p style="opacity:0.7;">Ready to start a new game.</p></div>`;
             break;
-        case "system:test":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🚧</div><h2>Test 3k</h2><p style="opacity:0.7;">Diagnostic systems running.</p></div>`;
+        case "page11.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⏱️</div><h2>Cycle Counter</h2><p style="opacity:0.7;">Alarm and Timer functions active.</p></div>`;
             break;
-        case "system:game":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎮</div><h2>Grapple</h2><p style="opacity:0.7;">Ready to start a new game.</p></div>`;
+        case "page4.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🧮</div><h2>Smart Calculator</h2><p style="opacity:0.7;">Calculator app ready.</p></div>`;
             break;
-        case "system:clock":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⏱️</div><h2>Cycles</h2><p style="opacity:0.7;">Alarm and Timer functions active.</p></div>`;
-            break;
-        case "system:calc":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🧮</div><h2>Calc</h2><p style="opacity:0.7;">Calculator app ready.</p></div>`;
+        case "page3000.html":
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🚧</div><h2>Test Page 3000</h2><p style="opacity:0.7;">Diagnostic systems running.</p></div>`;
             break;
         default:
-            const r=document.createElement("iframe");
-            r.className="aif";
-            r.src=e.path; 
-            t.appendChild(r);
-            return t;
+            // Fallback for any unknown internal path
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">${e.icon || '❓'}</div><h2>${e.title}</h2><p style="opacity:0.7;">Internal page content not defined.</p></div>`;
+            break;
     }
     
     t.innerHTML = content;
@@ -334,7 +341,6 @@ function m(){
     if(!U)return;
     document.getElementById("app-window").classList.remove("ac");
     document.getElementById("h").classList.remove("zo");
-    // Removed: document.getElementById("hi").style.display='flex'; 
     U=null;
 }
 
@@ -353,7 +359,6 @@ function o(){
     e.style.display='flex';
     document.getElementById("rcb").style.display='flex';
     r.classList.add("zo");
-    // Removed: document.getElementById("hi").style.display='none'; 
     t.innerHTML='';
     A.forEach(e=>{
         const r=document.createElement("div");
@@ -387,7 +392,6 @@ function f(){
     document.getElementById("switcher").style.display='none';
     document.getElementById("rcb").style.display='none';
     document.getElementById("h").classList.remove("zo");
-    // Removed: document.getElementById("hi").style.display='flex'; 
 }
 
 function x(e,t,r){
