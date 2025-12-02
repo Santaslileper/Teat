@@ -53,6 +53,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .ai.cycles { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
 .ai.settings { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color:#333; }
 .ai.calc { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.ai.motion { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.ai.torch { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+.ai.speaker { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
+.ai.touch { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+.ai.camera { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+.ai.mic { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
 
 .al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -145,7 +152,7 @@ const D=[
     { "title": "☠️ Mortis Cloud", "icon": "☠️", "path": "page67.html", "class": "camera" },
     { "title": "💬 Secure Chat", "icon": "💬", "path": "page69.html", "class": "mic" },
     { "title": "🚧 Test Page 3000", "icon": "🚧", "path": "page3000.html", "class": "test" },
-    { "title": "⚙️ Settings", "icon": "⚙️", "path": "settings.html", "class": "settings" } // Added custom settings entry
+    { "title": "⚙️ Settings", "icon": "⚙️", "path": "settings.html", "class": "settings" }
 ];
 
 function i(){
@@ -153,7 +160,6 @@ function i(){
     const s=localStorage.getItem(K);
     if(s){
         try{
-            // Note: If old layout is loaded, it might use the old class names/paths which won't match the new system
             JSON.parse(s).forEach(e=>g(e.type,e.x,e.y,e.cols,e.rows,e));
         }catch(e){d();}
     }else{
@@ -207,9 +213,8 @@ function g(e,t,r,o,s,a={}){
     const d=s*R-(e==="app"?10:15);
 
     if(e==="app"){
-        // Ensure the correct class is used for coloring the icon background
-        n.innerHTML=`<div class="ai ${a.class||'files'}">${a.icon}</div><div class="al">${a.title}</div>`;
         n.classList.add("aiw");
+        n.innerHTML=`<div class="ai ${a.class||'files'}">${a.icon}</div><div class="al">${a.title}</div>`;
         n.onclick=()=>{if(!E)j(a);};
     }else{
         n.classList.add("widget");
@@ -272,23 +277,23 @@ function j(e){
     if(M)f();
 }
 
-// MODIFIED: Handles all custom page paths as internal content, except for a live URL (News)
+// UPDATED: Handles new pageX.html paths as internal content, treats page9.html (News) as external, and settings.html as special.
 function k(e){
     const t=document.createElement("div");
     t.style.width="100%";t.style.height="100%";
     let content = '';
 
-    // If path is a recognizable live URL (like the News app), load it in an iframe.
-    if (e.path.startsWith("http") || e.path === "page9.html") { // Assuming page9.html should be the live news reader
+    // Check if the path is a live URL (http/https) OR if it's the News path (page9.html)
+    if (e.path.startsWith("http") || e.path === "page9.html") { 
         const r=document.createElement("iframe");
         r.className="aif";
-        // Check if it's the specific page9.html placeholder path, if so, substitute a live URL.
+        // If it's the specific page9.html placeholder path, substitute the live URL.
         r.src=e.path === "page9.html" ? "https://www.google.com/search?q=latest+news&igu=1" : e.path; 
         t.appendChild(r);
         return t;
     }
 
-    // Handle internal app content based on the title or path
+    // Handle internal app content based on the pageX.html path
     switch (e.path) {
         case "settings.html":
             content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
@@ -321,8 +326,7 @@ function k(e){
             content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🚧</div><h2>Test Page 3000</h2><p style="opacity:0.7;">Diagnostic systems running.</p></div>`;
             break;
         default:
-            // Fallback for any unknown internal path
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">${e.icon || '❓'}</div><h2>${e.title}</h2><p style="opacity:0.7;">Internal page content not defined.</p></div>`;
+            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">❓</div><h2>Error: ${e.title}</h2><p style="opacity:0.7;">Unknown internal page content for path: ${e.path}</p></div>`;
             break;
     }
     
@@ -350,7 +354,7 @@ function t(e){
     if(A.length===0)f();
 }
 
-// --- SWITCHER ---
+// UPDATED: App Card logic now uses fallback content for external URLs (like News/page9.html)
 function o(){
     M=true;
     const e=document.getElementById("switcher");
@@ -369,10 +373,20 @@ function o(){
         r.appendChild(o);
         
         const s=document.createElement("div");
-        s.style.cssText="width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
+        s.className = 'contentHolder';
+        s.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000;position:relative;";
         
         if(e.dom.parentNode)e.dom.parentNode.removeChild(e.dom);
-        s.appendChild(e.dom);
+        
+        // FIX: Display simple content for external iframes/problem apps
+        if (e.dom.querySelector('iframe')) {
+            s.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#2c2c2e;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:18px;opacity:0.8;";
+            s.innerHTML = `<div style="font-size:40px;margin-bottom:10px">${e.icon}</div><div>${e.title}</div>`;
+        } else {
+            s.appendChild(e.dom);
+        }
+        
+        r.appendChild(s);
         
         const a=document.createElement("div");
         a.className="ctl";
