@@ -1,537 +1,341 @@
-l<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>Santaslileper OS</title>
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
-<link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlNhbnRhc2xpbGVwZXIgT1MiLAogICJzaG9ydF9uYW1lIjogIlNhbnRhc09TIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAib3JpZW50YXRpb24iOiAicG9ydHJhaXQiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwMDAwMDAiLAogICJ0aGVtZV9jb2xvciI6ICIjMDAwMDAwIiwKICAic3RhcnRfdXJsIjogIi8iCn0=">
-
-<style>
-/* --- CORE STYLES --- */
-*{margin:0;padding:0;box-sizing:border-box}
-body,html{touch-action:none;overscroll-behavior:none;min-height:100vh;min-height:-webkit-fill-available}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;min-height:-webkit-fill-available;padding:20px;user-select:none;-webkit-user-select:none;cursor:default;overflow:hidden;position:fixed;width:100%;height:100%;top:0;left:0}
-html{height:-webkit-fill-available}
-.p,.s,.h,.ad,.aw,.as{touch-action:none}
-.p{position:relative;width:100%;height:100%;max-width:375px;max-height:812px;background-color:#050505;background-image:radial-gradient(circle at center,#1a1a1a 0%,#000 100%);overflow:hidden;display:flex;flex-direction:column;border:1px solid #333}
-@media(min-width:768px){.p{height:812px;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e,0 20px 60px rgba(0,0,0,.8)}.n{position:absolute;top:0;left:50%;transform:translateX(-50%);width:180px;height:30px;background:#000;border-radius:0 0 20px 20px;z-index:100}}
-.s{position:relative;width:100%;height:100%;overflow:hidden;z-index:2}
-.sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
-/* GRID CONTAINER */
-.h{padding:60px 20px 80px 20px;height:100%;overflow-y:auto;transition:transform .4s cubic-bezier(.32,0,.67,0),filter .4s linear;will-change:transform,filter}
-.h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
-.ag{position:relative;width:100%;min-height:100vh;padding-bottom:200px} /* GRID CONTAINER FOR ABSOLUTE POSITIONING */
-
-/* GRID ITEMS (Icons & Widgets) */
-.grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
-.grid-item.resizing{transition:none;z-index:100;opacity:.9;background:rgba(44,44,46,.9)!important;border:1px solid #007aff!important;border-radius:20px}
-.edit-mode .grid-item:not(.resizing):not(.dragging){animation:jiggle .3s infinite linear;cursor:grab}
-.edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
-@keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
-
-/* ICONS */
-.aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-.ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
-.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8)}
-.ai.i{background:linear-gradient(135deg,#3498db,#2980b9)}
-.ai.st{background:linear-gradient(135deg,#95a5a6,#7f8c8d)}
-.ai:active{filter:brightness(.8);transform:scale(.95)}
-
-/* WIDGETS */
-.widget{background:0 0;backdrop-filter:none;border:none;border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;transition:background .3s,border .3s,backdrop-filter .3s}
-.edit-mode .widget{background:rgba(30,41,59,.6);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 15px rgba(0,0,0,.3)}
-.widget-content{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:10px;text-align:center;width:100%;height:100%;overflow:hidden;text-shadow:0 2px 8px rgba(0,0,0,.6)}
-.del-btn{position:absolute;top:-8px;left:-8px;width:24px;height:24px;background:#ff3b30;border-radius:50%;display:none;z-index:20;color:#fff;font-weight:700;font-size:16px;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.3)}
-.resize-handle{position:absolute;bottom:0;right:0;width:40px;height:40px;z-index:30;display:none;touch-action:none}
-.resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px}
-.edit-mode .del-btn,.edit-mode .resize-handle{display:block}
-.loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
-@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
-.torch-on {background:#ffc107!important;} /* Style for torch button active state */
-
-/* --- APP WINDOW --- */
-.ad{position:absolute;top:0;left:0;width:100%;height:100%;z-index:50;pointer-events:none}
-.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column}
-.aw.ac{transform:translate3d(0,0,0)}
-.awc{width:100%;height:100%;overflow:auto;touch-action:pan-y pan-x;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;position:relative}
-.aif{width:100%;min-height:calc(100vh - 80px);border:none;display:block}
-
-/* --- SWITCHER --- */
-.as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
-.sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
-.scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#222;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;transform-origin:center;transition:transform .2s;overflow:hidden}
-.card-content-holder {
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    padding-top: 40px; 
-    background: #000;
-    overflow: hidden;
-}
-.scaled-app-content {
-    transform: scale(0.35); 
-    transform-origin: top left; 
-    width: 375px; 
-    height: 812px; 
-    overflow: hidden;
-}
-
-.ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
-.ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:15}
-.rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px;cursor:pointer;z-index:200;backdrop-filter:blur(5px);display:none}
-.em{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:16px;pointer-events:none}
-
-/* HOME INDICATOR */
-.hi{position:absolute;bottom:0;left:0;width:100%;height:40px;display:flex;justify-content:center;align-items:center;z-index:999;touch-action:none;pointer-events:auto}
-.hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px}
-.aw .hi{z-index:1000;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,rgba(0,0,0,.6) 60%,transparent 100%)}
-
-/* EDIT UI (Hidden when not in edit mode) */
-#edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
-.edit-mode #edit-ui{opacity:1;pointer-events:auto}
-button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border:none;border-radius:20px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3)}
-
-/* ADD WIDGET MODAL */
-#add-panel{position:fixed;bottom:-400px;left:0;width:100%;height:350px;background:#1c1c1e;border-radius:20px 20px 0 0;z-index:300;transition:bottom .3s;padding:20px;display:flex;flex-direction:column;gap:10px}
-#add-panel.open{bottom:0}
-.add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
-
-/* Settings Styles (Unchanged) */
-.tc{width:100%;height:100%;background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;text-align:center;overflow-y:auto}
-.ts{margin-bottom:15px;font-size:18px;color:#ccc}
-.sg{width:100%;max-width:320px;margin-bottom:25px}
-.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:left;padding:0 15px}
-.so{background:#1c1c1e;border-radius:10px;overflow:hidden}
-.si{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #2c2c2e;min-height:44px}
-.si:last-child{border-bottom:none}
-.sl{color:#fff;font-size:16px}
-.sr{display:flex;align-items:center;gap:10px}
-.sr select,.sr input{padding:6px 10px;font-size:14px;border-radius:6px;background:#2c2c2e;color:#fff;border:1px solid #3a3a3c}
-.sr input[type="file"]{display:none}
-.fb{padding:8px 15px;font-size:14px;border-radius:6px;background:#007aff;color:#fff;border:none;cursor:pointer}
-.db{background:#ff3b30}
-.bgp{width:100px;height:60px;border-radius:6px;background-size:cover;background-position:center;border:2px solid #3a3a3c;cursor:pointer}
-select,button,input{font-family:inherit}
-.pwa-prompt{position:fixed;bottom:20px;left:20px;right:20px;background:rgba(0,122,255,.95);color:#fff;padding:15px;border-radius:12px;font-size:14px;z-index:10000;display:none}
-</style>
-
-</head>
-<body>
-<div class="pwa-prompt" id="pwaPrompt">
-  <div id="promptText"></div>
-  <button onclick="document.getElementById('pwaPrompt').style.display='none'">Got it</button>
-</div>
-
-<div class="p" id="phone">
-    <div class="n"></div>
-    <div class="s">
-        <div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
-        <div class="h" id="h"><div class="ag" id="ag"></div></div>
-        <div class="ad" id="ad"><div id="awc"></div></div>
-        <div class="as" id="as"><div class="sc" id="scc"></div></div>
-        <div id="rcb" class="rcx">✕</div>
-        <div id="er" class="em" style="display:none">No Recent Apps</div>
-        <div id="edit-ui">
-            <button class="ui-btn" onclick="openAddPanel()">+ Widget</button>
-            <button class="ui-btn" style="background:#007aff" onclick="toggleEdit(false)">Done</button>
-        </div>
-        <div class="hi" id="hi"></div>
-    </div>
-</div>
-
-<div id="add-panel">
-    <h3 style="color:#fff;margin-bottom:10px">Add Widget</h3>
-    <div class="add-opt" onclick="addWidget('torch')">🔦 Torch Button (1x1)</div>
-    <div class="add-opt" onclick="addWidget('clock')">⏰ Clock (2x2)</div>
-    <div class="add-opt" onclick="addWidget('weather')">☁️ Weather (2x2)</div>
-    <div class="add-opt" onclick="addWidget('calendar')">📅 Calendar (2x2)</div>
-    <div class="add-opt" onclick="addWidget('photo')">🖼️ Photo (4x2)</div>
-    <div class="add-opt" style="background:#3a3a3c;justify-content:center" onclick="closeAddPanel()">Cancel</div>
-</div>
-
 <script>
-// --- CONFIG & UTILITIES ---
-const D=document,g=n=>D.getElementById(n),q=s=>D.querySelector(s),qa=s=>D.querySelectorAll(s),ce=t=>D.createElement(t),
-L=localStorage,K={o:'appLauncherOrder',t:'appLauncherTheme',f:'appLauncherFont',bg:'appLauncherBg',bb:'appLauncherBattery',pw:'pwaPromptShown', layout: 'os_layout_v4'},
-E={ag:g('ag'),awc:g('awc'),as:g('as'),scc:g('scc'),h:g('h'),er:g('er'),rcb:g('rcb'),p:g('phone'),hi:g('hi'),batt:g('batt'), ad:g('ad')},
-S={r:[],c:null,sw:0,dn:null,dr:0,dc:null,ds:{x:0,y:0}},
-gv=(k,d)=>L.getItem(k)||d,sv=(k,v)=>L.setItem(k,v),
-COL_COUNT=4, ROW_HEIGHT=100;
-let SCREEN_W = E.ag.clientWidth || 335; // 375 - (20px padding * 2) = 335
+// --- CONFIG ---
+const COL_COUNT=4, ROW_HEIGHT=100;
+let SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
 let COL_WIDTH = SCREEN_W / COL_COUNT;
 let isEditMode = false;
-let items = [];
-let isTorchOn = false;
+let items = []; 
+let runningApps = []; 
+let currentApp = null; 
+let isSwitcherMode = false;
+const STORAGE_KEY = 'os_layout_final_v3';
 
-// Default Apps and Initial Widgets
+// --- INITIAL LAYOUT ---
 const defaultApps = [
-    { type: 'widget', subtype: 'clock', x: 0, y: 0, cols: 2, rows: 2 },
-    { type: 'widget', subtype: 'weather', x: 2, y: 0, cols: 2, rows: 2 },
-    { type: 'app', title: "Files", icon: "🗃️", path: "/files.html", class: "i" },
-    { type: 'app', title: "Chat", icon: "💬", path: "/chat.html", class: "i" },
-    { type: 'app', title: "Info", icon: "ℹ️", path: "system:tutorial", class: "i" },
-    { type: 'app', title: "Settings", icon: "⚙️", path: "system:settings", class: "st" }
+    { title: "Files", icon: "🗃️", class: "files", path: "system:files" },
+    { title: "News", icon: "📰", class: "news", path: "system:news" },
+    { title: "Info", icon: "ℹ️", class: "info", path: "system:tutorial" },
+    { title: "Chat", icon: "💬", class: "chat", path: "system:chat" },
+    { title: "Mortis", icon: "☠️", class: "mortis", path: "system:mortis" },
+    { title: "AI Learn", icon: "🤖", class: "ai-learn", path: "system:ai" },
+    { title: "Themes", icon: "🎨", class: "themes", path: "system:themes" },
+    { title: "Test 3k", icon: "🚧", class: "test", path: "system:test" },
+    { title: "Grapple", icon: "🎮", class: "grapple", path: "system:game" },
+    { title: "Cycles", icon: "⏱️", class: "cycles", path: "system:clock" },
+    { title: "Settings", icon: "⚙️", class: "settings", path: "system:settings" },
+    { title: "Calc", icon: "🧮", class: "calc", path: "system:calc" }
 ];
 
-// --- SETTINGS LOGIC (Unchanged) ---
-gt=_=>gv(K.t,'dark'),gf=_=>gv(K.f,'system'),gb=_=>gv(K.bg,''),gbb=_=>gv(K.bb,'show'),
-at=_=>{const t=gt(),p=E.p,h=E.h,bg=gb(),m={light:['linear-gradient(135deg,#e0e0e0,#f5f5f5)','#000'],blue:['linear-gradient(135deg,#1e3c72,#2a5298)','#fff'],purple:['linear-gradient(135deg,#2d1b69,#5b3a9d)','#fff'],green:['linear-gradient(135deg,#0f2027,#203a43,#2c5364)','#fff'],red:['linear-gradient(135deg,#c31432,#240b36)','#fff'],orange:['linear-gradient(135deg,#f46b45,#eea849)','#fff'],pink:['linear-gradient(135deg,#ff9a9e,#fecfef)','#000']};if(bg){p.style.background='#000';p.style.backgroundImage=`url(${bg})`;p.style.backgroundSize='cover';p.style.backgroundPosition='center'}else if(m[t]){p.style.backgroundImage='none';p.style.background=m[t][0];h.style.color=m[t][1];qa('.al').forEach(l=>l.style.color=m[t][1])}else{p.style.backgroundImage='radial-gradient(circle at center,#1a1a1a 0%,#000 100%)';p.style.backgroundColor='#050505'}},
-af=_=>{const f=gf(),m={system:'-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif',serif:'Georgia,"Times New Roman",serif',mono:'"Courier New",Courier,monospace',rounded:'ui-rounded,"SF Pro Rounded",system-ui,sans-serif'};D.body.style.fontFamily=m[f]||m.system},
-ab=_=>{const bb=gbb();E.batt.style.display=bb==='hide'?'none':'block'},
-uc=_=>{const n=new Date();g('c').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}); qa("#w-clock").forEach(e => e.innerText = n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}));},
+function init() {
+    updateClock(); setInterval(updateClock, 1000);
 
-// --- LAYOUT PERSISTENCE (Adapted for Widgets + Icons) ---
-function saveLayout() {
-    const layout = items.map(i => {
-        const base = { type: i.type, x: i.x, y: i.y };
-        if (i.type === 'app') {
-            return { ...base, title: i.title, icon: i.icon, path: i.path, class: i.class };
-        } else { // widget
-            return { ...base, subtype: i.subtype, cols: i.cols, rows: i.rows, isTorchOn: i.subtype === 'torch' ? i.isTorchOn : undefined };
-        }
-    });
-    sv(K.layout, JSON.stringify(layout));
-}
-
-function loadLayout() {
-    const savedLayout = gv(K.layout, null);
+    const savedLayout = localStorage.getItem(STORAGE_KEY);
     if (savedLayout) {
         try {
             const layoutData = JSON.parse(savedLayout);
-            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols || 1, itemData.rows || 1, itemData));
-            // Initialize torch state from saved data
-            const torchItem = items.find(i => i.subtype === 'torch');
-            if (torchItem) isTorchOn = torchItem.isTorchOn || false;
-
-        } catch(e) { console.error("Failed to load layout:", e); loadDefaultLayout(); }
+            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
+        } catch(e) { loadDefaultApps(); }
     } else {
-        loadDefaultLayout();
+        loadDefaultApps();
     }
-    updateContainerHeight();
+
+    // --- HOME GESTURES ---
+    const hi = document.getElementById("hi");
+    let startY = 0;
+    hi.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; e.stopPropagation(); }, {passive:false});
+    hi.addEventListener("touchend", (e) => {
+        if(e.changedTouches[0].clientY - startY < -30) handleHomeGesture();
+    }, {passive:false});
+
+    // Edit Mode
+    const grid = document.getElementById("ag");
+    let pressTimer;
+    grid.addEventListener("touchstart", e => {
+        if(e.target === grid || e.target.classList.contains('aiw')) {
+            pressTimer = setTimeout(() => toggleEdit(true), 800);
+        }
+    });
+    grid.addEventListener("touchend", () => clearTimeout(pressTimer));
 }
 
-function loadDefaultLayout() {
-    let appIndex = 0;
-    let widgetIndex = 0;
-    
-    // Clear the current items array
-    items.length = 0;
-    E.ag.innerHTML = '';
-    
-    // Create Default Widgets (from the start of the defaultApps array)
-    defaultApps.filter(d => d.type === 'widget').forEach(w => {
-        createItem(w.type, w.x * COL_WIDTH, w.y * ROW_HEIGHT, w.cols, w.rows, w);
-    });
-
-    // Create Default Icons/Apps
-    let startRow = 2; // Start icons below 2x2 widgets
-    defaultApps.filter(d => d.type === 'app').forEach((app, index) => {
-        const col = index % COL_COUNT;
-        const row = startRow + Math.floor(index / COL_COUNT);
-        createItem(app.type, col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
+function loadDefaultApps() {
+    createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
+    createItem('widget', 2 * COL_WIDTH, 0, 2, 2, {subtype:'weather'});
+    let startRow = 2; 
+    defaultApps.forEach((app, index) => {
+        const col = index % 4;
+        const row = startRow + Math.floor(index / 4);
+        createItem('app', col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
     });
     saveLayout();
 }
 
+function saveLayout() {
+    const layout = items.map(i => ({
+        type: i.type, subtype: i.subtype, x: i.x, y: i.y, cols: i.cols, rows: i.rows,
+        title: i.title, icon: i.icon, path: i.path, class: i.class
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
+}
+
+function handleHomeGesture() {
+    if(currentApp) { minimizeApp(); openSwitcher(); }
+    else if(isSwitcherMode) { closeSwitcher(); }
+    else if(runningApps.length > 0 && !isEditMode) { openSwitcher(); }
+}
+
 // --- GRID ENGINE ---
 function createItem(type, x, y, wUnit, hUnit, data={}) {
-    const el = ce("div");
+    const el = document.createElement("div");
     el.classList.add("grid-item");
     const wPx = wUnit * COL_WIDTH - (type === "app" ? 0 : 15);
     const hPx = hUnit * ROW_HEIGHT - (type === "app" ? 10 : 15);
-    
-    // Base data object for storage
-    const itemObj = { 
-        el, type, x, y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
-        title: data.title, icon: data.icon, path: data.path, class: data.class,
-        subtype: data.subtype
-    };
 
     if (type === "app") {
         el.classList.add("aiw");
-        el.innerHTML = `<div class="ai ${data.class||''}">${data.icon}</div><div class="al">${data.title}</div>`;
-        el.onclick = () => { if(!S.dr) la(itemObj); }; // Use la (launcher) logic for icons
-        setupDrag(itemObj); // Only icons use icon drag logic
-    } else { // widget
+        el.innerHTML = `<div class="ai ${data.class||'files'}">${data.icon}</div><div class="al">${data.title}</div>`;
+        el.onclick = () => { if(!isEditMode) launchApp(data); };
+    } else {
         el.classList.add("widget");
-        el.style.width = wPx + "px";
-        el.style.height = hPx + "px";
         el.innerHTML = `<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}</div>`;
-        
-        // Custom interaction for Torch widget
-        if(data.subtype === 'torch') {
-            itemObj.isTorchOn = data.isTorchOn || false;
-            el.onclick = (e) => { 
-                if(!isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")) toggleTorch(el); 
-            };
-            if (itemObj.isTorchOn) el.classList.add('torch-on');
-        }
-
         el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
-        setupWidgetDrag(itemObj); // Use widget drag logic
-        setupResize(itemObj);
     }
-    E.ag.appendChild(el);
+    document.getElementById("ag").appendChild(el);
+    const itemObj = { 
+        el: el, type: type, subtype: data.subtype, 
+        x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
+        title: data.title, icon: data.icon, path: data.path, class: data.class
+    };
     updateVisualPosition(itemObj);
+    setupDrag(itemObj);
+    if(type === "widget") setupResize(itemObj);
     items.push(itemObj);
+    updateContainerHeight();
     return itemObj;
-}
-
-// --- WIDGET MANAGEMENT ---
-function toggleEdit(val) { 
-    isEditMode = val; 
-    D.body.classList.toggle("edit-mode", val); 
-    closeAddPanel(); 
-}
-function openAddPanel(){ g("add-panel").classList.add("open"); }
-function closeAddPanel(){ g("add-panel").classList.remove("open"); }
-function deleteItem(el) { 
-    const idx = items.findIndex(i => i.el === el); 
-    if(idx > -1) { 
-        if (items[idx].subtype === 'torch') isTorchOn = false;
-        items.splice(idx, 1); 
-        el.remove(); 
-        updateContainerHeight(); 
-        saveLayout(); 
-    } 
 }
 
 function addWidget(type) {
     closeAddPanel();
-    const w = (type === 'torch' ? 1 : (type === 'photo' ? 4 : 2));
-    const h = (type === 'torch' ? 1 : 2);
-    
-    const spot = findNextEmptySpot(w, h);
-    const widgetItem = createItem("widget", spot.x, spot.y, w, h, { subtype: "loading" });
-    
+    const spot = findNextEmptySpot(2, 2);
+    const widgetItem = createItem("widget", spot.x, spot.y, 2, 2, { subtype: "loading" });
     resolveCollisions(widgetItem); updateVisualPosition(widgetItem); toggleEdit(true);
-    
     setTimeout(() => {
         widgetItem.subtype = type;
-        widgetItem.cols = w;
-        widgetItem.rows = h;
-        widgetItem.w = w * COL_WIDTH - 15;
-        widgetItem.h = h * ROW_HEIGHT - 15;
-        widgetItem.el.style.width = widgetItem.w + "px";
-        widgetItem.el.style.height = widgetItem.h + "px";
-        
-        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, w);
-        if(type === 'clock') uc();
-        
-        if(type === 'torch') {
-            widgetItem.isTorchOn = isTorchOn;
-            widgetItem.el.onclick = (e) => { 
-                if(!isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")) toggleTorch(widgetItem.el); 
-            };
-            if(isTorchOn) widgetItem.el.classList.add('torch-on');
-        }
-
+        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, 2);
+        if(type === 'clock') updateClock();
         resolveCollisions(widgetItem); updateVisualPosition(widgetItem); saveLayout();
-    }, 500);
-}
-
-function toggleTorch(el) {
-    isTorchOn = !isTorchOn;
-    
-    items.filter(i => i.subtype === 'torch').forEach(item => {
-        item.isTorchOn = isTorchOn;
-        item.el.classList.toggle('torch-on', isTorchOn);
-    });
-
-    // Optional: Visually show the 'torch'
-    E.p.style.backgroundColor = isTorchOn ? '#fff' : '#050505';
-    E.h.style.backgroundImage = isTorchOn ? 'none' : E.h.style.backgroundImage;
-    E.p.style.backgroundImage = isTorchOn ? 'none' : E.p.style.backgroundImage;
-    E.p.style.transition = 'background-color 0.2s';
-
-    E.p.classList.toggle('torch-active', isTorchOn);
-    E.sb.style.color = isTorchOn ? '#000' : '#fff';
-    
-    saveLayout(); 
+    }, 1000);
 }
 
 function getWidgetHTML(type, cols) {
-    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NOW</div>`;
+    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NEW YORK</div>`;
     if(type === "weather") return `<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
     if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
     if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
-    if(type === "torch") return `<div style="font-size:30px;color:rgba(0,0,0,0.8);line-height:60px">🔦</div>`;
     return "Widget";
 }
 
-// --- APP LAUNCHER LOGIC (Adapted from App Launcher Only version) ---
+// --- NEW DOM TRANSFER HELPERS ---
 
-ca=d=>{
-    const w=ce('div'),wc=ce('div');
-    w.className='aw';
-    wc.className='awc';
-    
-    if(d.path==="system:tutorial"){
-        wc.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div><div class="ts" style="margin-top:20px;color:#007aff;">💡 <b>For fullscreen:</b> Add to Home Screen!</div></div>`;
-    }else if(d.path==="system:settings"){
-        wc.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px;">⚙️</div><h2 style="margin-bottom:30px">Settings</h2><div class="sg"><div class="sh">Appearance</div><div class="so"><div class="si"><span class="sl">Theme</span><div class="sr"><select id="tsl"><option value="dark">Dark</option><option value="light">Light</option><option value="blue">Ocean Blue</option><option value="purple">Purple</option><option value="green">Forest</option><option value="red">Red Velvet</option><option value="orange">Sunset</option><option value="pink">Pink Dream</option></select></div></div><div class="si"><span class="sl">Font</span><div class="sr"><select id="fsl"><option value="system">System</option><option value="serif">Serif</option><option value="mono">Mono</option><option value="rounded">Rounded</option></select></div></div><div class="si"><span class="sl">Background</span><div class="sr"><div class="bgp" id="bgp"></div><label for="bgi" class="fb">Upload</label><input type="file" id="bgi" accept="image/*"></div></div></div></div><div class="sg"><div class="sh">Status Bar</div><div class="so"><div class="si"><span class="sl">Battery</span><div class="sr"><select id="bbs"><option value="show">Show</option><option value="hide">Hide</option></select></div></div></div></div><div class="sg"><div class="sh">Advanced</div><div class="so"><div class="si"><span class="sl">Reset Icon Order</span><div class="sr"><button class="fb" id="rio">Reset</button></div></div><div class="si"><span class="sl">Clear Background</span><div class="sr"><button class="fb db" id="cbg">Clear</button></div></div><div class="si"><span class="sl">Reset All</span><div class="sr"><button class="fb db" id="ra">Reset</button></div></div></div></div></div>`;
-        setTimeout(()=>{
-            const ts=wc.querySelector('#tsl'),fs=wc.querySelector('#fsl'),bbs=wc.querySelector('#bbs'),bgi=wc.querySelector('#bgi'),bgp=wc.querySelector('#bgp'),rio=wc.querySelector('#rio'),cbg=wc.querySelector('#cbg'),ra=wc.querySelector('#ra');
-            ts.value=gt();fs.value=gf();bbs.value=gbb();
-            const bg=gb();if(bg)bgp.style.backgroundImage=`url(${bg})`;
-            bgp.addEventListener('click',()=>bgi.click());
-            ts.addEventListener('change',e=>{sv(K.t,e.target.value);sv(K.bg,'');at()});
-            fs.addEventListener('change',e=>{sv(K.f,e.target.value);af()});
-            bbs.addEventListener('change',e=>{sv(K.bb,e.target.value);ab()});
-            bgi.addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=ev=>{const b64=ev.target.result;sv(K.bg,b64);bgp.style.backgroundImage=`url(${b64})`;at()};r.readAsDataURL(f)}});
-            cbg.addEventListener('click',()=>{if(confirm('Clear custom background?')){sv(K.bg,'');bgp.style.backgroundImage='';at()}});
-            rio.addEventListener('click',()=>{if(confirm('Reset icon order?')){L.removeItem(K.o);loadApps()}});
-            ra.addEventListener('click',()=>{if(confirm('Reset ALL settings to default?')){L.clear();location.reload()}});
-        },100);
-    }else{
-        const i=ce('iframe');
-        i.className='aif';i.src=d.path;i.setAttribute('sandbox','allow-scripts allow-forms allow-popups allow-modals allow-same-origin');
-        wc.appendChild(i);
+// Moves app content from the main window (awc) to the card (cardEl)
+function moveContentToCard(app) {
+    if (app.dom.parentNode) {
+        app.dom.parentNode.removeChild(app.dom);
     }
-
-    const ih=ce('div');ih.className='hi';
-    let sy=0;
-    ih.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});
-    ih.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});
-    
-    w.appendChild(wc);
-    w.appendChild(ih);
-    E.ad.appendChild(w); 
-    
-    return{...d, we:w, ce:null, appContentEl: wc}
-},
-
-la=async a=>{
-    const ex=S.r.find(x=>x.path===a.path);
-    let ac = ex;
-    if(ex){S.r=S.r.filter(x=>x.path!==a.path);S.r.push(ex)}
-    else {ac = ca(a); S.r.push(ac);}
-    
-    if(ac.ce) moveContentFromCard(ac);
-    
-    cs();
-    
-    requestAnimationFrame(()=>{
-        ac.we.classList.add('ac');
-        E.h.classList.add('zo');
-        S.c=ac.path;
-        
-        S.r.forEach(x=>x.we.style.zIndex=10);
-        ac.we.style.zIndex=20;
-    })
-},
-
-// Switcher and App Closing Logic (using DOM transfer for live cards)
-hg=_=>{if(S.c){ma();os()}else if(S.sw)cs();else if(S.r.length>0)os()},
-ma=_=>{if(!S.c)return;const a=S.r.find(x=>x.path===S.c);if(a)a.we.classList.remove('ac');E.h.classList.remove('zo');S.c=null},
-cla=p=>{
-    const i=S.r.findIndex(x=>x.path===p);if(i===-1)return;
-    const a=S.r[i];
-    if(a.ce) moveContentFromCard(a); 
-
-    a.we.remove();
-    if(a.ce) a.ce.remove();
-    S.r.splice(i,1);
-    
-    if(S.r.length===0) E.er.style.display='block';
-    if(S.c===p) S.c=null;
-},
-
-moveContentToCard=a=>{
-    if(!a.ce || !a.appContentEl) return;
-    const appContentEl = a.appContentEl;
-    const cardContentHolder = a.ce.querySelector('.card-content-holder');
-    const scaledWrapper = ce('div');
-    scaledWrapper.style.cssText = 'transform: scale(0.35); transform-origin: top left; width: 375px; height: 812px;';
-    scaledWrapper.className = 'scaled-app-content';
-    appContentEl.style.width = '100%';
-    appContentEl.style.height = '100%';
-    appContentEl.style.overflow = 'auto';
-
-    appContentEl.parentNode.removeChild(appContentEl);
-    scaledWrapper.appendChild(appContentEl);
-    cardContentHolder.appendChild(scaledWrapper);
-    a.scaledWrapper = scaledWrapper;
-},
-
-moveContentFromCard=a=>{
-    if(!a.appContentEl || !a.scaledWrapper) return;
-    const appWindow = a.we; 
-    const appContentEl = a.appContentEl;
-    const scaledWrapper = a.scaledWrapper;
-    
-    if(scaledWrapper){
-        scaledWrapper.removeChild(appContentEl);
-        appWindow.insertBefore(appContentEl, appWindow.querySelector('.hi')); 
-        scaledWrapper.remove();
-        delete a.scaledWrapper;
+    if (app.cardEl) {
+        // Find the designated content holder on the card
+        const contentHolder = app.cardEl.querySelector('.content-holder-class'); 
+        if (contentHolder) {
+            contentHolder.appendChild(app.dom);
+        }
     }
-},
+}
 
-os=_=>{
-    S.sw=1;
-    E.h.classList.add('zo');
-    E.as.style.display='flex';
-    E.rcb.style.display='flex';
-    E.er.style.display=S.r.length===0?'block':'none';
-    rsc();
-    setTimeout(()=>{if(E.scc.lastElementChild){const cw=E.scc.lastElementChild.offsetWidth,cow=E.as.offsetWidth,sp=E.scc.lastElementChild.offsetLeft-(cow/2)+(cw/2);E.as.scrollLeft=sp}hss()},10)},
+// Moves app content from the card (cardEl) back to the main window (awc)
+function restoreContentToWindow(app) {
+    const awc = document.getElementById("awc");
+    if (app.dom.parentNode) {
+        app.dom.parentNode.removeChild(app.dom);
+    }
+    awc.appendChild(app.dom);
+}
 
-rsc=_=>{
-    E.scc.innerHTML='';
-    S.r.forEach(a=>{
-        const c=ce('div'); c.className='scd';
-        const h=ce('div'); h.className='ch';
-        h.innerHTML=`<span style="color:#fff;font-size:12px;font-weight:bold">${a.title}</span>`; c.appendChild(h);
-        const cardContentHolder = ce('div'); cardContentHolder.className = 'card-content-holder'; c.appendChild(cardContentHolder);
-        const tl=ce('div'); tl.className='ctl'; c.appendChild(tl);
-        
-        a.ce=c;
-        moveContentToCard(a); 
+// --- MODIFIED APP LOGIC ---
+function launchApp(appData) {
+    let existing = runningApps.find(a => a.path === appData.path);
+    if(!existing) {
+        existing = { ...appData, dom: createInternalAppDOM(appData) };
+        runningApps.push(existing);
+    }
+    
+    // RESTORE content from card and append to main window container
+    restoreContentToWindow(existing);
 
-        let ht=null,gr=0,sy=0;
-        tl.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;gr=0;ht=setTimeout(()=>{gr=1;c.style.transform='scale(.95)';if(navigator.vibrate)navigator.vibrate(20)},300)});
-        tl.addEventListener('touchmove',e=>{const dy=e.touches[0].clientY-sy;if(!gr&&Math.abs(dy)>5){clearTimeout(ht);gr=1}if(gr){e.preventDefault();if(dy<0){c.style.transition='none';c.style.transform=`scale(.95) translateY(${dy}px)`}}});
-        tl.addEventListener('touchend',e=>{
-            clearTimeout(ht);
-            if(gr){
-                const dy=e.changedTouches[0].clientY-sy;
-                if(dy<-100){
-                    c.style.transition='transform .3s ease-out';
-                    c.style.transform='translateY(-100vh)';
-                    setTimeout(()=>{moveContentFromCard(a);cla(a.path)},300);
-                }else{
-                    c.style.transition='transform .2s ease';
-                    c.style.transform='scale(1)'
-                }
-                gr=0;
-            }else {la(a)}
-        });
-        E.scc.appendChild(c);
-    })
-},
-
-cs=_=>{
-    S.sw=0;
-    E.as.style.display='none';
-    E.rcb.style.display='none';
-    E.h.classList.remove('zo');
-    E.er.style.display='none';
-    S.r.forEach(a => {
-        moveContentFromCard(a);
-        if(a.ce) a.ce.remove();
-        a.ce = null;
+    requestAnimationFrame(() => {
+        document.getElementById("app-window").classList.add("ac");
+        document.getElementById("h").classList.add("zo");
     });
-},
+    currentApp = existing;
+    if(isSwitcherMode) closeSwitcher();
+}
 
-hss=_=>{if(!S.sw)return;const cl=E.as.scrollLeft+(E.as.clientWidth/2);S.r.forEach(a=>{if(!a.ce)return;const c=a.ce,cn=c.offsetLeft+(c.offsetWidth/2),d=Math.abs(cn-cl);c.style.opacity=d<50?1:.5})},
+function createInternalAppDOM(data) {
+    const w = document.createElement("div");
+    w.style.width = "100%"; w.style.height = "100%";
+    if(data.path === "system:settings") {
+        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
+    } else {
+        const i = document.createElement("iframe");
+        i.className = "aif"; i.src = data.path.includes("system") ? "about:blank" : data.path; 
+        w.appendChild(i);
+    }
+    return w;
+}
 
-// --- GRID POSITIONING & DRAG/RESIZE HANDLERS (Re-added) ---
+function resetFactory() {
+    if(confirm("Reset layout to default?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+    }
+}
+
+function minimizeApp() {
+    if(!currentApp) return;
+    document.getElementById("app-window").classList.remove("ac");
+    currentApp = null;
+}
+
+function closeApp(app) {
+    const idx = runningApps.indexOf(app);
+    if(idx > -1) { 
+        // Ensure content is restored/detached before removal
+        if(app.cardEl) {
+            moveContentToCard(app); // Ensure the DOM is in the card before removal if it was active
+            app.cardEl.remove();
+        } else if (app.dom.parentNode) {
+            app.dom.parentNode.removeChild(app.dom); // Clean up if it was in the main window
+        }
+
+        runningApps.splice(idx, 1); 
+    }
+    if(runningApps.length === 0) closeSwitcher();
+}
+
+// --- MODIFIED SWITCHER ---
+function openSwitcher() {
+    isSwitcherMode = true;
+    const s = document.getElementById("switcher");
+    const sc = document.getElementById("scc");
+    const h = document.getElementById("h");
+    s.style.display = 'flex';
+    document.getElementById("rcb").style.display = 'flex';
+    h.classList.add("zo");
+    sc.innerHTML = '';
+    
+    runningApps.forEach(app => {
+        const card = document.createElement("div");
+        card.className = "scd";
+        const header = document.createElement("div");
+        header.className = "ch";
+        header.innerHTML = `<span style="color:#fff;font-size:12px;font-weight:bold">${app.title}</span>`;
+        card.appendChild(header);
+        
+        // This is the dedicated container for the app DOM
+        const contentHolder = document.createElement("div");
+        contentHolder.className = "content-holder-class"; // Add class for helper function
+        contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
+        card.appendChild(contentHolder);
+        
+        const touchLayer = document.createElement("div");
+        touchLayer.className = "ctl";
+        card.appendChild(touchLayer);
+        setupSwitcherGestures(touchLayer, card, app);
+        sc.appendChild(card);
+        app.cardEl = card; 
+        
+        // MOVE the content now that the card structure is ready
+        moveContentToCard(app); 
+    });
+}
+
+
+function closeSwitcher() {
+    isSwitcherMode = false;
+    document.getElementById("switcher").style.display = 'none';
+    document.getElementById("rcb").style.display = 'none';
+    document.getElementById("h").classList.remove("zo");
+
+    // Restore all app contents back to the main app window (awc)
+    runningApps.forEach(app => {
+        if(app.cardEl) {
+            restoreContentToWindow(app);
+            app.cardEl.remove();
+            app.cardEl = null;
+        }
+    });
+}
+
+function setupSwitcherGestures(touchLayer, card, app) {
+    let startX = 0, startY = 0, isVertical = false, isHorizontal = false;
+    
+    touchLayer.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isVertical = false;
+        isHorizontal = false;
+    }, {passive:false});
+
+    touchLayer.addEventListener('touchmove', (e) => {
+        if(isHorizontal) return; // If scrolling left/right, ignore vertical
+        
+        const cx = e.touches[0].clientX;
+        const cy = e.touches[0].clientY;
+        const dx = cx - startX;
+        const dy = cy - startY;
+
+        // Determine axis
+        if(!isVertical && !isHorizontal) {
+            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
+                isHorizontal = true;
+            } else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
+                isVertical = true;
+            }
+        }
+
+        if(isVertical) {
+            e.preventDefault(); // Stop scrolling, start moving card
+            if(dy < 0) {
+                 card.style.transform = `scale(0.9) translateY(${dy}px)`;
+                 card.style.opacity = `${1 - Math.abs(dy)/500}`;
+            }
+        }
+    }, {passive:false});
+
+    touchLayer.addEventListener('touchend', (e) => {
+        if(isVertical) {
+            const dy = e.changedTouches[0].clientY - startY;
+            if(dy < -100) {
+                card.style.transition = "transform 0.3s ease, opacity 0.3s";
+                card.style.transform = "translateY(-100vh)";
+                card.style.opacity = "0";
+                setTimeout(() => closeApp(app), 300);
+            } else {
+                card.style.transition = "transform 0.2s ease, opacity 0.2s";
+                card.style.transform = "scale(1)";
+                card.style.opacity = "1";
+            }
+        } else if(!isHorizontal) {
+             // If we didn't scroll much in either direction, treat as tap
+             const dy = e.changedTouches[0].clientY - startY;
+             const dx = e.changedTouches[0].clientX - startX;
+             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                 launchApp(app);
+             }
+        }
+    });
+}
+
+// --- UTILS ---
 function updateVisualPosition(item) {
     const offsetX = (item.cols * COL_WIDTH - item.w) / 2;
     const offsetY = (item.rows * ROW_HEIGHT - item.h) / 2;
@@ -540,30 +344,18 @@ function updateVisualPosition(item) {
 }
 function resolveCollisions(movedItem) {
     items.filter(i => i !== movedItem).forEach(other => {
-        const otherWidth = other.cols * COL_WIDTH;
-        const otherHeight = other.rows * ROW_HEIGHT;
-        
-        if (rectIntersect(movedItem, other)) {
-            const others = items.filter(x => x !== other && x !== movedItem);
-            // Calculate coordinates based on grid units
+        if(rectIntersect(movedItem, other)) {
+            const others = items.filter(x => x !== other);
             const nextSpot = findNextEmptySpot(other.cols, other.rows, others);
-            other.x = nextSpot.x;
-            other.y = nextSpot.y;
+            other.x = nextSpot.x; other.y = nextSpot.y;
             updateVisualPosition(other);
         }
     });
 }
 function rectIntersect(i1, i2) {
-    const margin = i1.type === 'app' ? 20 : 10;
-    const i1W = i1.cols * COL_WIDTH;
-    const i1H = i1.rows * ROW_HEIGHT;
-    const i2W = i2.cols * COL_WIDTH;
-    const i2H = i2.rows * ROW_HEIGHT;
-
-    return (i1.x + margin < i2.x + i2W) && 
-           (i1.x + i1W - margin > i2.x) &&
-           (i1.y + margin < i2.y + i2H) && 
-           (i1.y + i1H - margin > i2.y);
+    const margin = 10;
+    return (i1.x + margin < i2.x + i2.cols * COL_WIDTH) && (i1.x + i1.cols * COL_WIDTH - margin > i2.x) &&
+           (i1.y + margin < i2.y + i2.rows * ROW_HEIGHT) && (i1.y + i1.rows * ROW_HEIGHT - margin > i2.y);
 }
 function findNextEmptySpot(cols, rows, currentItems = items) {
     let rowIdx = 0;
@@ -571,122 +363,53 @@ function findNextEmptySpot(cols, rows, currentItems = items) {
         for(let colIdx = 0; colIdx < COL_COUNT; colIdx++) {
             if(colIdx + cols > COL_COUNT) continue; 
             const testX = colIdx * COL_WIDTH; const testY = rowIdx * ROW_HEIGHT;
-            
-            const collision = currentItems.some(i => {
-                const iW = i.cols * COL_WIDTH;
-                const iH = i.rows * ROW_HEIGHT;
-                const testW = cols * COL_WIDTH;
-                const testH = rows * ROW_HEIGHT;
-                
-                return testX < i.x + iW && testX + testW > i.x && 
-                       testY < i.y + iH && testY + testH > i.y;
-            });
-            
+            const collision = currentItems.some(i => testX < i.x + i.cols * COL_WIDTH && testX + cols * COL_WIDTH > i.x && testY < i.y + i.rows * ROW_HEIGHT && testY + rows * ROW_HEIGHT > i.y);
             if(!collision) return {x: testX, y: testY};
         }
         rowIdx++; if(rowIdx > 500) return {x:0, y:0};
     }
 }
 function updateContainerHeight() {
-    let max = 0; 
-    items.forEach(i => { 
-        const bottom = i.y + (i.rows * ROW_HEIGHT); 
-        if(bottom > max) max = bottom; 
-    });
-    E.ag.style.minHeight = (max + 150) + "px";
+    let max = 0; items.forEach(i => { const bottom = i.y + i.h; if(bottom > max) max = bottom; });
+    document.getElementById("ag").style.minHeight = (max + 300) + "px";
 }
+function toggleEdit(val) { isEditMode = val; document.body.classList.toggle("edit-mode", val); closeAddPanel(); }
+function openAddPanel(){ document.getElementById("add-panel").classList.add("open"); }
+function closeAddPanel(){ document.getElementById("add-panel").classList.remove("open"); }
+function deleteItem(el) { 
+    const idx = items.findIndex(i => i.el === el); 
+    if(idx > -1) { items.splice(idx, 1); el.remove(); updateContainerHeight(); saveLayout(); } 
+}
+function updateClock() { const d = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById("c").innerText = d; document.querySelectorAll("#w-clock").forEach(e => e.innerText = d); }
 
-// Icon Drag Setup (for Apps)
+// --- DRAG/RESIZE HANDLERS ---
 function setupDrag(item){
     let startX, startY, startLeft, startTop;
     const onStart = (e) => {
-        if(!isEditMode && item.type === 'app') {
-            // Initiate long press detection for reordering
-            e.preventDefault(); 
-            item.el.dataset.ht = setTimeout(() => {
-                toggleEdit(true);
-                startDrag(e, item);
-            }, 300);
-            return;
-        }
-        if(isEditMode) startDrag(e, item);
-    };
-
-    const startDrag = (e, item) => {
-        e.preventDefault(); 
-        item.el.classList.add("dragging");
-        startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
-        startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
-        document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
-    }
-    
-    const onMove = (e) => {
-        e.preventDefault(); 
-        const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
-        
-        // Simple collision feedback or reordering logic here could be added
-    };
-    
-    const onEnd = () => {
-        clearTimeout(item.el.dataset.ht);
-
-        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
-        item.el.classList.remove("dragging");
-
-        // Calculate final grid position
-        const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
-        let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
-        
-        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
-        
-        item.x = col * COL_WIDTH; 
-        item.y = row * ROW_HEIGHT;
-        
-        // Finalize position and resolve collisions
-        resolveCollisions(item); 
-        updateVisualPosition(item); 
-        updateContainerHeight(); 
-        saveLayout();
-    };
-
-    item.el.addEventListener("touchstart", onStart, {passive:false}); 
-    item.el.addEventListener("touchend", () => clearTimeout(item.el.dataset.ht));
-
-}
-
-// Widget Drag Setup (for Widgets)
-function setupWidgetDrag(item){
-    let startX, startY, startLeft, startTop;
-    const onStart = (e) => {
         if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
-            e.preventDefault(); 
-            item.el.classList.add("dragging");
+            e.preventDefault(); item.el.classList.add("dragging");
             startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
             startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
             document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+            document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
         }
     };
     const onMove = (e) => {
-        e.preventDefault(); 
-        const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
         item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
     };
     const onEnd = () => {
         document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
         item.el.classList.remove("dragging");
-        
         const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
         let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
-        
         if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
-        
         item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
         resolveCollisions(item); updateVisualPosition(item); updateContainerHeight(); saveLayout();
     };
-    item.el.addEventListener("touchstart", onStart, {passive:false});
+    item.el.addEventListener("touchstart", onStart, {passive:false}); item.el.addEventListener("mousedown", onStart);
 }
-
 function setupResize(item){
     const handle = item.el.querySelector(".resize-handle");
     let startX, startY, startW, startH;
@@ -695,75 +418,36 @@ function setupResize(item){
         startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
         startW = item.w; startH = item.h;
         document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
+        document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
     };
     const onMove = (e) => {
-        e.preventDefault(); 
-        const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); 
-        let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
-        
-        // Constraints
+        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
+        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
         if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4; if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
-        if(item.subtype === 'torch') { newCols = 1; newRows = 1; } // Torch is fixed 1x1
-
         const pxW = newCols * COL_WIDTH - 15; const pxH = newRows * ROW_HEIGHT - 15;
         item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
-        
         if(newCols !== item.cols || newRows !== item.rows) {
             item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
             if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
-            if(item.subtype === "clock") uc();
+            if(item.subtype === "clock") updateClock();
             resolveCollisions(item); updateVisualPosition(item); updateContainerHeight();
         }
     };
     const onEnd = () => {
         document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
+        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
         item.el.classList.remove("resizing"); updateVisualPosition(item); saveLayout();
     };
-    handle.addEventListener("touchstart", onStart, {passive:false});
+    handle.addEventListener("touchstart", onStart, {passive:false}); handle.addEventListener("mousedown", onStart);
 }
-
-
-// --- INITIALIZATION ---
-init=async()=>{
-    SCREEN_W = E.ag.clientWidth || 335;
+window.addEventListener("resize", () => {
+    SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
     COL_WIDTH = SCREEN_W / COL_COUNT;
-
-    uc();setInterval(uc,1e3);
-    
-    // Load persisted layout/apps first
-    loadLayout(); 
-    
-    at();af();ab();
-    initFullscreen();
-    
-    // Gestures
-    let sy=0;
-    E.hi.addEventListener('touchstart',e=>{sy=e.touches[0].clientY;e.preventDefault()});
-    E.hi.addEventListener('touchend',e=>{if(e.changedTouches[0].clientY-sy<-40)hg()});
-    E.rcb.addEventListener('click',cs);
-    E.as.addEventListener('scroll',hss);
-
-    // Initial edit mode check on background long press
-    E.h.addEventListener("touchstart", e => {
-        if (e.target.id === 'h' || e.target.classList.contains('ag')) {
-            e.target.dataset.pressTimer = setTimeout(() => {
-                toggleEdit(true);
-            }, 800);
-        }
+    items.forEach(i => {
+        const col = Math.round(i.x / (SCREEN_W/COL_COUNT)); 
+        i.x = col * COL_WIDTH; i.w = i.cols * COL_WIDTH - (i.type==="app"?0:15);
+        updateVisualPosition(i);
     });
-    E.h.addEventListener("touchend", e => {
-        clearTimeout(e.target.dataset.pressTimer);
-        if (g("add-panel").classList.contains("open")) {
-            closeAddPanel();
-        }
-    });
-};
-
-// --- PWA INIT (Unchanged) ---
-initFullscreen=_=>{const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);const isChrome=/CriOS/.test(navigator.userAgent);const isSafari=isIOS&&/Safari/.test(navigator.userAgent)&&!/CriOS/.test(navigator.userAgent);const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone;if(!isStandalone&&!gv(K.pw,'')){const prompt=g('pwaPrompt'),text=g('promptText');if(isChrome&&isIOS){text.innerHTML='<strong>📱 Best Experience</strong><br>Open in Safari → Share → Add to Home Screen for fullscreen mode!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}else if(isSafari){text.innerHTML='<strong>📱 Add to Home Screen</strong><br>Tap Share button → Add to Home Screen for the best experience!';prompt.style.display='block';setTimeout(()=>{if(prompt.style.display!=='none'){sv(K.pw,'1')}},8000)}}if(isIOS&&isChrome){window.scrollTo(0,1);setTimeout(()=>window.scrollTo(0,1),100)}let hasInteracted=false;const tryFullscreen=()=>{if(hasInteracted)return;hasInteracted=true;const elem=D.documentElement;if(elem.requestFullscreen){elem.requestFullscreen().catch(()=>{})}else if(elem.webkitRequestFullscreen){elem.webkitRequestFullscreen().catch(()=>{})}};D.addEventListener('touchstart',tryFullscreen,{once:true});D.addEventListener('click',tryFullscreen,{once:true})};
-
+});
 init();
 </script>
-</body>
-</html>
