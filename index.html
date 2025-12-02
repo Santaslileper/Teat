@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#000000">
 
 <style>
-/* --- CORE STYLES --- */
+/* --- CORE --- */
 *{margin:0;padding:0;box-sizing:border-box}
 body,html{touch-action:none;overscroll-behavior:none;height:100%;overflow:hidden;background:#000}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;user-select:none;-webkit-user-select:none}
@@ -20,6 +20,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 /* --- SYSTEM UI --- */
 .s{position:relative;width:100%;height:100%;z-index:2}
 .sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
+
+/* HOME INDICATOR */
 .hi {position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; display: flex; justify-content: center; align-items: center; z-index: 10000; pointer-events: auto; touch-action: none;}
 .hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px;box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
 
@@ -28,18 +30,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
 #ag{position:relative;width:100%;min-height:100vh;padding-bottom:200px}
 
-/* Grid Items */
+/* ITEMS */
 .grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
 .grid-item.resizing{transition:none;z-index:100;opacity:.9;background:rgba(44,44,46,.9)!important;border:1px solid #007aff!important;border-radius:20px}
 .edit-mode .grid-item:not(.resizing):not(.dragging){animation:jiggle .3s infinite linear;cursor:grab}
 .edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
 @keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
+/* ICONS & COLORS */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
-.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* App Styles */
 .ai.files { background: linear-gradient(135deg, #1CB5E0 0%, #000851 100%); }
 .ai.news { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #93a5cf 100%); }
 .ai.info { background: linear-gradient(135deg, #e1eec3 0%, #f05053 100%); }
@@ -53,7 +54,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .ai.settings { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color:#333; }
 .ai.calc { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
 
-/* Widgets */
+.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* WIDGETS */
 .widget{background:0 0;backdrop-filter:none;border:none;border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;transition:background .3s,border .3s,backdrop-filter .3s}
 .edit-mode .widget{background:rgba(30,41,59,.6);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 15px rgba(0,0,0,.3)}
 .widget-content{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:10px;text-align:center;width:100%;height:100%;overflow:hidden;text-shadow:0 2px 8px rgba(0,0,0,.6)}
@@ -63,11 +66,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .edit-mode .del-btn,.edit-mode .resize-handle{display:block}
 .loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
 @keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
+.torch-on {background:#ffc107!important;} /* Added style for torch button active state */
 
 /* --- APP WINDOW --- */
-#windows-container {position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none;}
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
 .aw.ac{transform:translate3d(0,0,0)}
+/* App Content Container: Fixed to be black so text is visible */
 .awc{width:100%;height:100%;overflow:hidden;background:#000;position:relative} 
 .aif{width:100%;height:100%;border:none;display:block;background:#fff;}
 
@@ -76,10 +80,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
 .scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#1c1c1e;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;overflow:hidden;transform:scale(1);transition:transform 0.1s}
 .ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
+/* Touch Layer on Cards */
 .ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:200;} 
 .rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;z-index:200;display:none}
 
-/* UI & Settings Styles from Backup */
+/* UI */
 #edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
 .edit-mode #edit-ui{opacity:1;pointer-events:auto}
 button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border:none;border-radius:20px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3)}
@@ -87,32 +92,17 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 #add-panel.open{bottom:0}
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
 
-/* Internal App Content Styles */
-.tc{padding:60px 20px;color:#fff;text-align:center;background:#111;height:100%;width:100%;overflow-y:auto}
-.ts{margin-bottom:15px;font-size:18px;color:#ccc;text-align:left}
-.sg{width:100%;max-width:320px;margin:0 auto 25px auto}
-.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:left;padding:0 15px}
-.so{background:#1c1c1e;border-radius:10px;overflow:hidden}
-.si{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #2c2c2e;min-height:44px}
-.si:last-child{border-bottom:none}
-.sl{color:#fff;font-size:16px}
-.sr{display:flex;align-items:center;gap:10px}
-.sr select,.sr input{padding:6px 10px;font-size:14px;border-radius:6px;background:#2c2c2e;color:#fff;border:1px solid #3a3a3c}
-.sr input[type="file"]{display:none}
-.fb{padding:8px 15px;font-size:14px;border-radius:6px;background:#007aff;color:#fff;border:none;cursor:pointer}
-.db{background:#ff3b30}
-.bgp{width:100px;height:60px;border-radius:6px;background-size:cover;background-position:center;border:2px solid #3a3a3c;cursor:pointer}
+/* INTERNAL APPS - Styled for Dark Mode */
+.tc{padding:60px 20px;color:#fff;text-align:center;background:#000;height:100%;width:100%}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
 </style>
 </head>
 <body>
 
 <div class="p" id="phone">
     <div class="s">
-        <div class="sb"><span id="c">12:00</span><span id="batt">100%</span></div>
+        <div class="sb"><span id="c">17:55</span><span id="batt">100%</span></div>
         <div class="h" id="h"><div id="ag"></div></div>
-        
-        <div id="windows-container"></div>
-
+        <div class="aw" id="app-window"><div class="awc" id="awc"></div></div>
         <div class="as" id="switcher"><div class="sc" id="scc"></div></div>
         <div id="rcb" class="rcx" onclick="closeSwitcher()">✕</div>
         <div id="edit-ui">
@@ -125,6 +115,7 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 
 <div id="add-panel">
     <h3 style="color:#fff;margin-bottom:10px">Add Widget</h3>
+    <div class="add-opt" onclick="addWidget('torch')">🔦 Torch Button</div>
     <div class="add-opt" onclick="addWidget('clock')">⏰ Clock</div>
     <div class="add-opt" onclick="addWidget('weather')">☁️ Weather</div>
     <div class="add-opt" onclick="addWidget('calendar')">📅 Calendar</div>
@@ -142,8 +133,8 @@ let items = [];
 let runningApps = []; 
 let currentApp = null; 
 let isSwitcherMode = false;
-const STORAGE_KEY = 'os_layout_final_v4';
-const K={t:'appLauncherTheme',f:'appLauncherFont',bg:'appLauncherBg',bb:'appLauncherBattery'}; // Settings Keys
+let isTorchOn = false; // Added state for the Torch Button
+const STORAGE_KEY = 'os_layout_final_v3';
 
 // --- INITIAL LAYOUT ---
 const defaultApps = [
@@ -163,7 +154,6 @@ const defaultApps = [
 
 function init() {
     updateClock(); setInterval(updateClock, 1000);
-    applySettings(); // Load theme/bg
 
     const savedLayout = localStorage.getItem(STORAGE_KEY);
     if (savedLayout) {
@@ -191,7 +181,13 @@ function init() {
             pressTimer = setTimeout(() => toggleEdit(true), 800);
         }
     });
-    grid.addEventListener("touchend", () => clearTimeout(pressTimer));
+    grid.addEventListener("touchend", () => {
+        clearTimeout(pressTimer);
+        // NEW: Close the add panel if it was open and user lifted finger.
+        if(document.getElementById("add-panel").classList.contains("open")) {
+            closeAddPanel();
+        }
+    });
 }
 
 function loadDefaultApps() {
@@ -233,14 +229,26 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
         el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
         el.classList.add("widget");
+        el.style.width = wPx + "px";
+        el.style.height = hPx + "px";
         el.innerHTML = `<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}</div>`;
+        
+        // Custom interaction for Torch widget
+        if(data.subtype === 'torch') {
+            el.onclick = (e) => { 
+                if(!isEditMode) toggleTorch(el); 
+            };
+            if (data.isTorchOn) el.classList.add('torch-on');
+        }
+
         el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
     }
     document.getElementById("ag").appendChild(el);
     const itemObj = { 
         el: el, type: type, subtype: data.subtype, 
         x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
-        title: data.title, icon: data.icon, path: data.path, class: data.class
+        title: data.title, icon: data.icon, path: data.path, class: data.class,
+        isTorchOn: data.subtype === 'torch' ? (data.isTorchOn || false) : undefined // Persist state
     };
     updateVisualPosition(itemObj);
     setupDrag(itemObj);
@@ -252,129 +260,124 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
 
 function addWidget(type) {
     closeAddPanel();
-    const spot = findNextEmptySpot(2, 2);
-    const widgetItem = createItem("widget", spot.x, spot.y, 2, 2, { subtype: "loading" });
+    // Default size for torch button is 1x1
+    const w = type === 'torch' ? 1 : 2;
+    const h = type === 'torch' ? 1 : 2;
+
+    const spot = findNextEmptySpot(w, h);
+    const widgetItem = createItem("widget", spot.x, spot.y, w, h, { subtype: "loading" });
     resolveCollisions(widgetItem); updateVisualPosition(widgetItem); toggleEdit(true);
+    
     setTimeout(() => {
         widgetItem.subtype = type;
-        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, 2);
+        widgetItem.cols = w;
+        widgetItem.rows = h;
+        widgetItem.w = w * COL_WIDTH - 15;
+        widgetItem.h = h * ROW_HEIGHT - 15;
+        widgetItem.el.style.width = widgetItem.w + "px";
+        widgetItem.el.style.height = widgetItem.h + "px";
+        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, w);
         if(type === 'clock') updateClock();
+        
+        // Re-apply click handler for Torch after content is loaded
+        if(type === 'torch') {
+            widgetItem.el.onclick = (e) => { 
+                if(!isEditMode) toggleTorch(widgetItem.el); 
+            };
+            // Set initial state based on global torch state
+            if(isTorchOn) widgetItem.el.classList.add('torch-on');
+        }
+
         resolveCollisions(widgetItem); updateVisualPosition(widgetItem); saveLayout();
     }, 1000);
 }
+
+// Function to handle the Torch Button interaction
+function toggleTorch(el) {
+    isTorchOn = !isTorchOn;
+    
+    // Toggle background state on the clicked widget
+    el.classList.toggle('torch-on', isTorchOn);
+    
+    // Update all other torch widgets to match the state
+    items.filter(i => i.subtype === 'torch' && i.el !== el).forEach(item => {
+        item.isTorchOn = isTorchOn;
+        item.el.classList.toggle('torch-on', isTorchOn);
+    });
+
+    // Save layout to persist state (optional, but good practice)
+    saveLayout(); 
+
+    // Optional: Visually show the 'torch' (e.g., set the phone background to white)
+    document.getElementById('phone').style.backgroundColor = isTorchOn ? '#fff' : '#050505';
+    document.getElementById('c').style.color = isTorchOn ? '#000' : '#fff';
+    document.getElementById('batt').style.color = isTorchOn ? '#000' : '#fff';
+}
+
 
 function getWidgetHTML(type, cols) {
     if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NEW YORK</div>`;
     if(type === "weather") return `<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
     if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
     if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
+    if(type === "torch") return `<div style="font-size:30px;color:rgba(0,0,0,0.8);line-height:60px">🔦</div>`;
     return "Widget";
 }
 
-// --- APP LOGIC (Fused Logic) ---
+// --- APP LOGIC ---
 function launchApp(appData) {
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
-        // Create the window
-        const win = createAppWindow(appData);
-        existing = { ...appData, win: win };
-        document.getElementById("windows-container").appendChild(win);
+        existing = { ...appData, dom: createInternalAppDOM(appData) };
         runningApps.push(existing);
     }
-    
-    // Logic from backup.html: restore content if it was in card
     restoreContentToWindow(existing);
 
+    const awc = document.getElementById("awc");
+    awc.innerHTML = ''; 
+    awc.appendChild(existing.dom);
+    
     requestAnimationFrame(() => {
-        runningApps.forEach(a => a.win.style.zIndex = 50);
-        existing.win.style.zIndex = 60;
-        existing.win.classList.add("ac");
+        document.getElementById("app-window").classList.add("ac");
         document.getElementById("h").classList.add("zo");
     });
     currentApp = existing;
     if(isSwitcherMode) closeSwitcher();
 }
 
-function createAppWindow(data) {
+function createInternalAppDOM(data) {
     const w = document.createElement("div");
-    w.className = 'aw';
-    const wc = document.createElement("div");
-    wc.className = 'awc';
-
-    // --- DATA INJECTION (Matching backup.html) ---
+    w.style.width = "100%"; w.style.height = "100%";
     if(data.path === "system:settings") {
-        wc.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px;">⚙️</div><h2 style="margin-bottom:30px">Settings</h2><div class="sg"><div class="sh">Appearance</div><div class="so"><div class="si"><span class="sl">Theme</span><div class="sr"><select id="tsl"><option value="dark">Dark</option><option value="light">Light</option><option value="blue">Ocean Blue</option><option value="purple">Purple</option><option value="green">Forest</option><option value="red">Red Velvet</option><option value="orange">Sunset</option><option value="pink">Pink Dream</option></select></div></div><div class="si"><span class="sl">Background</span><div class="sr"><div class="bgp" id="bgp"></div><label for="bgi" class="fb">Upload</label><input type="file" id="bgi" accept="image/*"></div></div></div></div><div class="sg"><div class="sh">Status Bar</div><div class="so"><div class="si"><span class="sl">Battery</span><div class="sr"><select id="bbs"><option value="show">Show</option><option value="hide">Hide</option></select></div></div></div></div><div class="sg"><div class="sh">Advanced</div><div class="so"><div class="si"><span class="sl">Reset Icon Order</span><div class="sr"><button class="fb" id="rio">Reset</button></div></div><div class="si"><span class="sl">Clear Background</span><div class="sr"><button class="fb db" id="cbg">Clear</button></div></div><div class="si"><span class="sl">Reset All</span><div class="sr"><button class="fb db" id="ra">Reset</button></div></div></div></div></div>`;
-        
-        // Settings Listeners
-        setTimeout(() => {
-            const ts=wc.querySelector('#tsl'), bgi=wc.querySelector('#bgi'), bgp=wc.querySelector('#bgp'), rio=wc.querySelector('#rio'), cbg=wc.querySelector('#cbg'), ra=wc.querySelector('#ra');
-            ts.value=localStorage.getItem(K.t)||'dark';
-            const bg=localStorage.getItem(K.bg);
-            if(bg) bgp.style.backgroundImage=`url(${bg})`;
-            
-            ts.addEventListener('change',e=>{ localStorage.setItem(K.t,e.target.value); applySettings(); });
-            bgi.addEventListener('change',e=>{
-                const f=e.target.files[0];
-                if(f){ const r=new FileReader(); r.onload=ev=>{ const b64=ev.target.result; localStorage.setItem(K.bg,b64); bgp.style.backgroundImage=`url(${b64})`; applySettings(); }; r.readAsDataURL(f); }
-            });
-            rio.addEventListener('click', () => { localStorage.removeItem(STORAGE_KEY); location.reload(); });
-            ra.addEventListener('click', () => { localStorage.clear(); location.reload(); });
-        }, 100);
-    } 
-    else if(data.path === "system:tutorial") {
-        wc.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div class="ts">1. Swipe Up bar to go Home.</div><div class="ts">2. Hold & Swipe Up for Recents.</div><div class="ts">3. <b>Hold Card</b> & Swipe Up to Close it.</div><div class="ts">4. <b>Long-press & drag</b> icons to reorder.</div></div>`;
-    }
-    else if(data.path.startsWith("system:")) {
-        // Generic Placeholder to prevent white screens for Mortis, Chat, etc.
-        const name = data.title || "System App";
-        wc.innerHTML = `<div class="tc" style="display:flex;flex-direction:column;justify-content:center;height:100%"><div style="font-size:80px;margin-bottom:20px;opacity:0.8">${data.icon}</div><h1 style="margin-bottom:10px">${name}</h1><p style="color:#666">System Application</p></div>`;
-    }
-    else {
-        // External URL / HTML File (For Page 17, etc.)
+        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
+    } else {
         const i = document.createElement("iframe");
-        i.className = "aif"; 
-        i.src = data.path; 
-        wc.appendChild(i);
+        i.className = "aif"; i.src = data.path.includes("system") ? "about:blank" : data.path; 
+        w.appendChild(i);
     }
-    w.appendChild(wc);
     return w;
 }
 
-function applySettings() {
-    const t = localStorage.getItem(K.t) || 'dark';
-    const bg = localStorage.getItem(K.bg);
-    const p = document.getElementById('phone');
-    
-    if(bg) {
-        p.style.background = '#000';
-        p.style.backgroundImage = `url(${bg})`;
-        p.style.backgroundSize = 'cover';
-        p.style.backgroundPosition = 'center';
-    } else {
-        const m={dark:['#000','#fff'], light:['#f5f5f5','#000'], blue:['linear-gradient(135deg,#1e3c72,#2a5298)','#fff'], purple:['linear-gradient(135deg,#2d1b69,#5b3a9d)','#fff']};
-        const th = m[t] || m.dark;
-        p.style.background = th[0];
-        p.style.backgroundImage = 'none';
+function resetFactory() {
+    if(confirm("Reset layout to default?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
     }
 }
 
 function minimizeApp() {
     if(!currentApp) return;
-    currentApp.win.classList.remove("ac");
+    document.getElementById("app-window").classList.remove("ac");
     currentApp = null;
 }
 
 function closeApp(app) {
     const idx = runningApps.indexOf(app);
-    if(idx > -1) { 
-        runningApps.splice(idx, 1); 
-        app.win.remove(); 
-        if(app.cardEl) app.cardEl.remove(); 
-    }
+    if(idx > -1) { runningApps.splice(idx, 1); app.dom.remove(); if(app.cardEl) app.cardEl.remove(); }
     if(runningApps.length === 0) closeSwitcher();
 }
 
-// --- SWITCHER (The "backup.html" Logic) ---
+// --- SWITCHER ---
 function openSwitcher() {
     isSwitcherMode = true;
     const s = document.getElementById("switcher");
@@ -384,7 +387,6 @@ function openSwitcher() {
     document.getElementById("rcb").style.display = 'flex';
     h.classList.add("zo");
     sc.innerHTML = '';
-    
     runningApps.forEach(app => {
         const card = document.createElement("div");
         card.className = "scd";
@@ -394,16 +396,12 @@ function openSwitcher() {
         card.appendChild(header);
         
         const contentHolder = document.createElement("div");
+        // FIXED: Dark background for cards so internal apps show up
         contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
         
-        // --- KEY LOGIC: MOVE DOM FROM WINDOW TO CARD ---
-        const winContent = app.win.querySelector('.awc');
-        if (winContent) {
-            // Move children into card (Preserves iframe state!)
-            while (winContent.firstChild) {
-                contentHolder.appendChild(winContent.firstChild);
-            }
-        }
+        // Move live DOM into card
+        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
+        contentHolder.appendChild(app.dom);
         
         card.appendChild(contentHolder);
         
@@ -417,18 +415,7 @@ function openSwitcher() {
 }
 
 function restoreContentToWindow(app) {
-    // If we are coming back from switcher, move content back
-    if(app.cardEl) {
-        const contentHolder = app.cardEl.children[1]; // The content div
-        const winContent = app.win.querySelector('.awc');
-        if(contentHolder && winContent) {
-            while(contentHolder.firstChild) {
-                winContent.appendChild(contentHolder.firstChild);
-            }
-        }
-        app.cardEl.remove();
-        app.cardEl = null;
-    }
+    if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
 }
 
 function closeSwitcher() {
@@ -436,9 +423,6 @@ function closeSwitcher() {
     document.getElementById("switcher").style.display = 'none';
     document.getElementById("rcb").style.display = 'none';
     document.getElementById("h").classList.remove("zo");
-    
-    // Ensure content is back in windows
-    runningApps.forEach(restoreContentToWindow);
 }
 
 function setupSwitcherGestures(touchLayer, card, app) {
@@ -452,19 +436,24 @@ function setupSwitcherGestures(touchLayer, card, app) {
     }, {passive:false});
 
     touchLayer.addEventListener('touchmove', (e) => {
-        if(isHorizontal) return;
+        if(isHorizontal) return; // If scrolling left/right, ignore vertical
+        
         const cx = e.touches[0].clientX;
         const cy = e.touches[0].clientY;
         const dx = cx - startX;
         const dy = cy - startY;
 
+        // Determine axis
         if(!isVertical && !isHorizontal) {
-            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) isHorizontal = true;
-            else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) isVertical = true;
+            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
+                isHorizontal = true;
+            } else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
+                isVertical = true;
+            }
         }
 
         if(isVertical) {
-            e.preventDefault();
+            e.preventDefault(); // Stop scrolling, start moving card
             if(dy < 0) {
                  card.style.transform = `scale(0.9) translateY(${dy}px)`;
                  card.style.opacity = `${1 - Math.abs(dy)/500}`;
@@ -486,9 +475,12 @@ function setupSwitcherGestures(touchLayer, card, app) {
                 card.style.opacity = "1";
             }
         } else if(!isHorizontal) {
+             // If we didn't scroll much in either direction, treat as tap
              const dy = e.changedTouches[0].clientY - startY;
              const dx = e.changedTouches[0].clientX - startX;
-             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) launchApp(app);
+             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                 launchApp(app);
+             }
         }
     });
 }
@@ -582,6 +574,10 @@ function setupResize(item){
         e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
         let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
         if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4; if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
+        
+        // Torch widget is a fixed 1x1 size, prevent resizing it
+        if(item.subtype === 'torch') { newCols = 1; newRows = 1; }
+
         const pxW = newCols * COL_WIDTH - 15; const pxH = newRows * ROW_HEIGHT - 15;
         item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
         if(newCols !== item.cols || newRows !== item.rows) {
@@ -603,7 +599,11 @@ window.addEventListener("resize", () => {
     COL_WIDTH = SCREEN_W / COL_COUNT;
     items.forEach(i => {
         const col = Math.round(i.x / (SCREEN_W/COL_COUNT)); 
-        i.x = col * COL_WIDTH; i.w = i.cols * COL_WIDTH - (i.type==="app"?0:15);
+        i.x = col * COL_WIDTH; 
+        i.w = i.cols * COL_WIDTH - (i.type==="app"?0:15);
+        i.h = i.rows * ROW_HEIGHT - (i.type==="app"?10:15);
+        i.el.style.width = i.w + "px";
+        i.el.style.height = i.h + "px";
         updateVisualPosition(i);
     });
 });
