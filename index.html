@@ -136,7 +136,7 @@ const K='os_layout_final_v3';
 // --- INITIAL LAYOUT ---
 const D=[
     {title:"Files",icon:"🗃️",class:"files",path:"system:files"},
-    {title:"News",icon:"📰",class:"news",path:"https://www.google.com/search?q=latest+news&igu=1"}, // FIXED: Using a live URL
+    {title:"News",icon:"📰",class:"news",path:"https://www.google.com/search?q=latest+news&igu=1"}, // FIXED: This app will now load a live web page
     {title:"Info",icon:"ℹ️",class:"info",path:"system:tutorial"},
     {title:"Chat",icon:"💬",class:"chat",path:"system:chat"},
     {title:"Mortis",icon:"☠️",class:"mortis",path:"system:mortis"},
@@ -266,7 +266,7 @@ function j(e){
     requestAnimationFrame(()=>{
         document.getElementById("app-window").classList.add("ac");
         document.getElementById("h").classList.add("zo");
-        document.getElementById("hi").style.display='none'; // HIDE HI
+        document.getElementById("hi").style.display='none'; 
     });
     U=t;
     if(M)f();
@@ -280,7 +280,7 @@ function k(e){
     }else{
         const r=document.createElement("iframe");
         r.className="aif";
-        // FIXED: Only block if path starts with 'system:' AND is not a recognized external protocol
+        // This is the core logic: if the path starts with "system:", it loads about:blank (except for the path we changed above).
         r.src=e.path.startsWith("system:")?"about:blank":e.path; 
         t.appendChild(r);
     }
@@ -298,7 +298,7 @@ function m(){
     if(!U)return;
     document.getElementById("app-window").classList.remove("ac");
     document.getElementById("h").classList.remove("zo");
-    document.getElementById("hi").style.display='flex'; // SHOW HI
+    document.getElementById("hi").style.display='flex'; 
     U=null;
 }
 
@@ -317,7 +317,7 @@ function o(){
     e.style.display='flex';
     document.getElementById("rcb").style.display='flex';
     r.classList.add("zo");
-    document.getElementById("hi").style.display='none'; // HIDE HI
+    document.getElementById("hi").style.display='none'; 
     t.innerHTML='';
     A.forEach(e=>{
         const r=document.createElement("div");
@@ -353,7 +353,7 @@ function f(){
     document.getElementById("switcher").style.display='none';
     document.getElementById("rcb").style.display='none';
     document.getElementById("h").classList.remove("zo");
-    document.getElementById("hi").style.display='flex'; // SHOW HI
+    document.getElementById("hi").style.display='flex'; 
 }
 
 function x(e,t,r){
@@ -436,7 +436,7 @@ function rE(e){
 function rI(e,t){
     const r=10;
     return(e.x+r<t.x+t.cols*C)&&(e.x+e.cols*C-r>t.x)&&
-           (e.y+r<t.y+t.rows*R)&&(e.y+e.rows*R-r>t.y);
+           (e.y+r<t.y+t.rows*R)&&(e.y+r.rows*R-r>t.y);
 }
 
 function fN(e,t,r=I){
