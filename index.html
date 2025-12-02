@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>Santaslileper OS</title>
+<title>OS</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -24,8 +24,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 /* --- SYSTEM UI --- */
 .s{position:relative;width:100%;height:100%;z-index:2}
 .sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
-.hi{position:absolute;bottom:0;left:0;width:100%;height:40px;display:flex;justify-content:center;align-items:center;z-index:999;pointer-events:auto}
-.hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px}
+
+/* --- CRITICAL FIX: HOME INDICATOR Z-INDEX --- */
+.hi {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40px; /* Touch area size */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* FIXED: Must be higher than iframe (z-50) */
+    pointer-events: auto; /* Ensure it catches touches */
+    touch-action: none;
+}
+.hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px;box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
 
 /* --- APP GRID --- */
 .h{position:absolute;top:0;left:0;right:0;bottom:0;padding-top:60px;transition:transform .4s,filter .4s;overflow-y:auto;overflow-x:hidden;display:block}
@@ -43,25 +57,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 /* --- APP ICONS --- */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
-.ai.i{background:linear-gradient(135deg,#3498db,#2980b9)}
-.ai.st{background:linear-gradient(135deg,#95a5a6,#7f8c8d)}
+
+/* COLOR MAPPINGS FOR YOUR CLASSES */
+.ai.motion { background: linear-gradient(135deg, #FF3CAC 0%, #784BA0 50%, #2B86C5 100%); }
+.ai.torch { background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 52%, #2BFF88 90%); }
+.ai.speaker { background: linear-gradient(135deg, #FEE140 0%, #FA709A 100%); }
+.ai.camera { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+.ai.mic { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.ai.touch { background: linear-gradient(135deg, #5ee7df 0%, #b490ca 100%); }
+.ai.st { background: linear-gradient(135deg, #8e9eab 0%, #eef2f3 100%); color: #333; }
+.ai.i { background: linear-gradient(135deg, #3a1c71 0%, #d76d77 50%, #ffaf7b 100%); }
+
 .al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* --- WIDGETS --- */
 .widget{background:0 0;backdrop-filter:none;border:none;border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;transition:background .3s,border .3s,backdrop-filter .3s}
 .edit-mode .widget{background:rgba(30,41,59,.6);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 15px rgba(0,0,0,.3)}
 .widget-content{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:10px;text-align:center;width:100%;height:100%;overflow:hidden;text-shadow:0 2px 8px rgba(0,0,0,.6)}
-
 .del-btn{position:absolute;top:-8px;left:-8px;width:24px;height:24px;background:#ff3b30;border-radius:50%;display:none;z-index:20;color:#fff;font-weight:700;font-size:16px;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.3)}
 .resize-handle{position:absolute;bottom:0;right:0;width:40px;height:40px;z-index:30;display:none;touch-action:none}
 .resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
 .edit-mode .del-btn,.edit-mode .resize-handle{display:block}
-
-/* WIDGET INTERNALS */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:10px;width:100%;max-width:200px}
-.cal-day{text-align:center;color:#ddd;padding:2px 0}
-.cal-today{color:#fff;font-weight:700;background:#ff3b30;border-radius:50%}
-.photo-cover{width:100%;height:100%;object-fit:cover;position:absolute;top:0;left:0;z-index:-1;opacity:1;border-radius:20px}
 
 /* LOADING SPINNER */
 .loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
@@ -75,13 +91,12 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 #add-panel{position:fixed;bottom:-400px;left:0;width:100%;height:350px;background:#1c1c1e;border-radius:20px 20px 0 0;z-index:300;transition:bottom .3s;padding:20px;display:flex;flex-direction:column;gap:10px}
 #add-panel.open{bottom:0}
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
-.add-opt:active{background:#3a3a3c}
 
 /* --- APP WINDOW & SWITCHER --- */
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
 .aw.ac{transform:translate3d(0,0,0)}
-.awc{width:100%;height:calc(100% - 40px);overflow:auto;-webkit-overflow-scrolling:touch}
-.aif{width:100%;min-height:calc(100vh - 80px);border:none;display:block}
+.awc{width:100%;height:100%;overflow:auto;-webkit-overflow-scrolling:touch}
+.aif{width:100%;height:100%;border:none;display:block;background: #fff;}
 
 /* Switcher */
 .as{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(20px);z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto}
@@ -90,8 +105,8 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 .ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
 .rcx{position:absolute;top:50px;right:20px;width:30px;height:30px;background:rgba(60,60,60,.8);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold;cursor:pointer;z-index:200;display:none}
 
-/* Internal Settings Styles */
-.tc{padding:40px 20px;color:#fff;text-align:center}.sg{margin-bottom:25px}.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;margin-bottom:8px;text-align:left;padding-left:15px}.so{background:#1c1c1e;border-radius:10px;overflow:hidden}.si{padding:12px 15px;border-bottom:1px solid #2c2c2e;display:flex;justify-content:space-between;align-items:center;color:#fff}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
+/* Settings & Internal */
+.tc{padding:60px 20px 20px 20px;color:#fff;text-align:center}.sg{margin-bottom:25px}.sh{font-size:13px;color:#8e8e93;text-transform:uppercase;margin-bottom:8px;text-align:left;padding-left:15px}.so{background:#1c1c1e;border-radius:10px;overflow:hidden}.si{padding:12px 15px;border-bottom:1px solid #2c2c2e;display:flex;justify-content:space-between;align-items:center;color:#fff}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
 </style>
 </head>
 <body>
@@ -106,7 +121,6 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 
         <div class="aw" id="app-window">
             <div class="awc" id="awc"></div>
-            <div class="hi" id="aw-hi"></div>
         </div>
 
         <div class="as" id="switcher"><div class="sc" id="scc"></div></div>
@@ -140,10 +154,20 @@ let items = [];
 let runningApps = []; 
 let currentApp = null; 
 
-// --- UPDATED SYSTEM APPS (Removed fake ones, kept Info & Settings) ---
-const sysApps = [
-    {id:"info", title:"Info", icon:"ℹ️", color:"i", path:"system:tutorial"},
-    {id:"settings", title:"Settings", icon:"⚙️", color:"st", path:"system:settings"}
+// --- YOUR APPS (Hardcoded so they work instantly) ---
+const myApps = [
+  { "id": 998, "title": "Settings", "icon": "⚙️", "path": "system:settings", "class": "st" },
+  { "id": 999, "title": "Info", "icon": "ℹ️", "path": "system:tutorial", "class": "i" },
+  { "id": 3, "title": "Grapple", "icon": "🎮", "path": "page3.html", "class": "motion" },
+  { "id": 4, "title": "Calc", "icon": "🧮", "path": "page4.html", "class": "torch" },
+  { "id": 6, "title": "AI Learn", "icon": "🤖", "path": "page6.html", "class": "speaker" },
+  { "id": 9, "title": "News", "icon": "📰", "path": "page9.html", "class": "motion" },
+  { "id": 11, "title": "Cycles", "icon": "⏱️", "path": "page11.html", "class": "touch" },
+  { "id": 13, "title": "Themes", "icon": "🎨", "path": "page13.html", "class": "speaker" },
+  { "id": 17, "title": "Files", "icon": "🗃️", "path": "page17.html", "class": "camera" },
+  { "id": 67, "title": "Mortis", "icon": "☠️", "path": "page67.html", "class": "camera" },
+  { "id": 69, "title": "Chat", "icon": "💬", "path": "page69.html", "class": "mic" },
+  { "id": 3000, "title": "Test 3k", "icon": "🚧", "path": "page3000.html", "class": "torch" }
 ];
 
 // --- INITIALIZATION ---
@@ -151,31 +175,32 @@ function init() {
     updateClock();
     setInterval(updateClock, 1000);
     
-    // 1. Render System Apps IMMEDIATELY (so they exist before fetch)
-    sysApps.forEach(appData => {
+    // 1. Load Your Apps
+    myApps.forEach(appData => {
         const spot = findNextEmptySpot(1, 1);
         createItem("app", spot.x, spot.y, 1, 1, appData);
     });
 
-    // 2. Fetch External Apps (Async)
-    loadExternalApps();
-
-    // Home Indicator Logic
+    // 2. GLOBAL SWIPE UP LOGIC (Fixes the iframe issue)
     const hi = document.getElementById("hi");
     let touchStartY = 0;
-    hi.addEventListener("touchstart", e => touchStartY = e.touches[0].clientY);
-    hi.addEventListener("touchend", e => {
-        if(e.changedTouches[0].clientY - touchStartY < -40) {
-            if(runningApps.length > 0 && !isEditMode) openSwitcher();
-        }
-    });
+    
+    // Listen for touch start
+    hi.addEventListener("touchstart", (e) => {
+        touchStartY = e.touches[0].clientY;
+        e.stopPropagation(); // Stop grid from stealing this
+    }, {passive: false});
+    
+    // Listen for touch end
+    hi.addEventListener("touchend", (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchEndY - touchStartY;
 
-    // App Window Home Logic
-    const awHi = document.getElementById("aw-hi");
-    awHi.addEventListener("touchstart", e => touchStartY = e.touches[0].clientY);
-    awHi.addEventListener("touchend", e => {
-        if(e.changedTouches[0].clientY - touchStartY < -40) closeApp();
-    });
+        // If swiped UP (negative difference)
+        if(diff < -30) {
+            handleHomeGesture();
+        }
+    }, {passive: false});
 
     // Long Press on Grid
     const grid = document.getElementById("ag");
@@ -188,28 +213,16 @@ function init() {
     grid.addEventListener("touchend", () => clearTimeout(pressTimer));
 }
 
-// --- DYNAMIC APP LOADING ---
-async function loadExternalApps() {
-    try {
-        const r = await fetch('apps.json');
-        if(r.ok) {
-            const externalApps = await r.json();
-            externalApps.forEach(appData => {
-                // Determine color based on index or random if not provided
-                if(!appData.color) appData.color = "i"; 
-                
-                // Add to Grid
-                const spot = findNextEmptySpot(1, 1);
-                createItem("app", spot.x, spot.y, 1, 1, {
-                    title: appData.title,
-                    icon: appData.icon || "📱",
-                    color: appData.color,
-                    path: appData.path
-                });
-            });
+// --- THE SWIPE HANDLER ---
+function handleHomeGesture() {
+    if(currentApp) {
+        // If an app is open, close it (Go Home)
+        closeApp();
+    } else {
+        // If already home, open App Switcher
+        if(runningApps.length > 0 && !isEditMode) {
+            openSwitcher();
         }
-    } catch(e) { 
-        console.log("No external apps found or fetch failed."); 
     }
 }
 
@@ -223,7 +236,8 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
 
     if (type === "app") {
         el.classList.add("aiw");
-        el.innerHTML = `<div class="ai ${data.color||""}">${data.icon}</div><div class="al">${data.title}</div>`;
+        // Use data.class directly here
+        el.innerHTML = `<div class="ai ${data.class||'i'}">${data.icon}</div><div class="al">${data.title}</div>`;
         el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
         el.classList.add("widget");
@@ -270,7 +284,7 @@ function addWidget(type) {
         if(type === 'clock') updateClock();
         resolveCollisions(widgetItem);
         updateVisualPosition(widgetItem);
-    }, 1500);
+    }, 1000);
 }
 
 function getWidgetHTML(type, cols) {
@@ -290,14 +304,18 @@ function launchApp(appData) {
     const awc = document.getElementById("awc");
     const h = document.getElementById("h");
     
+    // Check if running
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
         existing = { ...appData, dom: createInternalAppDOM(appData) };
         runningApps.push(existing);
     }
     
+    // Render
     awc.innerHTML = '';
     awc.appendChild(existing.dom);
+    
+    // Animate
     requestAnimationFrame(() => {
         aw.classList.add("ac");
         h.classList.add("zo");
@@ -308,6 +326,7 @@ function launchApp(appData) {
 function createInternalAppDOM(data) {
     const w = document.createElement("div");
     w.style.height = "100%";
+    w.style.width = "100%";
     
     if(data.path === "system:settings") {
         w.innerHTML = `
@@ -327,7 +346,8 @@ function createInternalAppDOM(data) {
     } else {
         const i = document.createElement("iframe");
         i.className = "aif";
-        i.src = data.path.includes("http") ? data.path : "about:blank";
+        // If it's a test page, it might 404, so we act nicely
+        i.src = data.path; 
         w.appendChild(i);
     }
     return w;
@@ -360,6 +380,13 @@ function openSwitcher() {
         const card = document.createElement("div");
         card.className = "scd";
         card.innerHTML = `<div class="ch"><span>${app.title}</span></div>`;
+        
+        // Add snapshot or color
+        const bg = document.createElement('div');
+        bg.style.cssText = "width:100%;height:100%;background:#333;display:flex;align-items:center;justify-content:center;font-size:50px";
+        bg.innerHTML = app.icon;
+        card.appendChild(bg);
+
         card.onclick = () => { closeSwitcher(); launchApp(app); };
         sc.appendChild(card);
     });
@@ -374,7 +401,6 @@ function closeSwitcher() {
 // --- DRAG, DROP & RESIZE ---
 function setupDrag(item){
     let startX, startY, startLeft, startTop;
-    
     const onStart = (e) => {
         if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
             e.preventDefault();
@@ -383,14 +409,12 @@ function setupDrag(item){
             startY = e.touches?e.touches[0].clientY:e.clientY;
             startLeft = parseFloat(item.el.style.left);
             startTop = parseFloat(item.el.style.top);
-            
             document.addEventListener("touchmove", onMove, {passive:false});
             document.addEventListener("touchend", onEnd);
             document.addEventListener("mousemove", onMove);
             document.addEventListener("mouseup", onEnd);
         }
     };
-
     const onMove = (e) => {
         e.preventDefault();
         const clientX = e.touches?e.touches[0].clientX:e.clientX;
@@ -398,33 +422,22 @@ function setupDrag(item){
         item.el.style.left = startLeft + (clientX - startX) + "px";
         item.el.style.top = startTop + (clientY - startY) + "px";
     };
-
     const onEnd = () => {
         document.removeEventListener("touchmove", onMove);
         document.removeEventListener("touchend", onEnd);
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onEnd);
-        
         item.el.classList.remove("dragging");
-        
         const left = parseFloat(item.el.style.left);
         const top = parseFloat(item.el.style.top);
-        
         let col = Math.round(left / COL_WIDTH);
         let row = Math.round(top / ROW_HEIGHT);
-        
-        if(col < 0) col = 0;
-        if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols;
-        if(row < 0) row = 0;
-
-        item.x = col * COL_WIDTH;
-        item.y = row * ROW_HEIGHT;
-        
+        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
+        item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
         resolveCollisions(item);
         updateVisualPosition(item);
         updateContainerHeight();
     };
-
     item.el.addEventListener("touchstart", onStart, {passive:false});
     item.el.addEventListener("mousedown", onStart);
 }
@@ -432,53 +445,37 @@ function setupDrag(item){
 function setupResize(item){
     const handle = item.el.querySelector(".resize-handle");
     let startX, startY, startW, startH;
-
     const onStart = (e) => {
         e.stopPropagation(); e.preventDefault();
         item.el.classList.add("resizing");
         startX = e.touches?e.touches[0].clientX:e.clientX;
         startY = e.touches?e.touches[0].clientY:e.clientY;
-        startW = item.w;
-        startH = item.h;
-        
+        startW = item.w; startH = item.h;
         document.addEventListener("touchmove", onMove, {passive:false});
         document.addEventListener("touchend", onEnd);
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onEnd);
     };
-
     const onMove = (e) => {
         e.preventDefault();
         const clientX = e.touches?e.touches[0].clientX:e.clientX;
         const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        
         let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH);
         let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
-        
         if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4;
         if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
-        
         const pxW = newCols * COL_WIDTH - 15;
         const pxH = newRows * ROW_HEIGHT - 15;
-        
-        item.el.style.width = pxW + "px";
-        item.el.style.height = pxH + "px";
-
+        item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
         if(newCols !== item.cols || newRows !== item.rows) {
-            item.cols = newCols;
-            item.rows = newRows;
-            item.w = pxW; 
-            item.h = pxH;
-            if(item.subtype !== 'loading') {
-                item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
-            }
+            item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
+            if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
             if(item.subtype === "clock") updateClock();
             resolveCollisions(item);
             updateVisualPosition(item);
             updateContainerHeight();
         }
     };
-
     const onEnd = () => {
         document.removeEventListener("touchmove", onMove);
         document.removeEventListener("touchend", onEnd);
@@ -487,7 +484,6 @@ function setupResize(item){
         item.el.classList.remove("resizing");
         updateVisualPosition(item);
     };
-
     handle.addEventListener("touchstart", onStart, {passive:false});
     handle.addEventListener("mousedown", onStart);
 }
@@ -505,8 +501,7 @@ function resolveCollisions(movedItem) {
         if(rectIntersect(movedItem, other)) {
             const others = items.filter(x => x !== other);
             const nextSpot = findNextEmptySpot(other.cols, other.rows, others);
-            other.x = nextSpot.x;
-            other.y = nextSpot.y;
+            other.x = nextSpot.x; other.y = nextSpot.y;
             updateVisualPosition(other);
         }
     });
@@ -514,10 +509,8 @@ function resolveCollisions(movedItem) {
 
 function rectIntersect(i1, i2) {
     const margin = 10;
-    return (i1.x + margin < i2.x + i2.cols * COL_WIDTH) &&
-           (i1.x + i1.cols * COL_WIDTH - margin > i2.x) &&
-           (i1.y + margin < i2.y + i2.rows * ROW_HEIGHT) &&
-           (i1.y + i1.rows * ROW_HEIGHT - margin > i2.y);
+    return (i1.x + margin < i2.x + i2.cols * COL_WIDTH) && (i1.x + i1.cols * COL_WIDTH - margin > i2.x) &&
+           (i1.y + margin < i2.y + i2.rows * ROW_HEIGHT) && (i1.y + i1.rows * ROW_HEIGHT - margin > i2.y);
 }
 
 function findNextEmptySpot(cols, rows, currentItems = items) {
@@ -525,17 +518,8 @@ function findNextEmptySpot(cols, rows, currentItems = items) {
     while(true) {
         for(let colIdx = 0; colIdx < COL_COUNT; colIdx++) {
             if(colIdx + cols > COL_COUNT) continue; 
-            
-            const testX = colIdx * COL_WIDTH;
-            const testY = rowIdx * ROW_HEIGHT;
-            
-            const collision = currentItems.some(i => 
-                testX < i.x + i.cols * COL_WIDTH &&
-                testX + cols * COL_WIDTH > i.x &&
-                testY < i.y + i.rows * ROW_HEIGHT &&
-                testY + rows * ROW_HEIGHT > i.y
-            );
-            
+            const testX = colIdx * COL_WIDTH; const testY = rowIdx * ROW_HEIGHT;
+            const collision = currentItems.some(i => testX < i.x + i.cols * COL_WIDTH && testX + cols * COL_WIDTH > i.x && testY < i.y + i.rows * ROW_HEIGHT && testY + rows * ROW_HEIGHT > i.y);
             if(!collision) return {x: testX, y: testY};
         }
         rowIdx++;
@@ -545,34 +529,15 @@ function findNextEmptySpot(cols, rows, currentItems = items) {
 
 function updateContainerHeight() {
     let max = 0;
-    items.forEach(i => {
-        const bottom = i.y + i.h;
-        if(bottom > max) max = bottom;
-    });
+    items.forEach(i => { const bottom = i.y + i.h; if(bottom > max) max = bottom; });
     document.getElementById("ag").style.minHeight = (max + 300) + "px";
 }
 
-function toggleEdit(val) {
-    isEditMode = val;
-    document.body.classList.toggle("edit-mode", val);
-    closeAddPanel();
-}
+function toggleEdit(val) { isEditMode = val; document.body.classList.toggle("edit-mode", val); closeAddPanel(); }
 function openAddPanel(){ document.getElementById("add-panel").classList.add("open"); }
 function closeAddPanel(){ document.getElementById("add-panel").classList.remove("open"); }
-function deleteItem(el) {
-    const idx = items.findIndex(i => i.el === el);
-    if(idx > -1) {
-        items.splice(idx, 1);
-        el.remove();
-        updateContainerHeight();
-    }
-}
-
-function updateClock() {
-    const d = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    document.getElementById("c").innerText = d;
-    document.querySelectorAll("#w-clock").forEach(e => e.innerText = d);
-}
+function deleteItem(el) { const idx = items.findIndex(i => i.el === el); if(idx > -1) { items.splice(idx, 1); el.remove(); updateContainerHeight(); }}
+function updateClock() { const d = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById("c").innerText = d; document.querySelectorAll("#w-clock").forEach(e => e.innerText = d); }
 
 window.addEventListener("resize", () => {
     SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
