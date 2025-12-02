@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#000000">
 
 <style>
-/* --- CORE STYLES (From Backup) --- */
+/* --- CORE STYLES --- */
 *{margin:0;padding:0;box-sizing:border-box}
 body,html{touch-action:none;overscroll-behavior:none;height:100%;overflow:hidden;background:#000}
 body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;user-select:none;-webkit-user-select:none}
@@ -27,7 +27,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .hi{position:absolute;bottom:0;left:0;width:100%;height:40px;display:flex;justify-content:center;align-items:center;z-index:999;pointer-events:auto}
 .hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px}
 
-/* --- APP GRID (From RIP2) --- */
+/* --- APP GRID --- */
 .h{position:absolute;top:0;left:0;right:0;bottom:0;padding-top:60px;transition:transform .4s,filter .4s;overflow-y:auto;overflow-x:hidden;display:block}
 .h.zo{transform:scale(.85);filter:brightness(.6)blur(5px);pointer-events:none}
 
@@ -77,7 +77,7 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
 .add-opt:active{background:#3a3a3c}
 
-/* --- APP WINDOW & SWITCHER (From Backup) --- */
+/* --- APP WINDOW & SWITCHER --- */
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
 .aw.ac{transform:translate3d(0,0,0)}
 .awc{width:100%;height:calc(100% - 40px);overflow:auto;-webkit-overflow-scrolling:touch}
@@ -136,16 +136,14 @@ const COL_COUNT=4, ROW_HEIGHT=100;
 let SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
 let COL_WIDTH = SCREEN_W / COL_COUNT;
 let isEditMode = false;
-let items = []; // Stores both Apps and Widgets
-let runningApps = []; // Stores apps currently "open" in memory
-let currentApp = null; // Currently visible fullscreen app
+let items = []; 
+let runningApps = []; 
+let currentApp = null; 
 
-// Pre-defined System Apps (Fallback)
+// --- UPDATED SYSTEM APPS (Removed fake ones, kept Info & Settings) ---
 const sysApps = [
-    {id:"mail", title:"Mail", icon:"✉️", color:"i", path:"system:mail"},
-    {id:"photos", title:"Photos", icon:"🖼️", color:"ph", path:"system:photos"},
-    {id:"settings", title:"Settings", icon:"⚙️", color:"st", path:"system:settings"},
-    {id:"tutorial", title:"Tips", icon:"💡", color:"st", path:"system:tutorial"}
+    {id:"info", title:"Info", icon:"ℹ️", color:"i", path:"system:tutorial"},
+    {id:"settings", title:"Settings", icon:"⚙️", color:"st", path:"system:settings"}
 ];
 
 // --- INITIALIZATION ---
@@ -153,8 +151,14 @@ function init() {
     updateClock();
     setInterval(updateClock, 1000);
     
-    // Load Apps Dynamically (Simulating the backup.html logic)
-    loadApps();
+    // 1. Render System Apps IMMEDIATELY (so they exist before fetch)
+    sysApps.forEach(appData => {
+        const spot = findNextEmptySpot(1, 1);
+        createItem("app", spot.x, spot.y, 1, 1, appData);
+    });
+
+    // 2. Fetch External Apps (Async)
+    loadExternalApps();
 
     // Home Indicator Logic
     const hi = document.getElementById("hi");
@@ -162,7 +166,6 @@ function init() {
     hi.addEventListener("touchstart", e => touchStartY = e.touches[0].clientY);
     hi.addEventListener("touchend", e => {
         if(e.changedTouches[0].clientY - touchStartY < -40) {
-            // Swipe Up
             if(runningApps.length > 0 && !isEditMode) openSwitcher();
         }
     });
@@ -174,7 +177,7 @@ function init() {
         if(e.changedTouches[0].clientY - touchStartY < -40) closeApp();
     });
 
-    // Long Press on Grid to Edit
+    // Long Press on Grid
     const grid = document.getElementById("ag");
     let pressTimer;
     grid.addEventListener("touchstart", e => {
@@ -186,51 +189,43 @@ function init() {
 }
 
 // --- DYNAMIC APP LOADING ---
-async function loadApps() {
-    // 1. Clear Grid
-    document.getElementById("ag").innerHTML = '';
-    items = [];
-    
-    // 2. Fetch or Use Defaults
-    let appsToLoad = [...sysApps];
+async function loadExternalApps() {
     try {
         const r = await fetch('apps.json');
-        if(r.ok) appsToLoad.push(...await r.json());
-    } catch(e) { console.log("No external apps found"); }
-
-    // 3. Place them on the Grid (Using logic from RIP2)
-    appsToLoad.forEach(appData => {
-        const spot = findNextEmptySpot(1, 1);
-        // Map backup.html data structure to rip2 grid structure
-        createItem("app", spot.x, spot.y, 1, 1, {
-            title: appData.title,
-            icon: appData.icon,
-            color: appData.color || "st",
-            path: appData.path // Store path for launching
-        });
-    });
-    
-    updateContainerHeight();
+        if(r.ok) {
+            const externalApps = await r.json();
+            externalApps.forEach(appData => {
+                // Determine color based on index or random if not provided
+                if(!appData.color) appData.color = "i"; 
+                
+                // Add to Grid
+                const spot = findNextEmptySpot(1, 1);
+                createItem("app", spot.x, spot.y, 1, 1, {
+                    title: appData.title,
+                    icon: appData.icon || "📱",
+                    color: appData.color,
+                    path: appData.path
+                });
+            });
+        }
+    } catch(e) { 
+        console.log("No external apps found or fetch failed."); 
+    }
 }
 
-// --- CORE GRID FUNCTIONS (From RIP2) ---
+// --- CORE GRID FUNCTIONS ---
 function createItem(type, x, y, wUnit, hUnit, data={}) {
     const el = document.createElement("div");
     el.classList.add("grid-item");
     
-    // Calculate Pixel Dimensions
     const wPx = wUnit * COL_WIDTH - (type === "app" ? 0 : 15);
     const hPx = hUnit * ROW_HEIGHT - (type === "app" ? 10 : 15);
 
     if (type === "app") {
         el.classList.add("aiw");
         el.innerHTML = `<div class="ai ${data.color||""}">${data.icon}</div><div class="al">${data.title}</div>`;
-        // Click to Launch
-        el.onclick = () => {
-            if(!isEditMode) launchApp(data);
-        };
+        el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
-        // Widget
         el.classList.add("widget");
         el.innerHTML = `
             <div class="del-btn">×</div>
@@ -238,11 +233,7 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
             <div class="widget-content">
                 ${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}
             </div>`;
-        
-        el.querySelector(".del-btn").onclick = (e) => {
-            e.stopPropagation();
-            deleteItem(el);
-        };
+        el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
     }
 
     document.getElementById("ag").appendChild(el);
@@ -250,18 +241,13 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
     const itemObj = {
         el: el,
         type: type,
-        subtype: data.subtype, // 'clock', 'weather', 'loading', etc.
-        x: x,
-        y: y,
-        w: wPx,
-        h: hPx,
-        cols: wUnit,
-        rows: hUnit
+        subtype: data.subtype,
+        x: x, y: y, w: wPx, h: hPx,
+        cols: wUnit, rows: hUnit
     };
 
     updateVisualPosition(itemObj);
     setupDrag(itemObj);
-    
     if(type === "widget") setupResize(itemObj);
     
     items.push(itemObj);
@@ -269,32 +255,19 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
     return itemObj;
 }
 
-// --- WIDGET LOGIC & LOADING ---
-
+// --- WIDGET LOGIC ---
 function addWidget(type) {
     closeAddPanel();
-    
-    // 1. Find a spot
     const spot = findNextEmptySpot(2, 2);
-    
-    // 2. Add as LOADING state (Spinner)
     const widgetItem = createItem("widget", spot.x, spot.y, 2, 2, { subtype: "loading" });
-    
-    // 3. Force Collision Check Immediately (Bumping)
     resolveCollisions(widgetItem);
     updateVisualPosition(widgetItem);
-    toggleEdit(true); // Enter edit mode so user sees it happens
+    toggleEdit(true);
 
-    // 4. Simulate Async Loading (1.5s delay)
     setTimeout(() => {
-        // Replace Content
         widgetItem.subtype = type;
         widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, 2);
-        
-        // Re-run setup specific to widgets if needed (like clock ticker)
         if(type === 'clock') updateClock();
-        
-        // Ensure layout is still valid
         resolveCollisions(widgetItem);
         updateVisualPosition(widgetItem);
     }, 1500);
@@ -311,29 +284,24 @@ function getWidgetHTML(type, cols) {
     return "Widget";
 }
 
-// --- APP LAUNCHING LOGIC (From Backup) ---
+// --- APP LAUNCHING ---
 function launchApp(appData) {
     const aw = document.getElementById("app-window");
     const awc = document.getElementById("awc");
     const h = document.getElementById("h");
     
-    // Check if running
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
         existing = { ...appData, dom: createInternalAppDOM(appData) };
         runningApps.push(existing);
     }
     
-    // Render
     awc.innerHTML = '';
     awc.appendChild(existing.dom);
-    
-    // Animate
     requestAnimationFrame(() => {
         aw.classList.add("ac");
         h.classList.add("zo");
     });
-    
     currentApp = existing;
 }
 
@@ -357,7 +325,6 @@ function createInternalAppDOM(data) {
     } else if(data.path === "system:tutorial") {
         w.innerHTML = `<div class="tc"><h2>How To</h2><p>Hold icons to edit.</p><p>Use + to add widgets.</p><p>Swipe up to go home.</p></div>`;
     } else {
-        // Iframe loader for external apps
         const i = document.createElement("iframe");
         i.className = "aif";
         i.src = data.path.includes("http") ? data.path : "about:blank";
@@ -374,10 +341,10 @@ function closeApp() {
 }
 
 function resetLayout() {
-    if(confirm("Reset Layout?")) { items=[]; init(); }
+    if(confirm("Reset Layout?")) { items=[]; document.getElementById("ag").innerHTML=''; init(); }
 }
 
-// --- SWITCHER (RECENTS) ---
+// --- SWITCHER ---
 function openSwitcher() {
     const s = document.getElementById("switcher");
     const sc = document.getElementById("scc");
@@ -386,18 +353,14 @@ function openSwitcher() {
     
     s.style.display = 'flex';
     rcb.style.display = 'flex';
-    h.classList.add("zo"); // Zoom out home
+    h.classList.add("zo");
     
-    // Render Previews
     sc.innerHTML = '';
     runningApps.forEach(app => {
         const card = document.createElement("div");
         card.className = "scd";
         card.innerHTML = `<div class="ch"><span>${app.title}</span></div>`;
-        card.onclick = () => {
-            closeSwitcher();
-            launchApp(app);
-        };
+        card.onclick = () => { closeSwitcher(); launchApp(app); };
         sc.appendChild(card);
     });
 }
@@ -408,7 +371,7 @@ function closeSwitcher() {
     document.getElementById("h").classList.remove("zo");
 }
 
-// --- DRAG, DROP & RESIZE LOGIC (From RIP2) ---
+// --- DRAG, DROP & RESIZE ---
 function setupDrag(item){
     let startX, startY, startLeft, startTop;
     
@@ -444,14 +407,12 @@ function setupDrag(item){
         
         item.el.classList.remove("dragging");
         
-        // Snap to Grid
         const left = parseFloat(item.el.style.left);
         const top = parseFloat(item.el.style.top);
         
         let col = Math.round(left / COL_WIDTH);
         let row = Math.round(top / ROW_HEIGHT);
         
-        // Bounds check
         if(col < 0) col = 0;
         if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols;
         if(row < 0) row = 0;
@@ -491,7 +452,6 @@ function setupResize(item){
         const clientX = e.touches?e.touches[0].clientX:e.clientX;
         const clientY = e.touches?e.touches[0].clientY:e.clientY;
         
-        // Calculate new grid size
         let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH);
         let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
         
@@ -534,7 +494,6 @@ function setupResize(item){
 
 // --- UTILS ---
 function updateVisualPosition(item) {
-    // Add margin/padding calc
     const offsetX = (item.cols * COL_WIDTH - item.w) / 2;
     const offsetY = (item.rows * ROW_HEIGHT - item.h) / 2;
     item.el.style.left = (item.x + offsetX) + "px";
@@ -544,7 +503,6 @@ function updateVisualPosition(item) {
 function resolveCollisions(movedItem) {
     items.filter(i => i !== movedItem).forEach(other => {
         if(rectIntersect(movedItem, other)) {
-            // Collision detected, move 'other' down
             const others = items.filter(x => x !== other);
             const nextSpot = findNextEmptySpot(other.cols, other.rows, others);
             other.x = nextSpot.x;
@@ -566,12 +524,11 @@ function findNextEmptySpot(cols, rows, currentItems = items) {
     let rowIdx = 0;
     while(true) {
         for(let colIdx = 0; colIdx < COL_COUNT; colIdx++) {
-            if(colIdx + cols > COL_COUNT) continue; // Won't fit in row width
+            if(colIdx + cols > COL_COUNT) continue; 
             
             const testX = colIdx * COL_WIDTH;
             const testY = rowIdx * ROW_HEIGHT;
             
-            // Check overlap
             const collision = currentItems.some(i => 
                 testX < i.x + i.cols * COL_WIDTH &&
                 testX + cols * COL_WIDTH > i.x &&
@@ -582,7 +539,7 @@ function findNextEmptySpot(cols, rows, currentItems = items) {
             if(!collision) return {x: testX, y: testY};
         }
         rowIdx++;
-        if(rowIdx > 500) return {x:0, y:0}; // Safety break
+        if(rowIdx > 500) return {x:0, y:0};
     }
 }
 
@@ -617,12 +574,10 @@ function updateClock() {
     document.querySelectorAll("#w-clock").forEach(e => e.innerText = d);
 }
 
-// Recalculate grid on resize
 window.addEventListener("resize", () => {
     SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
     COL_WIDTH = SCREEN_W / COL_COUNT;
     items.forEach(i => {
-        // Snap existing items to new column widths
         const col = Math.round(i.x / (SCREEN_W/COL_COUNT)); 
         i.x = col * COL_WIDTH;
         i.w = i.cols * COL_WIDTH - (i.type==="app"?0:15);
