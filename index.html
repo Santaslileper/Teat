@@ -78,17 +78,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .as{position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;z-index:40;display:none;flex-direction:row;align-items:center;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scroll-snap-type:x mandatory;padding:0 20px;pointer-events:auto; -webkit-overflow-scrolling: touch;}
 .sc{display:flex;height:100%;align-items:center;gap:20px;min-width:min-content}
 .scd{position:relative;width:75vw;max-width:300px;height:70vh;background:#1c1c1e;border-radius:20px;box-shadow:0 20px 40px rgba(0,0,0,.5);scroll-snap-align:center;flex-shrink:0;overflow:hidden;transform:scale(1);transition:transform 0.1s}
-
-/* IMPORTANT: Class added to the content holder in JS for isolated DOM manipulation */
-.content-holder-class{
-    width:100%;
-    height:100%;
-    pointer-events:none;
-    padding-top:40px; /* Space for the header */
-    background:#000;
-    overflow:hidden;
-}
-
 .ch{position:absolute;top:0;left:0;width:100%;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px);z-index:20;pointer-events:none}
 /* Touch Layer on Cards */
 .ctl{position:absolute;top:40px;left:0;width:100%;height:calc(100% - 40px);z-index:200;} 
@@ -269,49 +258,19 @@ function getWidgetHTML(type, cols) {
     return "Widget";
 }
 
-// --- NEW DOM TRANSFER HELPERS ---
-
-/**
- * Moves app content (app.dom) from the main window (awc) to the card (app.cardEl).
- * We assume app.dom holds the actual content (iframe/internal div).
- */
-function moveContentToCard(app) {
-    if (app.dom.parentNode) {
-        app.dom.parentNode.removeChild(app.dom);
-    }
-    if (app.cardEl) {
-        // Find the designated content holder on the card (using the temporary class)
-        const contentHolder = app.cardEl.querySelector('.content-holder-class'); 
-        if (contentHolder) {
-            contentHolder.appendChild(app.dom);
-        }
-    }
-}
-
-/**
- * Moves app content (app.dom) from the card (app.cardEl) back to the main window (awc).
- */
-function restoreContentToWindow(app) {
-    const awc = document.getElementById("awc");
-    if (app.dom.parentNode) {
-        app.dom.parentNode.removeChild(app.dom);
-    }
-    // Append the app content back to the main app window container
-    awc.appendChild(app.dom);
-}
-
-
-// --- MODIFIED APP LOGIC ---
+// --- APP LOGIC ---
 function launchApp(appData) {
     let existing = runningApps.find(a => a.path === appData.path);
     if(!existing) {
         existing = { ...appData, dom: createInternalAppDOM(appData) };
         runningApps.push(existing);
     }
-    
-    // RESTORE content from card (if it was in the switcher) and append to main window container
     restoreContentToWindow(existing);
 
+    const awc = document.getElementById("awc");
+    awc.innerHTML = ''; 
+    awc.appendChild(existing.dom);
+    
     requestAnimationFrame(() => {
         document.getElementById("app-window").classList.add("ac");
         document.getElementById("h").classList.add("zo");
@@ -348,17 +307,11 @@ function minimizeApp() {
 
 function closeApp(app) {
     const idx = runningApps.indexOf(app);
-    if(idx > -1) { 
-        // Ensure content is cleaned up from wherever it is before removal
-        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
-        if(app.cardEl) app.cardEl.remove();
-
-        runningApps.splice(idx, 1); 
-    }
+    if(idx > -1) { runningApps.splice(idx, 1); app.dom.remove(); if(app.cardEl) app.cardEl.remove(); }
     if(runningApps.length === 0) closeSwitcher();
 }
 
-// --- MODIFIED SWITCHER ---
+// --- SWITCHER ---
 function openSwitcher() {
     isSwitcherMode = true;
     const s = document.getElementById("switcher");
@@ -368,7 +321,6 @@ function openSwitcher() {
     document.getElementById("rcb").style.display = 'flex';
     h.classList.add("zo");
     sc.innerHTML = '';
-    
     runningApps.forEach(app => {
         const card = document.createElement("div");
         card.className = "scd";
@@ -377,10 +329,14 @@ function openSwitcher() {
         header.innerHTML = `<span style="color:#fff;font-size:12px;font-weight:bold">${app.title}</span>`;
         card.appendChild(header);
         
-        // This is the dedicated container for the app DOM
         const contentHolder = document.createElement("div");
-        contentHolder.className = "content-holder-class"; // IMPORTANT: Used by moveContentToCard
+        // FIXED: Dark background for cards so internal apps show up
         contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
+        
+        // Move live DOM into card
+        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
+        contentHolder.appendChild(app.dom);
+        
         card.appendChild(contentHolder);
         
         const touchLayer = document.createElement("div");
@@ -389,27 +345,18 @@ function openSwitcher() {
         setupSwitcherGestures(touchLayer, card, app);
         sc.appendChild(card);
         app.cardEl = card; 
-        
-        // MOVE the content now that the card structure is ready
-        moveContentToCard(app); 
     });
 }
 
+function restoreContentToWindow(app) {
+    if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
+}
 
 function closeSwitcher() {
     isSwitcherMode = false;
     document.getElementById("switcher").style.display = 'none';
     document.getElementById("rcb").style.display = 'none';
     document.getElementById("h").classList.remove("zo");
-
-    // Restore all app contents back to the main app window (awc)
-    runningApps.forEach(app => {
-        if(app.cardEl) {
-            restoreContentToWindow(app);
-            app.cardEl.remove();
-            app.cardEl = null;
-        }
-    });
 }
 
 function setupSwitcherGestures(touchLayer, card, app) {
