@@ -3,609 +3,356 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>Santaslileper OS v3 (JSON)</title>
+<title>Santaslileper OS Pro</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
 
 <style>
-/* --- CORE --- */
-*{margin:0;padding:0;box-sizing:border-box}
-body,html{touch-action:none;overscroll-behavior:none;height:100%;overflow:hidden;background:#000}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;user-select:none;-webkit-user-select:none}
+/* CORE SYSTEM STYLES */
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;background:#000;height:100vh;overflow:hidden;display:flex;justify-content:center;align-items:center}
+.p{position:relative;width:100%;height:100%;max-width:375px;max-height:812px;background:#000;overflow:hidden;display:flex;flex-direction:column}
+@media(min-width:768px){.p{height:812px;border-radius:40px;box-shadow:0 0 0 12px #333,0 20px 50px #000}.n{position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#000;border-radius:0 0 20px 20px;z-index:1000}}
 
-/* DEVICE FRAME */
-.p{position:relative;width:100%;height:100%;background-color:#050505;overflow:hidden;display:flex;flex-direction:column}
-@media(min-width:768px){.p{max-width:375px;max-height:812px;margin:20px auto;border-radius:50px;box-shadow:0 0 0 12px #2c2c2e;border:1px solid #333}}
+/* WALLPAPER & SCREEN */
+.s{position:relative;width:100%;height:100%;z-index:10;background-size:cover;background-position:center;transition:filter .4s}
+.sb{padding:12px 25px;display:flex;justify-content:space-between;color:#fff;font-size:14px;font-weight:600;z-index:100;position:relative;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
 
-/* --- SYSTEM UI --- */
-.s{position:relative;width:100%;height:100%;z-index:2}
-.sb{height:44px;padding:0 20px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:8px;color:#fff;font-size:15px;font-weight:600;z-index:100;pointer-events:none;position:absolute;width:100%;top:0}
+/* HOMESCREEN GRID */
+.h{padding:20px;height:100%;overflow-y:auto;padding-bottom:120px;transition:transform .3s;will-change:transform}
+.h.zo{transform:scale(0.85);filter:brightness(0.5);pointer-events:none}
+.ag{display:grid;grid-template-columns:repeat(4,1fr);gap:15px 10px}
 
-/* HOME INDICATOR */
-.hi {position: absolute; bottom: 0; left: 0; width: 100%; height: 40px; display: flex; justify-content: center; align-items: center; z-index: 10000; pointer-events: auto; touch-action: none;}
-.hi::before{content:'';display:block;width:140px;height:5px;background:rgba(255,255,255,.7);border-radius:3px;box-shadow: 0 1px 4px rgba(0,0,0,0.5);}
+/* DOCK (The Missing Piece) */
+.dock-wrap{position:absolute;bottom:15px;left:15px;right:15px;height:95px;background:rgba(255,255,255,0.2);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:30px;display:flex;align-items:center;justify-content:space-around;padding:0 10px;z-index:90;border:1px solid rgba(255,255,255,0.1)}
 
-/* --- GRID SYSTEM --- */
-.h{position:absolute;top:0;left:0;right:0;bottom:0;padding-top:60px;transition:transform .4s cubic-bezier(0.2, 0.8, 0.2, 1), filter .4s;overflow-y:auto;overflow-x:hidden;display:block}
-.h.zo{transform:scale(.85);filter:brightness(.4) blur(10px);pointer-events:none}
-#ag{position:relative;width:100%;min-height:100vh;padding-bottom:200px}
+/* ICONS */
+.aiw{display:flex;flex-direction:column;align-items:center;text-align:center;width:100%}
+.ai{width:60px;height:60px;border-radius:15px;background:#333;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.2);transition:transform .1s}
+.ai:active{transform:scale(0.9)}
+.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,0.8);font-weight:500}
+/* Icon Gradients */
+.ai.st{background:linear-gradient(135deg,#7f8c8d,#bdc3c7)}
+.ai.cam{background:linear-gradient(135deg,#2c3e50,#34495e)}
+.ai.pho{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+.ai.not{background:linear-gradient(135deg,#f1c40f,#f39c12)}
 
-/* ITEMS */
-.grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
-.grid-item.resizing{transition:none;z-index:100;opacity:.9;background:rgba(44,44,46,.9)!important;border:1px solid #007aff!important;border-radius:20px}
-.edit-mode .grid-item:not(.resizing):not(.dragging){animation:jiggle .3s infinite linear;cursor:grab}
-.edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
-@keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
+/* APP WINDOWS */
+.aw{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;transform:translateY(100%);transition:transform .4s cubic-bezier(0.2,0.8,0.2,1);z-index:200;display:flex;flex-direction:column}
+.aw.ac{transform:translateY(0)}
+.awc{flex:1;position:relative;background:#fff;overflow:hidden}
+.hi{height:20px;width:100%;position:absolute;bottom:0;display:flex;justify-content:center;align-items:center;z-index:999}
+.hi::after{content:'';width:120px;height:5px;background:rgba(0,0,0,0.3);border-radius:10px}
+.aw .hi::after{background:#000}
 
-/* ICONS & COLORS */
-.aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-.ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
+/* LOCK SCREEN (New) */
+.ls{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);backdrop-filter:blur(10px);z-index:500;color:#fff;display:flex;flex-direction:column;align-items:center;padding-top:100px;transition:transform .4s ease-in-out}
+.ls.unlocked{transform:translateY(-100%)}
+.ls-time{font-size:70px;font-weight:200}
+.ls-date{font-size:18px;margin-top:-10px;font-weight:500}
+.ls-slide{position:absolute;bottom:40px;font-size:14px;opacity:0.7;animation:pulse 2s infinite}
+@keyframes pulse{0%{opacity:0.4}50%{opacity:1}100%{opacity:0.4}}
 
-/* Dynamic classes handled by JSON, defaults below */
-.ai.files { background: linear-gradient(135deg, #1CB5E0 0%, #000851 100%); }
-.ai.news { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #93a5cf 100%); }
-.ai.info { background: linear-gradient(135deg, #e1eec3 0%, #f05053 100%); }
-.ai.chat { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-.ai.mortis { background: linear-gradient(135deg, #434343 0%, #000000 100%); border: 1px solid #444; }
-.ai.ai-learn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-.ai.themes { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.ai.test { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
-.ai.grapple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
-.ai.cycles { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
-.ai.settings { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color:#333; }
-.ai.calc { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-/* Fallback */
-.ai.default { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+/* RECENTS/MULTITASKING */
+.as{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:150;display:none;align-items:center;overflow-x:auto;padding:0 20px;gap:20px;scroll-snap-type:x mandatory}
+.scd{min-width:70%;height:70%;background:#fff;border-radius:20px;overflow:hidden;position:relative;transform:scale(0.9);scroll-snap-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
 
-.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* SETTINGS UI */
+.tc{padding:20px;background:#f2f2f7;height:100%;color:#000}
+.sg{background:#fff;border-radius:10px;overflow:hidden;margin-bottom:20px}
+.si{padding:12px 15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+.fb{background:#007aff;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:13px}
 
-/* WIDGETS */
-.widget{background:0 0;backdrop-filter:none;border:none;border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;transition:background .3s,border .3s,backdrop-filter .3s}
-.edit-mode .widget{background:rgba(30,41,59,.6);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 15px rgba(0,0,0,.3)}
-.widget-content{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:10px;text-align:center;width:100%;height:100%;overflow:hidden;text-shadow:0 2px 8px rgba(0,0,0,.6)}
-.del-btn{position:absolute;top:-8px;left:-8px;width:24px;height:24px;background:#ff3b30;border-radius:50%;display:none;z-index:20;color:#fff;font-weight:700;font-size:16px;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.3)}
-.resize-handle{position:absolute;bottom:0;right:0;width:40px;height:40px;z-index:30;display:none;touch-action:none}
-.resize-handle::after{content:'';position:absolute;bottom:8px;right:8px;width:15px;height:15px;border-bottom:3px solid rgba(255,255,255,.8);border-right:3px solid rgba(255,255,255,.8);border-radius:2px}
-.edit-mode .del-btn,.edit-mode .resize-handle{display:block}
-.loader {border: 4px solid rgba(255, 255, 255, 0.1);border-left-color: #fff;border-radius: 50%;width: 30px;height: 30px;animation: spin 1s linear infinite;}
-@keyframes spin {0% {transform: rotate(0deg);}100% {transform: rotate(360deg);}}
-
-/* --- APP WINDOW --- */
-.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
-.aw.ac{transform:translate3d(0,0,0)}
-.awc{width:100%;height:100%;overflow:hidden;background:#000;position:relative} 
-.aif{width:100%;height:100%;border:none;display:block;background:#fff;}
-
-/* --- INTEGRATED CARD OS SWITCHER --- */
-#switcher {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 40;
-    display: none;
-    flex-direction: row;
-    align-items: center;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    padding: 0 15%; 
-    pointer-events: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-#switcher::-webkit-scrollbar { display: none; }
-
-.scd {
-    position: relative;
-    width: 70vw;
-    max-width: 300px;
-    height: 65vh;
-    background: #1c1c1e;
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    scroll-snap-align: center;
-    flex-shrink: 0;
-    margin: 0 15px;
-    overflow: hidden;
-    transform-origin: center;
-    transition: transform 0.2s, opacity 0.2s;
-    opacity: 0.5;
-    transform: scale(0.85);
-    border: 1px solid #333;
-}
-
-.ch {
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(30, 30, 30, 0.9);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    position: absolute;
-    top: 0; left: 0; width: 100%;
-    z-index: 20;
-    gap: 8px;
-    pointer-events: none;
-}
-
-.ctl {
-    position: absolute; top: 44px; left: 0; width: 100%; height: calc(100% - 44px);
-    z-index: 200; background: transparent;
-}
-
-.scd[data-class="files"] { border-color: #1CB5E0; }
-.scd[data-class="news"] { border-color: #FF9A9E; }
-.scd[data-class="info"] { border-color: #e1eec3; }
-.scd[data-class="chat"] { border-color: #f093fb; }
-.scd[data-class="settings"] { border-color: #cfd9df; }
-.scd[data-class="mortis"] { border-color: #555; }
-
-/* UI */
-#edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
-.edit-mode #edit-ui{opacity:1;pointer-events:auto}
-button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:blur(10px);border:none;border-radius:20px;color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.3)}
-#add-panel{position:fixed;bottom:-400px;left:0;width:100%;height:350px;background:#1c1c1e;border-radius:20px 20px 0 0;z-index:300;transition:bottom .3s;padding:20px;display:flex;flex-direction:column;gap:10px}
-#add-panel.open{bottom:0}
-.add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
-#status-msg { position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); color: #fff; font-size: 14px; text-align: center; width:80%; z-index:9999; pointer-events:none}
-
-/* INTERNAL APPS */
-.tc{padding:60px 20px;color:#fff;text-align:center;background:#000;height:100%;width:100%}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
+/* CAMERA UI */
+.cam-ui{width:100%;height:100%;background:#000;position:relative}
+video{width:100%;height:100%;object-fit:cover}
+.cam-btn{width:70px;height:70px;border-radius:50%;border:4px solid #fff;position:absolute;bottom:50px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.2)}
+.cam-btn:active{background:#fff}
 </style>
 </head>
 <body>
 
 <div class="p" id="phone">
-    <div class="s">
-        <div class="sb"><span id="c">...</span><span id="batt">100%</span></div>
-        
-        <div id="status-msg">Loading apps...</div>
+    <div class="n"></div>
+    
+    <div class="ls" id="lockScreen">
+        <div class="ls-time" id="lsTime">12:00</div>
+        <div class="ls-date" id="lsDate">Monday, January 1</div>
+        <div class="ls-slide">Swipe up to unlock</div>
+    </div>
 
-        <div class="h" id="h"><div id="ag"></div></div>
+    <div class="s" id="screen">
+        <div class="sb"><span id="c">12:00</span><span>5G</span><span id="batt">100%</span></div>
         
-        <div class="aw" id="app-window"><div class="awc" id="awc"></div></div>
-        
-        <div id="switcher"></div>
-        
-        <div id="edit-ui">
-            <button class="ui-btn" onclick="openAddPanel()">+ Widget</button>
-            <button class="ui-btn" style="background:#007aff" onclick="toggleEdit(false)">Done</button>
+        <div class="h" id="h">
+            <div class="ag" id="ag"></div>
         </div>
-        <div class="hi" id="hi"></div>
+
+        <div class="dock-wrap" id="dock"></div>
+        
+        <div class="as" id="as"></div>
+        
+        <div id="aw-con"></div>
+        
+        <div class="hi" id="homeBar"></div>
     </div>
 </div>
 
-<div id="add-panel">
-    <h3 style="color:#fff;margin-bottom:10px">Add Widget</h3>
-    <div class="add-opt" onclick="addWidget('clock')">⏰ Clock</div>
-    <div class="add-opt" onclick="addWidget('weather')">☁️ Weather</div>
-    <div class="add-opt" onclick="addWidget('calendar')">📅 Calendar</div>
-    <div class="add-opt" onclick="addWidget('photo')">🖼️ Photo</div>
-    <div class="add-opt" style="background:#3a3a3c;justify-content:center" onclick="closeAddPanel()">Cancel</div>
-</div>
-
 <script>
-// --- CONFIG ---
-const COL_COUNT=4, ROW_HEIGHT=100;
-let SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
-let COL_WIDTH = SCREEN_W / COL_COUNT;
-let isEditMode = false;
-let items = []; 
-let runningApps = []; 
-let currentApp = null; 
-let isSwitcherMode = false;
-const STORAGE_KEY = 'os_layout_final_json_v1';
+// --- CORE DATA & CONFIG ---
+const D=document, g=i=>D.getElementById(i), ce=t=>D.createElement(t);
+const LS=localStorage;
+const K={bg:'os_bg', apps:'os_apps'};
+const State={ openApps:[], activeApp:null, locked:true };
 
-function init() {
-    updateClock(); setInterval(updateClock, 1000);
+// --- DEFAULT APPS (If none exist) ---
+const DefApps = [
+    {id:'set', title:'Settings', icon:'⚙️', path:'system:settings', class:'st'},
+    {id:'cam', title:'Camera', icon:'📷', path:'system:camera', class:'cam'},
+    {id:'not', title:'Notes', icon:'📝', path:'system:notes', class:'not'},
+    {id:'map', title:'Maps', icon:'🗺️', path:'https://www.google.com/maps?output=embed'},
+    {id:'cal', title:'Calc', icon:'🧮', path:'https://www.desmos.com/scientific'},
+    {id:'tut', title:'Info', icon:'ℹ️', path:'system:info'}
+];
 
-    // --- SOURCE LOADING (Modified to match Card OS) ---
-    loadApps();
+// --- SYSTEM INIT ---
+const init = () => {
+    updateTime();
+    setInterval(updateTime, 1000);
+    loadWallpaper();
+    renderApps();
+    setupGestures();
+};
 
-    // --- HOME GESTURES ---
-    const hi = document.getElementById("hi");
-    let startY = 0;
-    hi.addEventListener("touchstart", (e) => { startY = e.touches[0].clientY; e.stopPropagation(); }, {passive:false});
-    hi.addEventListener("touchend", (e) => {
-        if(e.changedTouches[0].clientY - startY < -30) handleHomeGesture();
-    }, {passive:false});
-
-    // Edit Mode
-    const grid = document.getElementById("ag");
-    let pressTimer;
-    grid.addEventListener("touchstart", e => {
-        if(e.target === grid || e.target.classList.contains('aiw')) {
-            pressTimer = setTimeout(() => toggleEdit(true), 800);
+// --- RENDER ENGINE ---
+const renderApps = () => {
+    g('ag').innerHTML = '';
+    g('dock').innerHTML = '';
+    
+    // Sort: Dock items vs Grid items (Simulated)
+    // In this simplified version, first 4 go to Dock, rest to Grid
+    const allApps = DefApps; // You can expand this with LS saving later
+    
+    allApps.forEach((app, i) => {
+        const el = createIcon(app);
+        if(i < 4) {
+            // Remove text for dock items for cleaner look
+            el.querySelector('.al').style.display='none'; 
+            g('dock').appendChild(el);
+        } else {
+            g('ag').appendChild(el);
         }
     });
-    grid.addEventListener("touchend", () => clearTimeout(pressTimer));
-}
+};
 
-// --- NEW SOURCE LOADING LOGIC ---
-async function loadApps() {
-  const msg = document.getElementById('status-msg');
-  try {
-    const response = await fetch('apps.json');
-    if (!response.ok) throw new Error("Could not find apps.json");
+const createIcon = (app) => {
+    const d = ce('div');
+    d.className = 'aiw';
+    d.innerHTML = `<div class="ai ${app.class||''}">${app.icon}</div><div class="al">${app.title}</div>`;
+    d.onclick = () => openApp(app);
+    // Add touch effect
+    d.addEventListener('touchstart', () => d.style.transform = 'scale(0.9)');
+    d.addEventListener('touchend', () => d.style.transform = 'scale(1)');
+    return d;
+};
+
+// --- APP ENGINE ---
+const openApp = (app) => {
+    if(State.locked) return;
     
-    const appsData = await response.json();
-    msg.style.display = 'none'; 
-    
-    // Check if we have a saved layout, otherwise generate from JSON
-    const savedLayout = localStorage.getItem(STORAGE_KEY);
-    if (savedLayout) {
-        try {
-            const layoutData = JSON.parse(savedLayout);
-            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
-        } catch(e) { generateGridFromJSON(appsData); }
-    } else {
-        generateGridFromJSON(appsData);
+    // Check if already open
+    let existing = State.openApps.find(x => x.id === app.id);
+    if(existing) {
+        bringToFront(existing);
+        return;
     }
+
+    const win = ce('div');
+    win.className = 'aw';
+    win.id = 'win-'+app.id;
     
-  } catch (error) {
-    msg.innerHTML = "Error: " + error.message + "<br><br>⚠️ Use a Local Server (VS Code Live Server)";
-    msg.style.color = '#ff3b30';
-    console.error(error);
-  }
-}
+    const content = ce('div');
+    content.className = 'awc';
+    
+    // APP CONTENT ROUTER
+    if(app.path === 'system:settings') renderSettings(content);
+    else if(app.path === 'system:camera') renderCamera(content);
+    else if(app.path === 'system:notes') renderNotes(content);
+    else if(app.path === 'system:info') content.innerHTML = '<div class="tc"><h1>Santas OS Pro</h1><p>Better. Faster. Safe Wallpaper.</p></div>';
+    else content.innerHTML = `<iframe src="${app.path}" style="width:100%;height:100%;border:none;"></iframe>`;
+    
+    win.appendChild(content);
+    
+    // Home Bar for App
+    const hb = ce('div');
+    hb.className = 'hi';
+    win.appendChild(hb);
 
-function generateGridFromJSON(appsData) {
-    // 1. Add Default Widgets
-    createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
-    createItem('widget', 2 * COL_WIDTH, 0, 2, 2, {subtype:'weather'});
-
-    // 2. Loop through JSON apps and place them
-    let startRow = 2; 
-    appsData.forEach((app, index) => {
-        const col = index % 4;
-        const row = startRow + Math.floor(index / 4);
-        createItem('app', col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
+    g('aw-con').appendChild(win);
+    
+    // Animation Frame
+    setTimeout(() => win.classList.add('ac'), 10);
+    
+    const appObj = { ...app, el: win };
+    State.openApps.push(appObj);
+    State.activeApp = appObj;
+    
+    // App Gestures (Swipe to Home)
+    let sy = 0;
+    hb.addEventListener('touchstart', e => sy = e.touches[0].clientY);
+    hb.addEventListener('touchend', e => {
+        if(e.changedTouches[0].clientY - sy < -30) closeApp(appObj);
     });
-    saveLayout();
-}
+};
 
-function saveLayout() {
-    const layout = items.map(i => ({
-        type: i.type, subtype: i.subtype, x: i.x, y: i.y, cols: i.cols, rows: i.rows,
-        title: i.title, icon: i.icon, path: i.path, class: i.class
-    }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
-}
-
-function handleHomeGesture() {
-    if(currentApp) { minimizeApp(); openSwitcher(); }
-    else if(isSwitcherMode) { closeSwitcher(); }
-    else if(runningApps.length > 0 && !isEditMode) { openSwitcher(); }
-}
-
-// --- GRID ENGINE ---
-function createItem(type, x, y, wUnit, hUnit, data={}) {
-    const el = document.createElement("div");
-    el.classList.add("grid-item");
-    const wPx = wUnit * COL_WIDTH - (type === "app" ? 0 : 15);
-    const hPx = hUnit * ROW_HEIGHT - (type === "app" ? 10 : 15);
-
-    if (type === "app") {
-        el.classList.add("aiw");
-        // Use class from JSON or default
-        el.innerHTML = `<div class="ai ${data.class||'default'}">${data.icon}</div><div class="al">${data.title}</div>`;
-        el.onclick = () => { if(!isEditMode) launchApp(data); };
-    } else {
-        el.classList.add("widget");
-        el.innerHTML = `<div class="del-btn">×</div><div class="resize-handle"></div><div class="widget-content">${data.subtype === 'loading' ? '<div class="loader"></div>' : getWidgetHTML(data.subtype, wUnit)}</div>`;
-        el.querySelector(".del-btn").onclick = (e) => { e.stopPropagation(); deleteItem(el); };
-    }
-    document.getElementById("ag").appendChild(el);
-    const itemObj = { 
-        el: el, type: type, subtype: data.subtype, 
-        x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
-        title: data.title, icon: data.icon, path: data.path, class: data.class
-    };
-    updateVisualPosition(itemObj);
-    setupDrag(itemObj);
-    if(type === "widget") setupResize(itemObj);
-    items.push(itemObj);
-    updateContainerHeight();
-    return itemObj;
-}
-
-function addWidget(type) {
-    closeAddPanel();
-    const spot = findNextEmptySpot(2, 2);
-    const widgetItem = createItem("widget", spot.x, spot.y, 2, 2, { subtype: "loading" });
-    resolveCollisions(widgetItem); updateVisualPosition(widgetItem); toggleEdit(true);
+const closeApp = (app) => {
+    app.el.classList.remove('ac');
+    g('h').classList.remove('zo'); // Unzoom home
     setTimeout(() => {
-        widgetItem.subtype = type;
-        widgetItem.el.querySelector(".widget-content").innerHTML = getWidgetHTML(type, 2);
-        if(type === 'clock') updateClock();
-        resolveCollisions(widgetItem); updateVisualPosition(widgetItem); saveLayout();
-    }, 1000);
-}
+        app.el.remove();
+        State.openApps = State.openApps.filter(x => x.id !== app.id);
+    }, 400);
+};
 
-function getWidgetHTML(type, cols) {
-    if(type === "clock") return `<h1 style="margin:0;font-size:${cols>=3?"48px":"34px"};font-weight:300" id="w-clock">17:55</h1><div style="font-size:11px;opacity:0.7;margin-top:-2px;letter-spacing:1px">NEW YORK</div>`;
-    if(type === "weather") return `<div style="font-size:35px;margin-bottom:5px">⛈️</div><div style="font-size:22px;font-weight:bold">16°</div><div style="font-size:11px;opacity:0.7">Heavy Rain</div>`;
-    if(type === "photo") return '<img src="https://images.unsplash.com/photo-1494548162494-384bba4ab999?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" style="width:100%;height:100%;object-fit:cover;border-radius:20px;">';
-    if(type === "calendar") return `<div style="color:#ff3b30;font-weight:bold;font-size:20px">DEC</div><div style="font-size:40px">2</div>`;
-    return "Widget";
-}
+// --- SYSTEM APPS ---
 
-// --- APP LOGIC ---
-function launchApp(appData) {
-    let existing = runningApps.find(a => a.path === appData.path);
-    if(!existing) {
-        existing = { ...appData, dom: createInternalAppDOM(appData) };
-        runningApps.push(existing);
-    }
-    restoreContentToWindow(existing);
-
-    const awc = document.getElementById("awc");
-    awc.innerHTML = ''; 
-    awc.appendChild(existing.dom);
+// 1. SAFE SETTINGS (The Fix)
+const renderSettings = (ctx) => {
+    ctx.innerHTML = `
+    <div class="tc">
+        <h1 style="margin-bottom:20px">Settings</h1>
+        <div class="sg">
+            <div class="si">
+                <span>Wallpaper</span>
+                <input type="file" id="wpInput" hidden accept="image/*">
+                <button class="fb" onclick="g('wpInput').click()">Upload</button>
+            </div>
+            <div class="si" style="font-size:12px;color:#666">
+                Note: Images are now auto-compressed to prevent crashing.
+            </div>
+            <div class="si">
+                <button class="fb" style="background:red;width:100%" onclick="resetOS()">Reset OS</button>
+            </div>
+        </div>
+    </div>`;
     
-    requestAnimationFrame(() => {
-        document.getElementById("app-window").classList.add("ac");
-        document.getElementById("h").classList.add("zo");
+    setTimeout(() => {
+        const inp = ctx.querySelector('#wpInput');
+        inp.addEventListener('change', handleWallpaperUpload);
+    }, 100);
+};
+
+// 2. CAMERA
+const renderCamera = (ctx) => {
+    ctx.innerHTML = `<div class="cam-ui"><video id="camFeed" autoplay playsinline></video><div class="cam-btn" id="snap"></div></div>`;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            const vid = ctx.querySelector('video');
+            vid.srcObject = stream;
+            // Stop camera when app closes
+             const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (!document.contains(ctx)) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                });
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        })
+        .catch(e => ctx.innerHTML = '<div class="tc">Camera access denied</div>');
+};
+
+// 3. NOTES
+const renderNotes = (ctx) => {
+    const saved = LS.getItem('os_notes') || 'Type here...';
+    ctx.innerHTML = `<textarea style="width:100%;height:100%;padding:20px;font-size:18px;border:none;outline:none;font-family:sans-serif" id="noteArea">${saved}</textarea>`;
+    ctx.querySelector('textarea').addEventListener('input', (e) => {
+        LS.setItem('os_notes', e.target.value);
     });
-    currentApp = existing;
-    if(isSwitcherMode) closeSwitcher();
-}
+};
 
-function createInternalAppDOM(data) {
-    const w = document.createElement("div");
-    w.style.width = "100%"; w.style.height = "100%";
-    if(data.path === "system:settings") {
-        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
-    } else {
-        const i = document.createElement("iframe");
-        i.className = "aif"; i.src = data.path.includes("system") ? "about:blank" : data.path; 
-        w.appendChild(i);
-    }
-    return w;
-}
+// --- CORE UTILS ---
 
-function resetFactory() {
-    if(confirm("Reset layout to default?")) {
-        localStorage.removeItem(STORAGE_KEY);
+// The "Bard Code" Wallpaper Fix
+const handleWallpaperUpload = (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            // Compress using Canvas
+            const cvs = ce('canvas');
+            const ctx = cvs.getContext('2d');
+            // Max height 1200px
+            const scale = 1200 / img.height;
+            cvs.width = img.width * scale;
+            cvs.height = 1200;
+            ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+            
+            // Convert to JPEG 70%
+            const data = cvs.toDataURL('image/jpeg', 0.7);
+            
+            try {
+                LS.setItem(K.bg, data);
+                applyWallpaper(data);
+                alert("Wallpaper Updated!");
+            } catch(err) {
+                alert("Image too complex, try a simpler one.");
+            }
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+const loadWallpaper = () => {
+    const bg = LS.getItem(K.bg);
+    if(bg) applyWallpaper(bg);
+};
+
+const applyWallpaper = (data) => {
+    g('screen').style.backgroundImage = `url(${data})`;
+};
+
+const resetOS = () => {
+    if(confirm("Reset everything?")) {
+        LS.clear();
         location.reload();
     }
-}
+};
 
-function minimizeApp() {
-    if(!currentApp) return;
-    document.getElementById("app-window").classList.remove("ac");
-    currentApp = null;
-}
+const updateTime = () => {
+    const now = new Date();
+    const time = now.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    g('c').innerText = time;
+    g('lsTime').innerText = now.getHours() + ':' + (now.getMinutes()<10?'0':'') + now.getMinutes();
+    g('lsDate').innerText = now.toLocaleDateString([], {weekday:'long', month:'long', day:'numeric'});
+};
 
-function closeApp(app) {
-    const idx = runningApps.indexOf(app);
-    if(idx > -1) { runningApps.splice(idx, 1); app.dom.remove(); if(app.cardEl) app.cardEl.remove(); }
-    if(runningApps.length === 0) closeSwitcher();
-}
-
-// --- SWITCHER (Integrated) ---
-function openSwitcher() {
-    isSwitcherMode = true;
-    const s = document.getElementById("switcher");
-    const h = document.getElementById("h");
-    s.style.display = 'flex';
-    h.classList.add("zo");
-    s.innerHTML = ''; 
-
-    if(runningApps.length === 0) { closeSwitcher(); return; }
-
-    runningApps.forEach(app => {
-        const card = document.createElement("div");
-        card.className = "scd";
-        if(app.class) card.setAttribute('data-class', app.class);
-
-        const header = document.createElement("div");
-        header.className = "ch";
-        header.innerHTML = `<span>${app.icon}</span><span>${app.title}</span>`;
-        card.appendChild(header);
-        
-        const contentHolder = document.createElement("div");
-        contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:44px;background:#000";
-        if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
-        contentHolder.appendChild(app.dom);
-        card.appendChild(contentHolder);
-        
-        const touchLayer = document.createElement("div");
-        touchLayer.className = "ctl";
-        card.appendChild(touchLayer);
-        setupSwitcherGestures(touchLayer, card, app);
-        s.appendChild(card);
-        app.cardEl = card; 
-    });
-    s.addEventListener('scroll', handleSwitcherScroll);
-    requestAnimationFrame(() => {
-        if(runningApps.length > 0) {
-           const lastCard = s.children[s.children.length-1];
-           const centerOffset = lastCard.offsetLeft - (s.clientWidth / 2) + (lastCard.offsetWidth / 2);
-           s.scrollLeft = centerOffset;
-        }
-        handleSwitcherScroll();
-    });
-}
-
-function handleSwitcherScroll() {
-    const container = document.getElementById("switcher");
-    const containerCenter = container.scrollLeft + (container.clientWidth / 2);
-    Array.from(container.children).forEach(card => {
-        if(card.classList.contains('closing')) return; 
-        const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
-        const distance = Math.abs(containerCenter - cardCenter);
-        const maxDist = card.offsetWidth; 
-        if (distance < maxDist) {
-            const scale = 1 - (distance / (maxDist * 4)); 
-            const opacity = 1 - (distance / (maxDist * 2));
-            card.style.transform = `scale(${scale})`; card.style.opacity = `${opacity}`; card.style.zIndex = 100 - Math.round(distance/10);
-        } else {
-            card.style.transform = 'scale(0.85)'; card.style.opacity = '0.5'; card.style.zIndex = 1;
+// --- GESTURES & LOCK SCREEN ---
+const setupGestures = () => {
+    const ls = g('lockScreen');
+    let startY = 0;
+    
+    ls.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+    ls.addEventListener('touchend', e => {
+        if(startY - e.changedTouches[0].clientY > 100) {
+            unlock();
         }
     });
-}
+    
+    // Prevent standard scrolling on body
+    document.body.addEventListener('touchmove', e => e.preventDefault(), {passive:false});
+};
 
-function restoreContentToWindow(app) { if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom); }
-function closeSwitcher() {
-    isSwitcherMode = false;
-    const s = document.getElementById("switcher");
-    s.removeEventListener('scroll', handleSwitcherScroll);
-    s.style.display = 'none';
-    document.getElementById("h").classList.remove("zo");
-}
+const unlock = () => {
+    g('lockScreen').classList.add('unlocked');
+    State.locked = false;
+};
 
-function setupSwitcherGestures(touchLayer, card, app) {
-    let startX = 0, startY = 0, isVertical = false, isHorizontal = false;
-    touchLayer.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX; startY = e.touches[0].clientY; isVertical = false; isHorizontal = false; card.style.transition = 'none';
-    }, {passive:false});
-    touchLayer.addEventListener('touchmove', (e) => {
-        if(isHorizontal) return; 
-        const cx = e.touches[0].clientX; const cy = e.touches[0].clientY;
-        const dx = cx - startX; const dy = cy - startY;
-        if(!isVertical && !isHorizontal) {
-            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) isHorizontal = true;
-            else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) isVertical = true;
-        }
-        if(isVertical) {
-            e.preventDefault(); 
-            if(dy < 0) { card.style.transform = `scale(0.9) translateY(${dy}px)`; card.style.opacity = `${1 - Math.abs(dy)/500}`; }
-        }
-    }, {passive:false});
-    touchLayer.addEventListener('touchend', (e) => {
-        card.style.transition = "transform 0.3s ease, opacity 0.3s"; 
-        if(isVertical) {
-            const dy = e.changedTouches[0].clientY - startY;
-            if(dy < -100) {
-                card.classList.add('closing'); card.style.transform = "translateY(-100vh) scale(0.5)"; card.style.opacity = "0";
-                setTimeout(() => { closeApp(app); handleSwitcherScroll(); }, 300);
-            } else { handleSwitcherScroll(); }
-        } else if(!isHorizontal) {
-             const dy = e.changedTouches[0].clientY - startY; const dx = e.changedTouches[0].clientX - startX;
-             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) launchApp(app);
-        }
-    });
-}
-
-// --- UTILS ---
-function updateVisualPosition(item) {
-    const offsetX = (item.cols * COL_WIDTH - item.w) / 2;
-    const offsetY = (item.rows * ROW_HEIGHT - item.h) / 2;
-    item.el.style.left = (item.x + offsetX) + "px";
-    item.el.style.top = (item.y + offsetY) + "px";
-}
-function resolveCollisions(movedItem) {
-    items.filter(i => i !== movedItem).forEach(other => {
-        if(rectIntersect(movedItem, other)) {
-            const others = items.filter(x => x !== other);
-            const nextSpot = findNextEmptySpot(other.cols, other.rows, others);
-            other.x = nextSpot.x; other.y = nextSpot.y;
-            updateVisualPosition(other);
-        }
-    });
-}
-function rectIntersect(i1, i2) {
-    const margin = 10;
-    return (i1.x + margin < i2.x + i2.cols * COL_WIDTH) && (i1.x + i1.cols * COL_WIDTH - margin > i2.x) &&
-           (i1.y + margin < i2.y + i2.rows * ROW_HEIGHT) && (i1.y + i1.rows * ROW_HEIGHT - margin > i2.y);
-}
-function findNextEmptySpot(cols, rows, currentItems = items) {
-    let rowIdx = 0;
-    while(true) {
-        for(let colIdx = 0; colIdx < COL_COUNT; colIdx++) {
-            if(colIdx + cols > COL_COUNT) continue; 
-            const testX = colIdx * COL_WIDTH; const testY = rowIdx * ROW_HEIGHT;
-            const collision = currentItems.some(i => testX < i.x + i.cols * COL_WIDTH && testX + cols * COL_WIDTH > i.x && testY < i.y + i.rows * ROW_HEIGHT && testY + rows * ROW_HEIGHT > i.y);
-            if(!collision) return {x: testX, y: testY};
-        }
-        rowIdx++; if(rowIdx > 500) return {x:0, y:0};
-    }
-}
-function updateContainerHeight() {
-    let max = 0; items.forEach(i => { const bottom = i.y + i.h; if(bottom > max) max = bottom; });
-    document.getElementById("ag").style.minHeight = (max + 300) + "px";
-}
-function toggleEdit(val) { isEditMode = val; document.body.classList.toggle("edit-mode", val); closeAddPanel(); }
-function openAddPanel(){ document.getElementById("add-panel").classList.add("open"); }
-function closeAddPanel(){ document.getElementById("add-panel").classList.remove("open"); }
-function deleteItem(el) { 
-    const idx = items.findIndex(i => i.el === el); 
-    if(idx > -1) { items.splice(idx, 1); el.remove(); updateContainerHeight(); saveLayout(); } 
-}
-function updateClock() { const d = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); document.getElementById("c").innerText = d; document.querySelectorAll("#w-clock").forEach(e => e.innerText = d); }
-
-// --- DRAG/RESIZE HANDLERS ---
-function setupDrag(item){
-    let startX, startY, startLeft, startTop;
-    const onStart = (e) => {
-        if(isEditMode && !e.target.className.includes("resize-handle") && !e.target.className.includes("del-btn")){
-            e.preventDefault(); item.el.classList.add("dragging");
-            startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
-            startLeft = parseFloat(item.el.style.left); startTop = parseFloat(item.el.style.top);
-            document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
-            document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
-        }
-    };
-    const onMove = (e) => {
-        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        item.el.style.left = startLeft + (clientX - startX) + "px"; item.el.style.top = startTop + (clientY - startY) + "px";
-    };
-    const onEnd = () => {
-        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
-        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
-        item.el.classList.remove("dragging");
-        const left = parseFloat(item.el.style.left); const top = parseFloat(item.el.style.top);
-        let col = Math.round(left / COL_WIDTH); let row = Math.round(top / ROW_HEIGHT);
-        if(col < 0) col = 0; if(col > COL_COUNT - item.cols) col = COL_COUNT - item.cols; if(row < 0) row = 0;
-        item.x = col * COL_WIDTH; item.y = row * ROW_HEIGHT;
-        resolveCollisions(item); updateVisualPosition(item); updateContainerHeight(); saveLayout();
-    };
-    item.el.addEventListener("touchstart", onStart, {passive:false}); item.el.addEventListener("mousedown", onStart);
-}
-function setupResize(item){
-    const handle = item.el.querySelector(".resize-handle");
-    let startX, startY, startW, startH;
-    const onStart = (e) => {
-        e.stopPropagation(); e.preventDefault(); item.el.classList.add("resizing");
-        startX = e.touches?e.touches[0].clientX:e.clientX; startY = e.touches?e.touches[0].clientY:e.clientY;
-        startW = item.w; startH = item.h;
-        document.addEventListener("touchmove", onMove, {passive:false}); document.addEventListener("touchend", onEnd);
-        document.addEventListener("mousemove", onMove); document.addEventListener("mouseup", onEnd);
-    };
-    const onMove = (e) => {
-        e.preventDefault(); const clientX = e.touches?e.touches[0].clientX:e.clientX; const clientY = e.touches?e.touches[0].clientY:e.clientY;
-        let newCols = Math.round((startW + (clientX - startX)) / COL_WIDTH); let newRows = Math.round((startH + (clientY - startY)) / ROW_HEIGHT);
-        if(newCols < 1) newCols = 1; if(newCols > 4) newCols = 4; if(newRows < 1) newRows = 1; if(newRows > 6) newRows = 6;
-        const pxW = newCols * COL_WIDTH - 15; const pxH = newRows * ROW_HEIGHT - 15;
-        item.el.style.width = pxW + "px"; item.el.style.height = pxH + "px";
-        if(newCols !== item.cols || newRows !== item.rows) {
-            item.cols = newCols; item.rows = newRows; item.w = pxW; item.h = pxH;
-            if(item.subtype !== 'loading') item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype, item.cols);
-            if(item.subtype === "clock") updateClock();
-            resolveCollisions(item); updateVisualPosition(item); updateContainerHeight();
-        }
-    };
-    const onEnd = () => {
-        document.removeEventListener("touchmove", onMove); document.removeEventListener("touchend", onEnd);
-        document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onEnd);
-        item.el.classList.remove("resizing"); updateVisualPosition(item); saveLayout();
-    };
-    handle.addEventListener("touchstart", onStart, {passive:false}); handle.addEventListener("mousedown", onStart);
-}
-window.addEventListener("resize", () => {
-    SCREEN_W = document.getElementById("ag").clientWidth || window.innerWidth;
-    COL_WIDTH = SCREEN_W / COL_COUNT;
-    items.forEach(i => {
-        const col = Math.round(i.x / (SCREEN_W/COL_COUNT)); 
-        i.x = col * COL_WIDTH; i.w = i.cols * COL_WIDTH - (i.type==="app"?0:15);
-        updateVisualPosition(i);
-    });
-});
 init();
 </script>
 </body>
