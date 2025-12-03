@@ -254,7 +254,7 @@ const STORE_APPS = [
     { id: 'sudoku', title: "Web Sudoku", icon: "✏️", url: "https://www.websudoku.com/?widget=yes&in=yes", cat: "Games", class: "torch" },
     { id: 'pokedex', title: "Pokedex", icon: "🔴", url: "https://pokedex.org/", cat: "Games", class: "camera" },
     { id: 'dino', title: "Dino Run", icon: "🦖", url: "https://chromedino.com/", cat: "Games", class: "settings" },
-    { id: 'geo', title: "GeoGuessr Free", icon: "🌎", url: "https://geoguessr.com/free", cat: "Games", class: "touch" },
+    { id: 'geo', title: "GeoGuessr Free", icon: "🌎", url: "https://geoguessr.com/free", cat: "Navigation", class: "touch" },
     { id: 'calc', title: "Calculator", icon: "🧮", url: "https://www.desmos.com/scientific", cat: "Utilities", class: "torch" },
     { id: 'graph', title: "Graphing Calc", icon: "📈", url: "https://www.desmos.com/calculator", cat: "Utilities", class: "torch" },
     { id: 'translate', title: "Bing Translate", icon: "文", url: "https://www.bing.com/translator", cat: "Utilities", class: "mic" },
@@ -746,6 +746,9 @@ function openSwitcher() {
     sw.style.display = "flex";
     sc.innerHTML = "";
     
+    // Minimize the currently active app (if any) before rendering cards
+    if (currentApp) minimizeApp();
+
     if(runningApps.length === 0) {
         msg.style.display = "block";
     } else {
@@ -758,14 +761,13 @@ function openSwitcher() {
             card.innerHTML = `<div class="ch">${app.title}</div><div class="card-body" style="flex:1;background:#fff;position:relative;overflow:hidden"></div>`;
             
             // --- LIVE PREVIEW FIX ---
-            // Move the actual app DOM into the card
-            // Note: This causes iframes to reload, but gives the visual preview user wants.
             const cardBody = card.querySelector('.card-body');
             
-            // Ensure app.dom is visible
-            app.dom.style.display = 'block';
+            // Move the actual app DOM into the card
+            if (app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
             cardBody.appendChild(app.dom);
-            
+            app.dom.style.display = 'block';
+
             // Card Interactions
             card.onclick = (e) => { 
                 e.stopPropagation(); 
@@ -799,13 +801,28 @@ function closeSwitcher() {
     isSwitcherMode = false;
     document.getElementById("switcher").style.display = "none";
     document.getElementById("h").classList.remove("zo");
-    // If we closed switcher without picking an app, but there was an active app, restore it
+    
+    const awc = document.getElementById("awc");
+
+    // Restore all app DOM elements back to the main window container (awc)
+    document.querySelectorAll(".scd .card-body").forEach(cardBody => {
+        const appDom = cardBody.querySelector('div:not(.ch)');
+        if (appDom && !awc.contains(appDom)) {
+            cardBody.removeChild(appDom);
+            awc.appendChild(appDom);
+        }
+    });
+    
+    // Re-launch the current app if one was active before the switcher opened
     if(currentApp) launchApp(currentApp);
+    // If no app was active, hide all content in awc
+    else Array.from(awc.children).forEach(child => child.style.display = 'none');
 }
 
 function minimizeApp() {
     document.getElementById("app-window").classList.remove("ac");
-    currentApp = null;
+    // Ensure the current app DOM is moved back to the awc before minimization
+    // This is handled implicitly by launchApp/openSwitcher calling removeChild/appendChild
 }
 
 function closeApp(app) {
@@ -844,24 +861,96 @@ function updateVisuals(i) {
     i.el.style.width = i.w + "px";
     i.el.style.height = i.h + "px";
 }
-function findEmptySpot(w=1,h=1) {
-    for(let r=0; r<10; r++) {
-        for(let c=0; c<4; c++) {
-            if(c+w > 4) continue;
-            const tx = c*COL_WIDTH; const ty = (r+2)*ROW_HEIGHT;
-            const hit = items.some(i => 
-                tx < i.x + i.cols*COL_WIDTH && tx + w*COL_WIDTH > i.x &&
-                ty < i.y + i.rows*ROW_HEIGHT && ty + h*ROW_HEIGHT > i.y
-            );
+
+// --- NEW COLLISION RESOLUTION FUNCTIONS ---
+
+/**
+ * Checks for intersection between two grid items.
+ * @param {object} i1 - Item 1
+ * @param {object} i2 - Item 2
+ * @returns {boolean} True if they overlap.
+ */
+function checkIntersection(i1, i2) {
+    const i1W = i1.cols * COL_WIDTH;
+    const i1H = i1.rows * ROW_HEIGHT;
+    const i2W = i2.cols * COL_WIDTH;
+    const i2H = i2.rows * ROW_HEIGHT;
+
+    // Use a small margin to prevent jittery adjacency checks
+    const margin = 5; 
+
+    return (i1.x + margin < i2.x + i2W) && 
+           (i1.x + i1W - margin > i2.x) &&
+           (i1.y + margin < i2.y + i2H) && 
+           (i1.y + i1H - margin > i2.y);
+}
+
+/**
+ * Finds the next available empty spot on the grid.
+ * @param {number} w - Width units needed.
+ * @param {number} h - Height units needed.
+ * @param {Array<object>} [checkItems=items] - The list of items to check collision against.
+ * @returns {{x: number, y: number}} The coordinates of the found spot.
+ */
+function findEmptySpot(w=1, h=1, checkItems = items) {
+    // Start scanning from row 0
+    for(let r=0; r<20; r++) {
+        for(let c=0; c<COL_COUNT; c++) {
+            if(c+w > COL_COUNT) continue;
+            
+            const tx = c*COL_WIDTH; 
+            const ty = r*ROW_HEIGHT; 
+
+            // Create a temporary object for collision testing
+            const testItem = { x: tx, y: ty, cols: w, rows: h, w: w*COL_WIDTH, h: h*ROW_HEIGHT };
+            
+            // Check if the test spot collides with any existing item (excluding the test item itself, if passed in)
+            const hit = checkItems.some(i => checkIntersection(testItem, i));
+            
             if(!hit) return {x:tx, y:ty};
         }
     }
-    return {x:0,y:0};
+    // Fallback to top-left if no spot found (shouldn't happen)
+    return {x:0, y:0};
 }
-function updateContainer(){
-    let max=0; items.forEach(i=> max=Math.max(max, i.y+i.h));
-    document.getElementById("ag").style.minHeight = (max+200)+"px";
+
+/**
+ * Resolves collisions by shifting items out of the way of the moved item.
+ * Currently, it just moves the overlapping item to the next available empty spot.
+ * @param {object} movedItem - The item that was just moved/resized.
+ */
+function resolveCollisions(movedItem) {
+    // Only resolve collisions if we are in Edit Mode (or after initial move)
+    if (!isEditMode) return; 
+
+    const itemsToShift = [];
+
+    // 1. Identify all items overlapping with the moved item
+    items.forEach(other => {
+        if (other !== movedItem && checkIntersection(movedItem, other)) {
+            itemsToShift.push(other);
+        }
+    });
+
+    if (itemsToShift.length === 0) return;
+
+    // 2. Resolve collisions by shifting overlapping items
+    itemsToShift.forEach(other => {
+        // Create a list of items to check against, excluding the 'other' item itself
+        const checkAgainst = items.filter(i => i !== other);
+        
+        // Find a new spot for the overlapping item ('other')
+        const newSpot = findEmptySpot(other.cols, other.rows, checkAgainst);
+        
+        // Update the position of the overlapping item
+        other.x = newSpot.x;
+        other.y = newSpot.y;
+        updateVisuals(other);
+    });
 }
+// -----------------------------------------------------------
+
+
 function saveLayout() {
     const data = items.map(i => ({
         type:i.type, subtype:i.subtype, x:i.x, y:i.y, cols:i.cols, rows:i.rows,
@@ -870,7 +959,7 @@ function saveLayout() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-// --- DRAG LOGIC ---
+// --- DRAG LOGIC (MODIFIED to include collision fix) ---
 function setupDrag(item) {
     let sx, sy, sl, st;
     const move = (e) => {
@@ -886,15 +975,25 @@ function setupDrag(item) {
         document.removeEventListener("touchend", end);
         document.removeEventListener("mouseup", end);
         item.el.classList.remove("dragging");
-        // Snap
+        
+        // Snap the item to the grid
         const l = parseFloat(item.el.style.left);
         const t = parseFloat(item.el.style.top);
         let c = Math.round(l/COL_WIDTH);
         let r = Math.round(t/ROW_HEIGHT);
+        
+        // Clamp position
         if(c<0)c=0; if(c>4-item.cols)c=4-item.cols; if(r<0)r=0;
-        item.x = c*COL_WIDTH; item.y = r*ROW_HEIGHT;
+
+        item.x = c*COL_WIDTH; 
+        item.y = r*ROW_HEIGHT;
+
+        // Apply Collision Resolution
+        resolveCollisions(item); 
+
         updateVisuals(item);
         updateContainer();
+        saveLayout();
     };
     const start = (e) => {
         if(isEditMode && !e.target.classList.contains("del-btn") && !e.target.className.includes("resize")) {
@@ -912,6 +1011,8 @@ function setupDrag(item) {
     item.el.addEventListener("touchstart", start, {passive:false});
     item.el.addEventListener("mousedown", start);
 }
+
+// --- RESIZE LOGIC (MODIFIED to include collision fix) ---
 function setupResize(item) {
     const h = item.el.querySelector(".resize-handle");
     if(!h) return;
@@ -926,13 +1027,25 @@ function setupResize(item) {
     const end = () => {
         document.removeEventListener("touchmove", move); document.removeEventListener("touchend", end);
         item.el.classList.remove("resizing");
+        
+        // Calculate new grid units
         const nw = parseFloat(item.el.style.width); const nh = parseFloat(item.el.style.height);
+        const oldCols = item.cols;
+        const oldRows = item.rows;
+
         item.cols = Math.max(1, Math.min(4, Math.round(nw/COL_WIDTH)));
         item.rows = Math.max(1, Math.min(6, Math.round(nh/ROW_HEIGHT)));
         item.w = item.cols*COL_WIDTH - 15;
         item.h = item.rows*ROW_HEIGHT - 15;
+
+        // Only run collision check if size changed
+        if (item.cols !== oldCols || item.rows !== oldRows) {
+            resolveCollisions(item);
+        }
+        
         item.el.querySelector(".widget-content").innerHTML = getWidgetHTML(item.subtype);
-        updateVisuals(item); saveLayout();
+        updateVisuals(item); 
+        saveLayout();
     }
     h.addEventListener("touchstart", e => {
         e.stopPropagation(); item.el.classList.add("resizing");
