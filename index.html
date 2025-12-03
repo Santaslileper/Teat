@@ -70,7 +70,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 /* --- APP WINDOW --- */
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
 .aw.ac{transform:translate3d(0,0,0)}
-/* App Content Container: Fixed to be black so text is visible */
+/* App Content Container */
 .awc{width:100%;height:100%;overflow:hidden;background:#000;position:relative} 
 .aif{width:100%;height:100%;border:none;display:block;background:#fff;}
 
@@ -131,22 +131,102 @@ let items = [];
 let runningApps = []; 
 let currentApp = null; 
 let isSwitcherMode = false;
-const STORAGE_KEY = 'os_layout_final_v3';
+const STORAGE_KEY = 'os_layout_final_v4';
 
-// --- INITIAL LAYOUT ---
+// --- TEMPLATES (NEW: Internal HTML for apps) ---
+const appTemplates = {
+    // 1. CALCULATOR TEMPLATE
+    'calc': `
+        <style>
+            .c-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px}
+            .c-btn{background:#333;color:#fff;border:none;padding:20px;font-size:20px;border-radius:50%;cursor:pointer;transition:0.2s}
+            .c-btn:active{background:#555}
+            .c-btn.op{background:#f1a33c}
+            #res{width:100%;background:0 0;border:none;color:#fff;font-size:60px;text-align:right;padding:20px;box-sizing:border-box}
+        </style>
+        <div style="height:100%;display:flex;flex-direction:column;justify-content:flex-end">
+            <input id="res" value="0" readonly>
+            <div class="c-grid">
+                <button class="c-btn" onclick="c('C')">C</button><button class="c-btn" onclick="c('/')">/</button><button class="c-btn" onclick="c('*')">×</button><button class="c-btn op" onclick="c('-')">-</button>
+                <button class="c-btn" onclick="c('7')">7</button><button class="c-btn" onclick="c('8')">8</button><button class="c-btn" onclick="c('9')">9</button><button class="c-btn op" onclick="c('+')">+</button>
+                <button class="c-btn" onclick="c('4')">4</button><button class="c-btn" onclick="c('5')">5</button><button class="c-btn" onclick="c('6')">6</button><button class="c-btn op" onclick="c('=')">=</button>
+                <button class="c-btn" style="grid-column:span 2;border-radius:40px" onclick="c('0')">0</button><button class="c-btn" onclick="c('.')">.</button>
+            </div>
+        </div>
+        <script>
+            let e = document.getElementById('res');
+            function c(v){
+                if(v=='C')e.value='0';
+                else if(v=='=')try{e.value=eval(e.value)}catch{e.value='Err'}
+                else e.value=e.value=='0'?v:e.value+v;
+            }
+        <\/script>`,
+
+    // 2. GENERIC PAGE TEMPLATE (Used for Info, Test, etc.)
+    'generic': `
+        <div style="padding:40px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%">
+            <div style="font-size:80px;margin-bottom:20px">{{ICON}}</div>
+            <h1>{{TITLE}}</h1>
+            <p style="color:#aaa;margin-top:20px;line-height:1.5">This is the {{TITLE}} app.<br>It is running from the internal template system.</p>
+        </div>`,
+    
+    // 3. GAME TEMPLATE
+    'game': `
+        <style>canvas{background:#333;margin:auto;display:block;border-radius:10px}</style>
+        <div style="height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column">
+            <h2 style="margin-bottom:20px">{{TITLE}}</h2>
+            <canvas id="g" width="300" height="300"></canvas>
+            <p style="margin-top:20px;color:#888">Tap screen to jump</p>
+        </div>
+        <script>
+            const canvas=document.getElementById('g');
+            const c=canvas.getContext('2d');
+            let y=150, v=0, score=0, pipeX=300;
+            let running=true;
+            
+            function loop(){
+                if(!running) return;
+                c.fillStyle='#222';c.fillRect(0,0,300,300);
+                
+                // Player
+                c.fillStyle='#fff';c.fillRect(50,y,30,30);
+                y+=v; v+=0.5; 
+                if(y>270){y=270;v=0}
+                if(y<0){y=0;v=0}
+
+                // Obstacle
+                c.fillStyle='red';c.fillRect(pipeX, 200, 30, 100);
+                pipeX -= 3;
+                if(pipeX < -30) { pipeX = 300; score++; }
+
+                // Collision
+                if(pipeX < 80 && pipeX > 20 && y > 170) {
+                    running = false;
+                    c.fillStyle='white';c.font='30px Arial';c.fillText("Game Over", 70, 150);
+                }
+
+                requestAnimationFrame(loop);
+            }
+            loop();
+            document.addEventListener('mousedown', ()=>{v=-8});
+            document.addEventListener('touchstart', ()=>{v=-8});
+        <\/script>`
+};
+
+// --- INITIAL LAYOUT (JSON) ---
 const defaultApps = [
-    { title: "Files", icon: "🗃️", class: "files", path: "system:files" },
-    { title: "News", icon: "📰", class: "news", path: "system:news" },
-    { title: "Info", icon: "ℹ️", class: "info", path: "system:tutorial" },
-    { title: "Chat", icon: "💬", class: "chat", path: "system:chat" },
-    { title: "Mortis", icon: "☠️", class: "mortis", path: "system:mortis" },
-    { title: "AI Learn", icon: "🤖", class: "ai-learn", path: "system:ai" },
-    { title: "Themes", icon: "🎨", class: "themes", path: "system:themes" },
-    { title: "Test 3k", icon: "🚧", class: "test", path: "system:test" },
-    { title: "Grapple", icon: "🎮", class: "grapple", path: "system:game" },
-    { title: "Cycles", icon: "⏱️", class: "cycles", path: "system:clock" },
-    { title: "Settings", icon: "⚙️", class: "settings", path: "system:settings" },
-    { title: "Calc", icon: "🧮", class: "calc", path: "system:calc" }
+    { title: "My Files", icon: "🗃️", class: "files", type: "generic" },
+    { title: "News", icon: "📰", class: "news", type: "browser", url: "https://www.bing.com/news" },
+    { title: "Info", icon: "ℹ️", class: "info", type: "generic" },
+    { title: "Chat", icon: "💬", class: "chat", type: "generic" },
+    { title: "Mortis", icon: "☠️", class: "mortis", type: "generic" },
+    { title: "AI Learn", icon: "🤖", class: "ai-learn", type: "generic" },
+    { title: "Themes", icon: "🎨", class: "themes", type: "generic" },
+    { title: "Test 3k", icon: "🚧", class: "test", type: "generic" },
+    { title: "Grapple", icon: "🎮", class: "grapple", type: "game" },
+    { title: "Cycles", icon: "⏱️", class: "cycles", type: "generic" },
+    { title: "Settings", icon: "⚙️", class: "settings", type: "settings" },
+    { title: "Calc", icon: "🧮", class: "calc", type: "calc" }
 ];
 
 function init() {
@@ -196,7 +276,9 @@ function loadDefaultApps() {
 function saveLayout() {
     const layout = items.map(i => ({
         type: i.type, subtype: i.subtype, x: i.x, y: i.y, cols: i.cols, rows: i.rows,
-        title: i.title, icon: i.icon, path: i.path, class: i.class
+        title: i.title, icon: i.icon, class: i.class, 
+        // Save the specific app data (type, url)
+        appType: i.appType, url: i.url
     }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
 }
@@ -227,7 +309,9 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
     const itemObj = { 
         el: el, type: type, subtype: data.subtype, 
         x: x, y: y, w: wPx, h: hPx, cols: wUnit, rows: hUnit,
-        title: data.title, icon: data.icon, path: data.path, class: data.class
+        title: data.title, icon: data.icon, class: data.class,
+        // Store properties needed to launch app later
+        appType: data.type || data.appType, url: data.url
     };
     updateVisualPosition(itemObj);
     setupDrag(itemObj);
@@ -258,11 +342,22 @@ function getWidgetHTML(type, cols) {
     return "Widget";
 }
 
-// --- APP LOGIC ---
+// --- APP LOGIC (UPDATED FOR TEMPLATES) ---
 function launchApp(appData) {
-    let existing = runningApps.find(a => a.path === appData.path);
+    // Unique ID based on title to allow multiple instances or single depending on preference
+    // Here we use Title as unique key for checking running apps
+    let existing = runningApps.find(a => a.title === appData.title);
+    
+    // Normalize data for createInternalAppDOM
+    const launchData = {
+        title: appData.title,
+        icon: appData.icon,
+        type: appData.appType || appData.type, // Handle both storage formats
+        url: appData.url
+    };
+
     if(!existing) {
-        existing = { ...appData, dom: createInternalAppDOM(appData) };
+        existing = { ...launchData, dom: createInternalAppDOM(launchData) };
         runningApps.push(existing);
     }
     restoreContentToWindow(existing);
@@ -282,15 +377,50 @@ function launchApp(appData) {
 function createInternalAppDOM(data) {
     const w = document.createElement("div");
     w.style.width = "100%"; w.style.height = "100%";
-    if(data.path === "system:settings") {
+
+    // 1. Settings is special (Built-in)
+    if (data.type === "settings") {
         w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="resetFactory()">Reset Home Layout</button></div>`;
-    } else {
-        const i = document.createElement("iframe");
-        i.className = "aif"; 
-        i.src = data.path;
-        i.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals allow-same-origin');
-        w.appendChild(i);
+        return w;
     }
+
+    const i = document.createElement("iframe");
+    i.className = "aif";
+    
+    // 2. Handle External URLs (Browser type)
+    if (data.type === "browser" && data.url) {
+        i.src = data.url;
+        i.setAttribute('sandbox', 'allow-scripts allow-forms allow-popups allow-modals allow-same-origin');
+    } 
+    // 3. Handle Internal Templates
+    else {
+        // Get template or fall back to generic
+        let content = appTemplates[data.type] || appTemplates['generic'];
+        
+        // --- TEMPLATE ENGINE ---
+        // This replaces {{TITLE}} and {{ICON}} with the real data from JSON
+        content = content.replace(/{{TITLE}}/g, data.title)
+                         .replace(/{{ICON}}/g, data.icon);
+
+        // Wrap it in a basic HTML structure for dark mode styling
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+                body{margin:0;padding:0;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,sans-serif;height:100vh;overflow:hidden}
+                *{box-sizing:border-box}
+            </style>
+            </head>
+            <body>${content}</body>
+            </html>`;
+        
+        // Write the generated HTML into the iframe
+        i.srcdoc = html;
+        i.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-same-origin');
+    }
+
+    w.appendChild(i);
     return w;
 }
 
@@ -332,10 +462,8 @@ function openSwitcher() {
         card.appendChild(header);
         
         const contentHolder = document.createElement("div");
-        // FIXED: Dark background for cards so internal apps show up
         contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000";
         
-        // Move live DOM into card
         if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
         contentHolder.appendChild(app.dom);
         
@@ -372,14 +500,13 @@ function setupSwitcherGestures(touchLayer, card, app) {
     }, {passive:false});
 
     touchLayer.addEventListener('touchmove', (e) => {
-        if(isHorizontal) return; // If scrolling left/right, ignore vertical
+        if(isHorizontal) return; 
         
         const cx = e.touches[0].clientX;
         const cy = e.touches[0].clientY;
         const dx = cx - startX;
         const dy = cy - startY;
 
-        // Determine axis
         if(!isVertical && !isHorizontal) {
             if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
                 isHorizontal = true;
@@ -389,7 +516,7 @@ function setupSwitcherGestures(touchLayer, card, app) {
         }
 
         if(isVertical) {
-            e.preventDefault(); // Stop scrolling, start moving card
+            e.preventDefault(); 
             if(dy < 0) {
                  card.style.transform = `scale(0.9) translateY(${dy}px)`;
                  card.style.opacity = `${1 - Math.abs(dy)/500}`;
@@ -411,7 +538,6 @@ function setupSwitcherGestures(touchLayer, card, app) {
                 card.style.opacity = "1";
             }
         } else if(!isHorizontal) {
-             // If we didn't scroll much in either direction, treat as tap
              const dy = e.changedTouches[0].clientY - startY;
              const dx = e.changedTouches[0].clientX - startX;
              if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
