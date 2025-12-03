@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>Santaslileper OS v8</title>
+<title>Santaslileper OS v8 - Fixed Preview</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
@@ -29,25 +29,20 @@ body {
     display: flex; flex-direction: column;
     background-position: center; background-size: cover;
     transition: background-image 0.3s, background-color 0.3s;
-    
-    /* DEFAULT: FILL SCREEN (Portrait) */
-    width: 100%; 
-    height: 100%;
+    width: 100%; height: 100%;
 }
 
 /* --- STRICT LANDSCAPE LOCK --- */
-/* This forces the phone to stay "Portrait Shaped" even if you turn the device */
 @media (min-width: 768px), (orientation: landscape) {
     .p {
         width: auto !important;
-        height: 95vh !important; /* Leave a small gap */
-        aspect-ratio: 9/19.5 !important; /* Force Phone Shape */
+        height: 95vh !important; 
+        aspect-ratio: 9/19.5 !important; 
         margin: 0 auto !important;
         position: absolute !important;
         top: 50% !important; 
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
-        
         border-radius: 40px !important;
         box-shadow: 0 0 0 10px #2c2c2e;
         border: 2px solid #333;
@@ -122,8 +117,6 @@ body {
 /* --- APP WINDOW --- */
 .aw { position:absolute; top:0; left:0; width:100%; height:100%; background:#000; transform:translate3d(100%,0,0); transition:transform .4s cubic-bezier(.19,1,.22,1); z-index:50; display:flex; flex-direction:column; }
 .aw.ac { transform:translate3d(0,0,0); }
-
-/* App Header */
 .app-header {
     height: 44px; display: flex; align-items: center; justify-content: space-between;
     padding: 0 15px; background: rgba(20,20,20,0.95); backdrop-filter: blur(10px);
@@ -131,14 +124,8 @@ body {
 }
 .ah-title { font-weight: 600; font-size: 15px; display:flex; align-items:center; gap:8px; }
 .ah-btn { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#007aff; text-decoration:none; font-size:14px; }
-
-/* App Content Wrapper */
 .awc { flex:1; width:100%; position:relative; background:#fff; overflow-x:hidden; overflow-y:auto; touch-action: pan-y; overscroll-behavior-x: none; }
-
-/* ROTATION CLASS (Applied to .awc to spin app content 90deg) */
-.awc.r90 {
-    overflow: hidden !important;
-}
+.awc.r90 { overflow: hidden !important; }
 
 iframe.aif { width:100%; height:100%; border:none; display:block; }
 .blocked-layer {
@@ -161,7 +148,7 @@ iframe.aif { width:100%; height:100%; border:none; display:block; }
 .store-btn { background: #2c2c2e; color: #007aff; border: none; font-weight: bold; font-size: 14px; padding: 6px 14px; border-radius: 14px; cursor: pointer; background: rgba(0,122,255,0.15); transition: 0.2s; white-space:nowrap; }
 .store-btn.installed { background: #333; color: #888; pointer-events:none; }
 
-/* --- SWITCHER --- */
+/* --- SWITCHER (FIXED PREVIEW CSS) --- */
 .as {
     position:absolute; top:0; left:0; width:100%; height:100%;
     background:rgba(0,0,0,0.8); z-index:40; display:none;
@@ -176,6 +163,10 @@ iframe.aif { width:100%; height:100%; border:none; display:block; }
     scroll-snap-align:center; flex-shrink:0; overflow:hidden;
     transform:scale(1); box-shadow:0 10px 30px rgba(0,0,0,0.5);
     display:flex; flex-direction:column;
+}
+/* This prevents clicking inside the app while in switcher mode */
+.scd iframe, .scd .blocked-layer, .scd .store-app, .scd .tc {
+    pointer-events: none;
 }
 .ch { height:40px; display:flex; align-items:center; justify-content:center; background:#333; color:#fff; font-size:12px; font-weight:bold; flex-shrink:0; }
 .em { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#888; font-size:18px; display:none; text-align:center; pointer-events: none; }
@@ -267,7 +258,6 @@ const STORE_APPS = [
     { id: 'calc', title: "Calculator", icon: "🧮", url: "https://www.desmos.com/scientific", cat: "Utilities", class: "torch" },
     { id: 'graph', title: "Graphing Calc", icon: "📈", url: "https://www.desmos.com/calculator", cat: "Utilities", class: "torch" },
     { id: 'translate', title: "Bing Translate", icon: "文", url: "https://www.bing.com/translator", cat: "Utilities", class: "mic" },
-    // GOOGLE MAPS FIX: Using embed URL
     { id: 'maps', title: "Google Maps", icon: "🗺️", url: "http://googleusercontent.com/maps.google.com/embed?pb=!1m14!1m12!1m3!1d3312.3810141979455!2d-118.2437!3d34.0522!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0", cat: "Navigation", class: "touch" },
     { id: 'speed', title: "Speed Test", icon: "🚀", url: "https://fast.com", cat: "Utilities", class: "motion" },
     { id: 'convert', title: "Unit Converter", icon: "⚖️", url: "https://www.unitconverters.net/", cat: "Utilities", class: "settings" },
@@ -395,20 +385,16 @@ function init() {
 
 function checkOrientation() {
     if(window.innerWidth > window.innerHeight && currentApp) {
-        // Landscape -> Rotate active app
         rotateApp(true);
     } else if (currentApp) {
-        // Portrait -> Reset active app
         rotateApp(false);
     }
 }
 
 function loadDefaults() {
-    // Widgets
     createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
     createItem('widget', 2*COL_WIDTH, 0, 2, 2, {subtype:'weather'});
     
-    // Default App Selection
     const initialApps = [
         { title: "App Store", icon: "🅰️", path: "system:store", class: "store" },
         { title: "Settings", icon: "⚙️", path: "system:settings", class: "settings" },
@@ -418,7 +404,6 @@ function loadDefaults() {
         { title: "News", icon: "📰", path: "https://lite.cnn.com", class: "motion" },
         { title: "Files", icon: "🗃️", path: "page17.html", class: "camera" },
         { title: "Chat", icon: "💬", path: "page69.html", class: "mic" },
-        // Use Embed Link for defaults too
         { title: "Maps", icon: "🗺️", path: "http://googleusercontent.com/maps.google.com/embed?pb=!1m14!1m12!1m3!1d3312.3810141979455!2d-118.2437!3d34.0522!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0", class: "touch" }
     ];
 
@@ -546,12 +531,12 @@ function launchApp(data) {
         link.style.display = "none";
     }
 
-    // PERSISTENCE LOGIC:
+    // Move App DOM to Window (This pulls it out of switcher if it was there)
     if (!awc.contains(app.dom)) {
         awc.appendChild(app.dom);
     }
     
-    // Hide all other apps
+    // Hide all other apps in the window
     Array.from(awc.children).forEach(child => {
         child.style.display = 'none';
     });
@@ -582,13 +567,11 @@ function rotateApp(forceState) {
     const aw = document.getElementById("app-window");
     const awc = document.getElementById("awc");
     const isRotated = awc.classList.contains("r90");
-    
-    // Determine target state
     const shouldRotate = forceState !== undefined ? forceState : !isRotated;
 
     if(shouldRotate) {
         awc.classList.add("r90");
-        const w = aw.offsetHeight; // Swap dims
+        const w = aw.offsetHeight;
         const h = aw.offsetWidth;
         awc.style.width = w + "px";
         awc.style.height = h + "px";
@@ -752,12 +735,13 @@ function launchStoreApp(id) {
     if(app) launchApp({ title: app.title, icon: app.icon, path: app.url });
 }
 
-// --- APP SWITCHER (PERSISTENT) ---
+// --- APP SWITCHER (FIXED LIVE PREVIEW) ---
 function openSwitcher() {
     isSwitcherMode = true;
     const sw = document.getElementById("switcher");
     const sc = document.getElementById("scc");
     const msg = document.getElementById("empty-msg");
+    const awc = document.getElementById("awc");
     
     sw.style.display = "flex";
     sc.innerHTML = "";
@@ -769,15 +753,20 @@ function openSwitcher() {
         runningApps.forEach(app => {
             const card = document.createElement("div");
             card.className = "scd";
-            card.innerHTML = `<div class="ch">${app.title}</div><div style="flex:1;background:#fff;position:relative;overflow:hidden"></div>`;
             
-            // Note: We use a placeholder for the switcher because we can't move the iframe without reloading it.
-            const placeholder = document.createElement("div");
-            placeholder.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:50px;background:#eee;color:#333";
-            placeholder.innerText = app.icon;
+            // Header
+            card.innerHTML = `<div class="ch">${app.title}</div><div class="card-body" style="flex:1;background:#fff;position:relative;overflow:hidden"></div>`;
             
-            card.children[1].appendChild(placeholder);
+            // --- LIVE PREVIEW FIX ---
+            // Move the actual app DOM into the card
+            // Note: This causes iframes to reload, but gives the visual preview user wants.
+            const cardBody = card.querySelector('.card-body');
             
+            // Ensure app.dom is visible
+            app.dom.style.display = 'block';
+            cardBody.appendChild(app.dom);
+            
+            // Card Interactions
             card.onclick = (e) => { 
                 e.stopPropagation(); 
                 launchApp(app); 
@@ -810,6 +799,8 @@ function closeSwitcher() {
     isSwitcherMode = false;
     document.getElementById("switcher").style.display = "none";
     document.getElementById("h").classList.remove("zo");
+    // If we closed switcher without picking an app, but there was an active app, restore it
+    if(currentApp) launchApp(currentApp);
 }
 
 function minimizeApp() {
@@ -818,13 +809,13 @@ function minimizeApp() {
 }
 
 function closeApp(app) {
-    const awc = document.getElementById("awc");
-    // Remove from DOM to stop it running
-    if(app.dom && awc.contains(app.dom)) {
-        awc.removeChild(app.dom);
+    // Remove from memory and DOM
+    if(app.dom && app.dom.parentNode) {
+        app.dom.parentNode.removeChild(app.dom);
     }
     const idx = runningApps.indexOf(app);
     if(idx > -1) runningApps.splice(idx, 1);
+    if(currentApp === app) currentApp = null;
 }
 
 // --- UTILS ---
@@ -921,7 +912,6 @@ function setupDrag(item) {
     item.el.addEventListener("touchstart", start, {passive:false});
     item.el.addEventListener("mousedown", start);
 }
-// Resize logic omitted for brevity but hooks exist in HTML/CSS
 function setupResize(item) {
     const h = item.el.querySelector(".resize-handle");
     if(!h) return;
@@ -953,6 +943,7 @@ function setupResize(item) {
     });
 }
 
+// Start
 init();
 </script>
 </body>
