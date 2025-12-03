@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>Santaslileper OS v7</title>
+<title>Santaslileper OS v8</title>
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -100,7 +100,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .ah-title { font-weight: 600; font-size: 15px; display:flex; align-items:center; gap:8px; }
 .ah-btn { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; color:#007aff; text-decoration:none; font-size:14px; }
 
-/* App Content - STRICT SCROLLING LOCK */
+/* App Content */
 .awc{flex:1;width:100%;position:relative;background:#fff;overflow-x:hidden; overflow-y:auto; touch-action: pan-y; overscroll-behavior-x: none;}
 iframe.aif { width:100%; height:100%; border:none; display:block; }
 .blocked-layer {
@@ -110,7 +110,6 @@ iframe.aif { width:100%; height:100%; border:none; display:block; }
 }
 
 /* --- APP STORE --- */
-/* Added touch-action: pan-y to prevent left/right wiggling */
 .store-app { background: #1c1c1e; color: #fff; height: 100%; display: flex; flex-direction: column; touch-action: pan-y; overscroll-behavior-x: none;}
 .store-header { padding: 50px 20px 10px; background: rgba(28,28,30,0.9); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 10; border-bottom: 1px solid #333; }
 .store-title { font-size: 30px; font-weight: bold; margin-bottom: 10px; }
@@ -129,8 +128,7 @@ iframe.aif { width:100%; height:100%; border:none; display:block; }
     position:absolute;top:0;left:0;width:100%;height:100%;
     background:rgba(0,0,0,0.8);z-index:40;display:none;
     flex-direction:row;align-items:center;
-    /* Centering Fix */
-    overflow-x:auto; padding: 0 calc(50vw - 35vw); /* 50vw - half card width (70vw/2) */
+    overflow-x:auto; padding: 0 calc(50vw - 35vw);
     scroll-snap-type:x mandatory;
 }
 
@@ -145,7 +143,7 @@ iframe.aif { width:100%; height:100%; border:none; display:block; }
 }
 
 .ch{height:40px;display:flex;align-items:center;justify-content:center;background:#333;color:#fff;font-size:12px;font-weight:bold; flex-shrink:0;}
-.em{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-size:18px;display:none; text-align:center;}
+.em{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#888;font-size:18px;display:none; text-align:center; pointer-events: none;}
 
 /* --- SETTINGS UI --- */
 #edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0}
@@ -197,7 +195,7 @@ input[type="file"]{display:none}
     <!-- App Switcher -->
     <div class="as" id="switcher">
         <div class="sc" id="scc"></div>
-        <div class="em" id="empty-msg">No Recent Apps</div>
+        <div class="em" id="empty-msg">No Recent Apps<br><span style="font-size:14px;opacity:0.6">Tap to close</span></div>
     </div>
     
     <!-- Gesture Area -->
@@ -252,7 +250,7 @@ let runningApps = [];
 let currentApp = null;
 let isEditMode = false;
 let isSwitcherMode = false;
-const STORAGE_KEY = 'santas_os_v7_layout';
+const STORAGE_KEY = 'santas_os_v8_layout';
 
 // --- PREFERENCES LOGIC ---
 const PREFS = { t:'os_theme', f:'os_font', bg:'os_bg' };
@@ -305,6 +303,7 @@ function init() {
     updateClock(); setInterval(updateClock, 1000);
     setupLockScreen();
     applyPreferences();
+    setupSwitcherClick();
     
     // Load layout
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -414,6 +413,10 @@ function createItem(type, x, y, cw, ch, data) {
     const w = cw * COL_WIDTH - (type==="app"?0:15);
     const h = ch * ROW_HEIGHT - (type==="app"?10:15);
     
+    // Explicitly set width/height from saved data or calc
+    if(data.w) el.style.width = data.w + "px";
+    if(data.h) el.style.height = data.h + "px";
+
     // BOTH APPS AND WIDGETS GET DELETE BUTTON NOW
     let inner = '';
     if(type === "app") {
@@ -430,6 +433,11 @@ function createItem(type, x, y, cw, ch, data) {
     
     document.getElementById("ag").appendChild(el);
     const item = { el, type, subtype:data.subtype, x, y, w, h, cols:cw, rows:ch, ...data };
+    
+    // Ensure size persistence
+    if(!item.w) item.w = w;
+    if(!item.h) item.h = h;
+
     items.push(item);
     updateVisuals(item);
     if(type==="widget") setupResize(item);
@@ -665,12 +673,18 @@ function openSwitcher() {
             if(ifr) { ifr.style.height="100%"; ifr.style.width="100%"; }
 
             card.children[1].appendChild(content);
-            card.onclick = () => { launchApp(app); };
+            
+            // PREVENT CLICK PROPAGATION
+            card.onclick = (e) => { 
+                e.stopPropagation(); 
+                launchApp(app); 
+            };
             
             // Close Gesture
             let sy=0;
             card.addEventListener("touchstart",e=>{sy=e.touches[0].clientY;e.stopPropagation()});
             card.addEventListener("touchend",e=>{
+                e.stopPropagation();
                 if(e.changedTouches[0].clientY - sy < -50) {
                     closeApp(app); openSwitcher(); // Refresh
                 }
@@ -679,6 +693,16 @@ function openSwitcher() {
             sc.appendChild(card);
         });
     }
+}
+
+function setupSwitcherClick() {
+    const sw = document.getElementById("switcher");
+    sw.onclick = (e) => {
+        // Close if tapping background or empty message
+        if(e.target === sw || e.target.id === 'empty-msg' || e.target.parentElement.id === 'empty-msg') {
+            closeSwitcher();
+        }
+    };
 }
 
 function closeSwitcher() {
@@ -720,6 +744,8 @@ function updateVisuals(i) {
     const oy = (i.rows*ROW_HEIGHT - i.h)/2;
     i.el.style.left = (i.x+ox)+"px";
     i.el.style.top = (i.y+oy)+"px";
+    i.el.style.width = i.w + "px";
+    i.el.style.height = i.h + "px";
 }
 function findEmptySpot(w=1,h=1) {
     // Simple finder
@@ -743,7 +769,7 @@ function updateContainer(){
 function saveLayout() {
     const data = items.map(i => ({
         type:i.type, subtype:i.subtype, x:i.x, y:i.y, cols:i.cols, rows:i.rows,
-        title:i.title, icon:i.icon, path:i.path, class:i.class
+        title:i.title, icon:i.icon, path:i.path, class:i.class, w:i.w, h:i.h
     }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
