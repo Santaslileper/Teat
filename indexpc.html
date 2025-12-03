@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santaslileper OS - Desktop</title>
+<style>
+    /* --- WINDOWS 11 THEME VARIABLES --- */
+    :root {
+        --bg-color: #f3f3f3;
+        --taskbar-bg: rgba(243, 243, 243, 0.85);
+        --window-bg: #ffffff;
+        --glass-border: 1px solid rgba(0, 0, 0, 0.05);
+        --accent: #0078d4;
+        --text-main: #202020;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-color: #111;
+            --taskbar-bg: rgba(32, 32, 32, 0.85);
+            --window-bg: #202020;
+            --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+        }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    
+    body {
+        width: 100vw; height: 100vh; overflow: hidden;
+        background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop') center/cover no-repeat;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: var(--text-main);
+    }
+
+    /* --- DESKTOP ICONS --- */
+    #desktop {
+        width: 100%; height: calc(100% - 48px);
+        padding: 10px;
+        display: flex; flex-direction: column; flex-wrap: wrap; align-content: flex-start; gap: 10px;
+    }
+
+    .d-icon {
+        width: 80px; height: 90px;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: flex-start;
+        padding: 5px;
+        border-radius: 4px;
+        transition: 0.1s;
+        cursor: pointer;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    .d-icon:hover { background: rgba(255,255,255,0.1); }
+    .d-icon:active { background: rgba(255,255,255,0.2); }
+    .d-img { font-size: 32px; margin-bottom: 5px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)); }
+    .d-label { font-size: 11px; text-align: center; line-height: 1.2; }
+
+    /* --- TASKBAR --- */
+    #taskbar {
+        position: absolute; bottom: 0; left: 0; right: 0;
+        height: 48px;
+        background: var(--taskbar-bg);
+        backdrop-filter: blur(20px);
+        border-top: var(--glass-border);
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0 15px; z-index: 9999;
+    }
+
+    .tb-center { display: flex; gap: 6px; height: 100%; align-items: center; }
+    
+    .tb-icon {
+        width: 40px; height: 40px;
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; cursor: pointer;
+        transition: 0.2s; position: relative;
+    }
+    .tb-icon:hover { background: rgba(255,255,255,0.1); }
+    .tb-icon:active { transform: scale(0.9); }
+    .tb-icon.active::after {
+        content: ''; position: absolute; bottom: 2px; width: 12px; height: 3px;
+        background: var(--accent); border-radius: 2px;
+    }
+    
+    .sys-tray {
+        display: flex; align-items: center; gap: 15px; font-size: 12px;
+        background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 6px;
+    }
+
+    /* --- START MENU --- */
+    #start-menu {
+        position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+        width: 600px; height: 600px;
+        background: rgba(32, 32, 32, 0.95);
+        backdrop-filter: blur(30px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        display: flex; flex-direction: column;
+        padding: 30px;
+        transition: 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        opacity: 0; pointer-events: none; transform: translate(-50%, 20px);
+        z-index: 10000;
+    }
+    #start-menu.open { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+    
+    .sm-search {
+        width: 100%; padding: 10px 15px;
+        background: #333; border: 1px solid #444; border-radius: 4px;
+        color: white; margin-bottom: 20px; outline: none;
+    }
+    .sm-grid {
+        display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px;
+        overflow-y: auto; padding-right: 5px;
+    }
+    .sm-item {
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+        cursor: pointer; padding: 10px; border-radius: 4px;
+    }
+    .sm-item:hover { background: rgba(255,255,255,0.1); }
+    .sm-icon { font-size: 30px; }
+    .sm-label { font-size: 11px; text-align: center; color: #ddd; }
+
+    /* --- WINDOW SYSTEM --- */
+    .window {
+        position: absolute;
+        width: 800px; height: 500px;
+        background: var(--window-bg);
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        border: var(--glass-border);
+        display: flex; flex-direction: column;
+        overflow: hidden;
+        animation: popIn 0.2s;
+        resize: both;
+        min-width: 300px; min-height: 200px;
+    }
+    .window.maximized {
+        top: 0 !important; left: 0 !important; width: 100% !important; height: calc(100% - 48px) !important;
+        border-radius: 0; resize: none;
+    }
+    
+    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .w-titlebar {
+        height: 32px; background: var(--window-bg);
+        display: flex; align-items: center; justify-content: space-between;
+        padding-left: 10px; user-select: none;
+    }
+    .w-drag-area { flex: 1; height: 100%; display: flex; align-items: center; font-size: 12px; }
+    
+    .w-controls { display: flex; height: 100%; }
+    .w-btn {
+        width: 45px; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; cursor: pointer; transition: 0.1s;
+    }
+    .w-btn:hover { background: rgba(0,0,0,0.05); }
+    .w-close:hover { background: #e81123; color: white; }
+
+    .w-content { flex: 1; position: relative; background: #fff; }
+    iframe { width: 100%; height: 100%; border: none; }
+    
+    .blocked-msg {
+        position: absolute; top:0; left:0; width:100%; height:100%;
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        background: #222; color: #fff; text-align: center;
+    }
+
+</style>
+</head>
+<body>
+
+    <div id="desktop">
+        <div class="d-icon" onclick="openApp(STORE_APPS[0])">
+            <div class="d-img">📺</div><div class="d-label">TV</div>
+        </div>
+        <div class="d-icon" onclick="openApp(STORE_APPS[6])">
+            <div class="d-img">🪝</div><div class="d-label">Grapple</div>
+        </div>
+        <div class="d-icon" onclick="window.location.href='index.html'">
+            <div class="d-img">📱</div><div class="d-label">Mobile Mode</div>
+        </div>
+    </div>
+
+    <div id="start-menu">
+        <input type="text" class="sm-search" placeholder="Type here to search apps..." onkeyup="filterStart(this.value)">
+        <div class="sm-grid" id="sm-grid"></div>
+    </div>
+
+    <div id="windows-area"></div>
+
+    <div id="taskbar">
+        <div style="width:100px"></div> <div class="tb-center">
+            <div class="tb-icon" onclick="toggleStart()" title="Start">🪟</div>
+            <div class="tb-icon" onclick="openApp(STORE_APPS[25])" title="VS Code">💻</div>
+            <div class="tb-icon" onclick="openApp(STORE_APPS[32])" title="Browser">🦆</div>
+            <div class="tb-icon" onclick="openApp(STORE_APPS[7])" title="Minecraft">🧱</div>
+        </div>
+
+        <div class="sys-tray">
+            <span>📶</span>
+            <span>🔊</span>
+            <div style="text-align:right">
+                <div id="clock-time" style="font-weight:600">12:00</div>
+                <div id="clock-date" style="font-size:10px;opacity:0.8">10/10/2025</div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- APP DATA (Same as Mobile) ---
+    const STORE_APPS=[{id:'yt-trend',title:"TV Trending",icon:"📺",url:"https://www.youtube.com/embed?listType=playlist&list=PLrEnWoR732-BHrPp_Pm8_VleD92fq9KSz"},{id:'music-lofi',title:"Lofi Girl",icon:"☕",url:"https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1"},{id:'radio',title:"Radio Garden",icon:"🌍",url:"http://radio.garden/visit/london/bP1_4s8M"},{id:'grapple',title:"Grapple",icon:"🪝",url:"page3.html"},{id:'minecraft',title:"Minecraft",icon:"🧱",url:"https://classic.minecraft.net"},{id:'2048',title:"2048",icon:"🔢",url:"https://play2048.co/"},{id:'chess',title:"Lichess",icon:"♟️",url:"https://lichess.org/tv/frame?theme=brown&bg=dark"},{id:'vscode',title:"VS Code",icon:"💻",url:"https://vscode.dev"},{id:'photopea',title:"Photopea",icon:"🎨",url:"https://www.photopea.com"},{id:'bing',title:"Bing",icon:"🔍",url:"https://www.bing.com"},{id:'duck',title:"DuckDuckGo",icon:"🦆",url:"https://duckduckgo.com"},{id:'cnn',title:"CNN",icon:"📰",url:"https://lite.cnn.com"},{id:'discord',title:"Discord",icon:"💬",url:"https://discord.com/app"},{id:'files',title:"Files",icon:"🗃️",url:"page17.html"},{id:'test',title:"Test Page",icon:"🚧",url:"page3000.html"}];
+
+    // --- INITIALIZATION ---
+    function init() {
+        renderStartMenu();
+        updateClock();
+        setInterval(updateClock, 1000);
+    }
+
+    // --- START MENU ---
+    function toggleStart() {
+        document.getElementById('start-menu').classList.toggle('open');
+    }
+    
+    function renderStartMenu() {
+        const grid = document.getElementById('sm-grid');
+        STORE_APPS.forEach(app => {
+            const el = document.createElement('div');
+            el.className = 'sm-item';
+            el.setAttribute('data-name', app.title.toLowerCase());
+            el.onclick = () => { openApp(app); toggleStart(); };
+            el.innerHTML = `<div class="sm-icon">${app.icon}</div><div class="sm-label">${app.title}</div>`;
+            grid.appendChild(el);
+        });
+    }
+
+    function filterStart(val) {
+        const q = val.toLowerCase();
+        document.querySelectorAll('.sm-item').forEach(el => {
+            el.style.display = el.getAttribute('data-name').includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    // --- WINDOW MANAGEMENT ---
+    let zIndex = 100;
+    
+    function openApp(app) {
+        zIndex++;
+        const id = 'win-' + Date.now();
+        const win = document.createElement('div');
+        win.className = 'window';
+        win.id = id;
+        win.style.zIndex = zIndex;
+        win.style.left = (100 + (Math.random() * 50)) + 'px';
+        win.style.top = (50 + (Math.random() * 50)) + 'px';
+        win.onmousedown = () => bringToFront(win);
+
+        let content = '';
+        if(app.url.startsWith('http') || app.url.endsWith('.html')) {
+            content = `<iframe src="${app.url}" allow="autoplay; fullscreen; microphone; camera"></iframe>`;
+        } else {
+            content = `<div class="blocked-msg"><h3>${app.title}</h3><p>Content unavailable</p></div>`;
+        }
+
+        win.innerHTML = `
+            <div class="w-titlebar" id="${id}-header">
+                <div class="w-drag-area">
+                    <span style="margin-right:10px">${app.icon}</span> ${app.title}
+                </div>
+                <div class="w-controls">
+                    <div class="w-btn" onclick="minimizeWindow('${id}')">─</div>
+                    <div class="w-btn" onclick="maximizeWindow('${id}')">□</div>
+                    <div class="w-btn w-close" onclick="closeWindow('${id}')">✕</div>
+                </div>
+            </div>
+            <div class="w-content">${content}</div>
+        `;
+        
+        document.getElementById('windows-area').appendChild(win);
+        dragElement(win);
+    }
+
+    function closeWindow(id) { document.getElementById(id).remove(); }
+    function bringToFront(el) { zIndex++; el.style.zIndex = zIndex; }
+    
+    function maximizeWindow(id) {
+        document.getElementById(id).classList.toggle('maximized');
+    }
+    
+    function minimizeWindow(id) {
+        // Simple hide effect
+        const win = document.getElementById(id);
+        win.style.transform = 'scale(0.8) translateY(500px)';
+        win.style.opacity = '0';
+        setTimeout(() => win.style.display = 'none', 200);
+        // Note: Real taskbar logic requires more complex state management
+    }
+
+    // --- DRAG LOGIC ---
+    function dragElement(elmnt) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        const header = document.getElementById(elmnt.id + "-header");
+        
+        if (header) header.onmousedown = dragMouseDown;
+
+        function dragMouseDown(e) {
+            if(e.target.classList.contains('w-btn')) return;
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+            bringToFront(elmnt);
+        }
+
+        function elementDrag(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+            elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+
+    // --- CLOCK ---
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock-time').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        document.getElementById('clock-date').innerText = now.toLocaleDateString();
+    }
+
+    init();
+</script>
+</body>
+</html>
