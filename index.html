@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
-<title>Santaslileper OS v2</title>
+<title>Santaslileper OS v3 (JSON)</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#000000">
@@ -42,6 +42,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
+/* Dynamic classes handled by JSON, defaults below */
 .ai.files { background: linear-gradient(135deg, #1CB5E0 0%, #000851 100%); }
 .ai.news { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #93a5cf 100%); }
 .ai.info { background: linear-gradient(135deg, #e1eec3 0%, #f05053 100%); }
@@ -54,6 +55,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .ai.cycles { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
 .ai.settings { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color:#333; }
 .ai.calc { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+/* Fallback */
+.ai.default { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
 
 .al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -79,13 +82,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     z-index: 40;
-    display: none; /* Hidden by default */
+    display: none;
     flex-direction: row;
     align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
-    /* Card OS Padding logic to center the first card */
     padding: 0 15%; 
     pointer-events: auto;
     -webkit-overflow-scrolling: touch;
@@ -93,7 +95,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 }
 #switcher::-webkit-scrollbar { display: none; }
 
-/* Switcher Card Style - Integrated from Card OS */
 .scd {
     position: relative;
     width: 70vw;
@@ -107,14 +108,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
     margin: 0 15px;
     overflow: hidden;
     transform-origin: center;
-    /* Transition for the Cover Flow effect */
     transition: transform 0.2s, opacity 0.2s;
     opacity: 0.5;
     transform: scale(0.85);
     border: 1px solid #333;
 }
 
-/* Card Header */
 .ch {
     height: 44px;
     display: flex;
@@ -133,20 +132,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
     pointer-events: none;
 }
 
-/* Touch Layer for Gestures */
 .ctl {
     position: absolute; top: 44px; left: 0; width: 100%; height: calc(100% - 44px);
     z-index: 200; background: transparent;
 }
 
-/* Specific Border Colors based on App Class */
 .scd[data-class="files"] { border-color: #1CB5E0; }
 .scd[data-class="news"] { border-color: #FF9A9E; }
 .scd[data-class="info"] { border-color: #e1eec3; }
 .scd[data-class="chat"] { border-color: #f093fb; }
 .scd[data-class="settings"] { border-color: #cfd9df; }
 .scd[data-class="mortis"] { border-color: #555; }
-
 
 /* UI */
 #edit-ui{position:fixed;bottom:40px;left:20px;right:20px;height:50px;display:flex;justify-content:center;gap:15px;z-index:200;pointer-events:none;opacity:0;transition:opacity .3s}
@@ -155,6 +151,7 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 #add-panel{position:fixed;bottom:-400px;left:0;width:100%;height:350px;background:#1c1c1e;border-radius:20px 20px 0 0;z-index:300;transition:bottom .3s;padding:20px;display:flex;flex-direction:column;gap:10px}
 #add-panel.open{bottom:0}
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
+#status-msg { position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); color: #fff; font-size: 14px; text-align: center; width:80%; z-index:9999; pointer-events:none}
 
 /* INTERNAL APPS */
 .tc{padding:60px 20px;color:#fff;text-align:center;background:#000;height:100%;width:100%}.fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
@@ -164,8 +161,10 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 
 <div class="p" id="phone">
     <div class="s">
-        <div class="sb"><span id="c">17:55</span><span id="batt">100%</span></div>
+        <div class="sb"><span id="c">...</span><span id="batt">100%</span></div>
         
+        <div id="status-msg">Loading apps...</div>
+
         <div class="h" id="h"><div id="ag"></div></div>
         
         <div class="aw" id="app-window"><div class="awc" id="awc"></div></div>
@@ -199,36 +198,13 @@ let items = [];
 let runningApps = []; 
 let currentApp = null; 
 let isSwitcherMode = false;
-const STORAGE_KEY = 'os_layout_final_v4';
-
-// --- INITIAL LAYOUT ---
-const defaultApps = [
-    { title: "Files", icon: "🗃️", class: "files", path: "system:files" },
-    { title: "News", icon: "📰", class: "news", path: "system:news" },
-    { title: "Info", icon: "ℹ️", class: "info", path: "system:tutorial" },
-    { title: "Chat", icon: "💬", class: "chat", path: "system:chat" },
-    { title: "Mortis", icon: "☠️", class: "mortis", path: "system:mortis" },
-    { title: "AI Learn", icon: "🤖", class: "ai-learn", path: "system:ai" },
-    { title: "Themes", icon: "🎨", class: "themes", path: "system:themes" },
-    { title: "Test 3k", icon: "🚧", class: "test", path: "system:test" },
-    { title: "Grapple", icon: "🎮", class: "grapple", path: "system:game" },
-    { title: "Cycles", icon: "⏱️", class: "cycles", path: "system:clock" },
-    { title: "Settings", icon: "⚙️", class: "settings", path: "system:settings" },
-    { title: "Calc", icon: "🧮", class: "calc", path: "system:calc" }
-];
+const STORAGE_KEY = 'os_layout_final_json_v1';
 
 function init() {
     updateClock(); setInterval(updateClock, 1000);
 
-    const savedLayout = localStorage.getItem(STORAGE_KEY);
-    if (savedLayout) {
-        try {
-            const layoutData = JSON.parse(savedLayout);
-            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
-        } catch(e) { loadDefaultApps(); }
-    } else {
-        loadDefaultApps();
-    }
+    // --- SOURCE LOADING (Modified to match Card OS) ---
+    loadApps();
 
     // --- HOME GESTURES ---
     const hi = document.getElementById("hi");
@@ -249,11 +225,42 @@ function init() {
     grid.addEventListener("touchend", () => clearTimeout(pressTimer));
 }
 
-function loadDefaultApps() {
+// --- NEW SOURCE LOADING LOGIC ---
+async function loadApps() {
+  const msg = document.getElementById('status-msg');
+  try {
+    const response = await fetch('apps.json');
+    if (!response.ok) throw new Error("Could not find apps.json");
+    
+    const appsData = await response.json();
+    msg.style.display = 'none'; 
+    
+    // Check if we have a saved layout, otherwise generate from JSON
+    const savedLayout = localStorage.getItem(STORAGE_KEY);
+    if (savedLayout) {
+        try {
+            const layoutData = JSON.parse(savedLayout);
+            layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
+        } catch(e) { generateGridFromJSON(appsData); }
+    } else {
+        generateGridFromJSON(appsData);
+    }
+    
+  } catch (error) {
+    msg.innerHTML = "Error: " + error.message + "<br><br>⚠️ Use a Local Server (VS Code Live Server)";
+    msg.style.color = '#ff3b30';
+    console.error(error);
+  }
+}
+
+function generateGridFromJSON(appsData) {
+    // 1. Add Default Widgets
     createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
     createItem('widget', 2 * COL_WIDTH, 0, 2, 2, {subtype:'weather'});
+
+    // 2. Loop through JSON apps and place them
     let startRow = 2; 
-    defaultApps.forEach((app, index) => {
+    appsData.forEach((app, index) => {
         const col = index % 4;
         const row = startRow + Math.floor(index / 4);
         createItem('app', col * COL_WIDTH, row * ROW_HEIGHT, 1, 1, app);
@@ -284,7 +291,8 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
 
     if (type === "app") {
         el.classList.add("aiw");
-        el.innerHTML = `<div class="ai ${data.class||'files'}">${data.icon}</div><div class="al">${data.title}</div>`;
+        // Use class from JSON or default
+        el.innerHTML = `<div class="ai ${data.class||'default'}">${data.icon}</div><div class="al">${data.title}</div>`;
         el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
         el.classList.add("widget");
@@ -379,55 +387,41 @@ function closeApp(app) {
     if(runningApps.length === 0) closeSwitcher();
 }
 
-// --- CARD OS INTEGRATED SWITCHER ---
+// --- SWITCHER (Integrated) ---
 function openSwitcher() {
     isSwitcherMode = true;
     const s = document.getElementById("switcher");
     const h = document.getElementById("h");
     s.style.display = 'flex';
     h.classList.add("zo");
-    s.innerHTML = ''; // Clear previous
+    s.innerHTML = ''; 
 
-    if(runningApps.length === 0) {
-        closeSwitcher();
-        return;
-    }
+    if(runningApps.length === 0) { closeSwitcher(); return; }
 
     runningApps.forEach(app => {
-        // Create Card (scd = Switcher Card Data)
         const card = document.createElement("div");
         card.className = "scd";
         if(app.class) card.setAttribute('data-class', app.class);
 
-        // Header
         const header = document.createElement("div");
         header.className = "ch";
         header.innerHTML = `<span>${app.icon}</span><span>${app.title}</span>`;
         card.appendChild(header);
         
-        // Content Holder
         const contentHolder = document.createElement("div");
         contentHolder.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:44px;background:#000";
-        
-        // Move live DOM into card
         if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
         contentHolder.appendChild(app.dom);
         card.appendChild(contentHolder);
         
-        // Touch Layer for gestures (Swipe up to kill, Tap to open)
         const touchLayer = document.createElement("div");
         touchLayer.className = "ctl";
         card.appendChild(touchLayer);
         setupSwitcherGestures(touchLayer, card, app);
-        
         s.appendChild(card);
         app.cardEl = card; 
     });
-
-    // Add Scroll Physics from Card OS
     s.addEventListener('scroll', handleSwitcherScroll);
-    
-    // Initial scroll position (Scroll to the last opened app)
     requestAnimationFrame(() => {
         if(runningApps.length > 0) {
            const lastCard = s.children[s.children.length-1];
@@ -441,34 +435,22 @@ function openSwitcher() {
 function handleSwitcherScroll() {
     const container = document.getElementById("switcher");
     const containerCenter = container.scrollLeft + (container.clientWidth / 2);
-    
     Array.from(container.children).forEach(card => {
-        if(card.classList.contains('closing')) return; // Don't animate dying cards
-
+        if(card.classList.contains('closing')) return; 
         const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
         const distance = Math.abs(containerCenter - cardCenter);
-        const maxDist = card.offsetWidth; // Distance where effect stops
-        
+        const maxDist = card.offsetWidth; 
         if (distance < maxDist) {
-            // Calculate scale based on distance
-            const scale = 1 - (distance / (maxDist * 4)); // Gentle scale down
+            const scale = 1 - (distance / (maxDist * 4)); 
             const opacity = 1 - (distance / (maxDist * 2));
-            
-            card.style.transform = `scale(${scale})`;
-            card.style.opacity = `${opacity}`;
-            card.style.zIndex = 100 - Math.round(distance/10);
+            card.style.transform = `scale(${scale})`; card.style.opacity = `${opacity}`; card.style.zIndex = 100 - Math.round(distance/10);
         } else {
-            card.style.transform = 'scale(0.85)';
-            card.style.opacity = '0.5';
-            card.style.zIndex = 1;
+            card.style.transform = 'scale(0.85)'; card.style.opacity = '0.5'; card.style.zIndex = 1;
         }
     });
 }
 
-function restoreContentToWindow(app) {
-    if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom);
-}
-
+function restoreContentToWindow(app) { if(app.dom.parentNode) app.dom.parentNode.removeChild(app.dom); }
 function closeSwitcher() {
     isSwitcherMode = false;
     const s = document.getElementById("switcher");
@@ -479,67 +461,33 @@ function closeSwitcher() {
 
 function setupSwitcherGestures(touchLayer, card, app) {
     let startX = 0, startY = 0, isVertical = false, isHorizontal = false;
-    
     touchLayer.addEventListener('touchstart', (e) => {
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        isVertical = false;
-        isHorizontal = false;
-        card.style.transition = 'none'; // Disable transition for direct finger tracking
+        startX = e.touches[0].clientX; startY = e.touches[0].clientY; isVertical = false; isHorizontal = false; card.style.transition = 'none';
     }, {passive:false});
-
     touchLayer.addEventListener('touchmove', (e) => {
         if(isHorizontal) return; 
-        
-        const cx = e.touches[0].clientX;
-        const cy = e.touches[0].clientY;
-        const dx = cx - startX;
-        const dy = cy - startY;
-
-        // Determine axis
+        const cx = e.touches[0].clientX; const cy = e.touches[0].clientY;
+        const dx = cx - startX; const dy = cy - startY;
         if(!isVertical && !isHorizontal) {
-            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
-                isHorizontal = true;
-            } else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) {
-                isVertical = true;
-            }
+            if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) isHorizontal = true;
+            else if(Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 5) isVertical = true;
         }
-
         if(isVertical) {
             e.preventDefault(); 
-            // Only allow upward movement for killing app
-            if(dy < 0) {
-                 card.style.transform = `scale(0.9) translateY(${dy}px)`;
-                 card.style.opacity = `${1 - Math.abs(dy)/500}`;
-            }
+            if(dy < 0) { card.style.transform = `scale(0.9) translateY(${dy}px)`; card.style.opacity = `${1 - Math.abs(dy)/500}`; }
         }
     }, {passive:false});
-
     touchLayer.addEventListener('touchend', (e) => {
-        card.style.transition = "transform 0.3s ease, opacity 0.3s"; // Re-enable transition
-
+        card.style.transition = "transform 0.3s ease, opacity 0.3s"; 
         if(isVertical) {
             const dy = e.changedTouches[0].clientY - startY;
             if(dy < -100) {
-                // Kill App
-                card.classList.add('closing');
-                card.style.transform = "translateY(-100vh) scale(0.5)";
-                card.style.opacity = "0";
-                setTimeout(() => {
-                    closeApp(app);
-                    handleSwitcherScroll(); // Recalculate focus after card removal
-                }, 300);
-            } else {
-                // Snap back
-                handleSwitcherScroll(); // Let the scroll handler reset positions
-            }
+                card.classList.add('closing'); card.style.transform = "translateY(-100vh) scale(0.5)"; card.style.opacity = "0";
+                setTimeout(() => { closeApp(app); handleSwitcherScroll(); }, 300);
+            } else { handleSwitcherScroll(); }
         } else if(!isHorizontal) {
-             // Tap detection
-             const dy = e.changedTouches[0].clientY - startY;
-             const dx = e.changedTouches[0].clientX - startX;
-             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-                 launchApp(app);
-             }
+             const dy = e.changedTouches[0].clientY - startY; const dx = e.changedTouches[0].clientX - startX;
+             if(Math.abs(dx) < 10 && Math.abs(dy) < 10) launchApp(app);
         }
     });
 }
