@@ -37,7 +37,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .edit-mode .grid-item.dragging{z-index:100;animation:none;transform:scale(1.1);opacity:.8;transition:none}
 @keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
-/* ICONS & COLORS (These classes are now referenced by the new app list) */
+/* ICONS & COLORS */
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
@@ -140,7 +140,7 @@ let U=null;
 let M=false;
 const K='os_layout_final_v3';
 
-// --- INITIAL LAYOUT (UPDATED TO HARCODED NEW LIST) ---
+// --- INITIAL LAYOUT ---
 const D=[
     { "title": "🎮 Grapple Ascent", "icon": "🎮", "path": "page3.html", "class": "motion" },
     { "title": "🧮 Smart Calculator", "icon": "🧮", "path": "page4.html", "class": "torch" },
@@ -235,7 +235,7 @@ function g(e,t,r,o,s,a={}){
     return p;
 }
 
-function a(e){
+function addWidget(e){
     cP();
     const t=fN(2,2);
     const r=g("widget",t.x,t.y,2,2,{subtype:"loading"});
@@ -277,60 +277,21 @@ function j(e){
     if(M)f();
 }
 
-// UPDATED: Handles new pageX.html paths as internal content, treats page9.html (News) as external, and settings.html as special.
+// --- FIXED: UNIVERSAL FILE LOADER ---
 function k(e){
     const t=document.createElement("div");
     t.style.width="100%";t.style.height="100%";
-    let content = '';
 
-    // Check if the path is a live URL (http/https) OR if it's the News path (page9.html)
-    if (e.path.startsWith("http") || e.path === "page9.html") { 
+    // Only Settings is special because of the internal JS Reset button
+    if(e.path==="settings.html"){
+        t.innerHTML=`<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
+    } else {
+        // EVERYTHING else (page3.html, page9.html, http, etc) gets loaded as a file
         const r=document.createElement("iframe");
         r.className="aif";
-        // If it's the specific page9.html placeholder path, substitute the live URL.
-        r.src=e.path === "page9.html" ? "https://www.google.com/search?q=latest+news&igu=1" : e.path; 
+        r.src=e.path; 
         t.appendChild(r);
-        return t;
     }
-
-    // Handle internal app content based on the pageX.html path
-    switch (e.path) {
-        case "settings.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⚙️</div><h2>Settings</h2><br><button class="fb db" onclick="r()">Reset Home Layout</button></div>`;
-            break;
-        case "page17.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🗃️</div><h2>Files Manager</h2><p style="opacity:0.7;">Your documents and media are stored here.</p></div>`;
-            break;
-        case "page69.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">💬</div><h2>Secure Chat</h2><p style="opacity:0.7;">Messaging interface initialized.</p></div>`;
-            break;
-        case "page67.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">☠️</div><h2>Mortis Cloud</h2><p style="opacity:0.7;">Mortis Protocol is active. Welcome.</p></div>`;
-            break;
-        case "page6.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🤖</div><h2>AI Learning Platform</h2><p style="opacity:0.7;">Processing new data models...</p></div>`;
-            break;
-        case "page13.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎨</div><h2>Theme Switcher</h2><p style="opacity:0.7;">Select a new visual style for the OS.</p></div>`;
-            break;
-        case "page3.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🎮</div><h2>Grapple Ascent</h2><p style="opacity:0.7;">Ready to start a new game.</p></div>`;
-            break;
-        case "page11.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">⏱️</div><h2>Cycle Counter</h2><p style="opacity:0.7;">Alarm and Timer functions active.</p></div>`;
-            break;
-        case "page4.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🧮</div><h2>Smart Calculator</h2><p style="opacity:0.7;">Calculator app ready.</p></div>`;
-            break;
-        case "page3000.html":
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">🚧</div><h2>Test Page 3000</h2><p style="opacity:0.7;">Diagnostic systems running.</p></div>`;
-            break;
-        default:
-            content = `<div class="tc"><div style="font-size:60px;margin-bottom:20px">❓</div><h2>Error: ${e.title}</h2><p style="opacity:0.7;">Unknown internal page content for path: ${e.path}</p></div>`;
-            break;
-    }
-    
-    t.innerHTML = content;
     return t;
 }
 
@@ -354,7 +315,7 @@ function t(e){
     if(A.length===0)f();
 }
 
-// UPDATED: App Card logic now uses fallback content for external URLs (like News/page9.html)
+// --- FIXED: SWITCHER SHOWS ACTUAL APPS ---
 function o(){
     M=true;
     const e=document.getElementById("switcher");
@@ -374,17 +335,12 @@ function o(){
         
         const s=document.createElement("div");
         s.className = 'contentHolder';
+        // Black background for iframe apps
         s.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#000;position:relative;";
         
+        // Move the LIVE app (iframe) into the card
         if(e.dom.parentNode)e.dom.parentNode.removeChild(e.dom);
-        
-        // FIX: Display simple content for external iframes/problem apps
-        if (e.dom.querySelector('iframe')) {
-            s.style.cssText = "width:100%;height:100%;pointer-events:none;padding-top:40px;background:#2c2c2e;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-size:18px;opacity:0.8;";
-            s.innerHTML = `<div style="font-size:40px;margin-bottom:10px">${e.icon}</div><div>${e.title}</div>`;
-        } else {
-            s.appendChild(e.dom);
-        }
+        s.appendChild(e.dom);
         
         r.appendChild(s);
         
@@ -511,9 +467,11 @@ function cI(e){
 
 function p(t){E=t;document.body.classList.toggle("edit-mode",t);cP();}
 
-function oP(){document.getElementById("add-panel").classList.add("open");}
+function openAddPanel(){document.getElementById("add-panel").classList.add("open");}
 
+function closeAddPanel(){document.getElementById("add-panel").classList.remove("open");}
 function cP(){document.getElementById("add-panel").classList.remove("open");}
+function toggleEdit(v){p(v);}
 
 function z(e){ 
     const t=I.findIndex(t=>t.el===e); 
