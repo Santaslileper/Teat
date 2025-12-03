@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Card Swiper</title>
+<title>JSON Card OS</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
   body {
-    background: #111;
+    background: #000;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
     height: 100vh;
     overflow: hidden;
@@ -17,7 +17,6 @@
     align-items: center;
   }
 
-  /* Container for the scrolling area */
   .swiper-container {
     width: 100%;
     height: 100%;
@@ -26,104 +25,208 @@
     align-items: center;
     overflow-x: auto;
     overflow-y: hidden;
-    scroll-snap-type: x mandatory; /* This handles the physical swipe snapping */
-    padding: 0 50vw; /* Large padding allows the first/last card to center */
-    box-sizing: border-box;
-    /* Hide scrollbar */
+    scroll-snap-type: x mandatory;
+    padding: 0 50vw; 
     scrollbar-width: none; 
-    -ms-overflow-style: none;
+    z-index: 10;
   }
-  
-  .swiper-container::-webkit-scrollbar { 
-    display: none; 
-  }
+  .swiper-container::-webkit-scrollbar { display: none; }
 
-  /* The actual Card */
+  /* CARD STYLES */
   .card {
     position: relative;
     width: 75vw;
-    max-width: 320px;
+    max-width: 340px;
     height: 65vh;
-    background: #222;
+    background: #1c1c1e;
     border-radius: 24px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    scroll-snap-align: center; /* Crucial for snapping */
+    scroll-snap-align: center;
     flex-shrink: 0;
     margin: 0 15px;
     overflow: hidden;
     transform-origin: center;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    opacity: 0.5; /* Default unfocused state */
-    transform: scale(0.9); /* Default unfocused state */
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+    opacity: 0; /* Hidden until loaded */
+    transform: scale(0.9);
+    border: 1px solid #333;
   }
 
-  /* Content inside the card */
   .card-header {
-    height: 50px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255,255,255,0.05);
+    background: rgba(30,30,30,0.9);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     color: #fff;
     font-weight: 600;
+    font-size: 13px;
+    position: absolute;
+    top: 0; left: 0; width: 100%;
+    z-index: 20;
+    pointer-events: none;
   }
 
-  .card-body {
-    padding: 20px;
-    color: #ccc;
-    height: calc(100% - 50px);
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+  .card-content {
+    width: 100%;
+    height: 100%;
+    padding-top: 40px;
+    background: #fff;
+  }
+
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    pointer-events: none; 
+  }
+
+  /* OPEN STATE */
+  .card.is-open {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    z-index: 1000;
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    border-radius: 0;
+    pointer-events: auto;
+  }
+  
+  .card.is-open iframe { pointer-events: auto; }
+  .card.is-open .card-header { display: none; }
+  .card.is-open .card-content { padding-top: 0; }
+
+  /* CLOSE BUTTON */
+  .close-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    display: none;
     align-items: center;
     justify-content: center;
-    text-align: center;
+    color: white;
+    font-size: 24px;
+    z-index: 1001;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   }
 
-  .card-icon {
-    font-size: 60px;
-    margin-bottom: 20px;
+  /* Error/Loading message */
+  #status-msg {
+    position: absolute;
+    color: #666;
+    font-size: 14px;
   }
 </style>
 </head>
 <body>
 
-<div class="swiper-container" id="swiper">
-  </div>
+<div id="status-msg">Loading apps...</div>
+<div class="swiper-container" id="swiper"></div>
+<div class="close-btn" id="closeBtn">✕</div>
 
 <script>
-// 1. Define your Card Data here
-const cardsData = [
-  { title: "Music", icon: "🎵", color: "linear-gradient(135deg, #ff00cc, #333399)" },
-  { title: "Photos", icon: "📸", color: "linear-gradient(135deg, #fce38a, #f38181)" },
-  { title: "Messages", icon: "💬", color: "linear-gradient(135deg, #00c6ff, #0072ff)" },
-  { title: "Settings", icon: "⚙️", color: "linear-gradient(135deg, #434343, #000000)" },
-  { title: "Weather", icon: "☀️", color: "linear-gradient(135deg, #56ab2f, #a8e063)" }
-];
-
 const container = document.getElementById('swiper');
+const closeBtn = document.getElementById('closeBtn');
+const statusMsg = document.getElementById('status-msg');
+let activeCard = null;
 
-// 2. Render Cards
-cardsData.forEach(data => {
-  const card = document.createElement('div');
-  card.className = 'card';
-  
-  // Apply a custom background if defined
-  if(data.color) card.style.background = data.color;
+// --- 1. FETCH AND LOAD APPS ---
+async function loadApps() {
+  try {
+    const response = await fetch('apps.json');
+    if (!response.ok) throw new Error("Could not load apps.json");
+    
+    const apps = await response.json();
+    statusMsg.style.display = 'none'; // Hide loading text
+    renderCards(apps);
+    
+  } catch (error) {
+    statusMsg.innerHTML = "Error: " + error.message + "<br>Make sure to run this on a Local Server.";
+    console.error(error);
+  }
+}
 
-  card.innerHTML = `
-    <div class="card-header">${data.title}</div>
-    <div class="card-body">
-      <div class="card-icon">${data.icon}</div>
-      <p>Content for ${data.title}</p>
-    </div>
-  `;
-  container.appendChild(card);
-});
+// --- 2. RENDER CARDS ---
+function renderCards(appsData) {
+  container.innerHTML = ''; // Clear existing
 
-// 3. The "Focus" Effect Logic
+  appsData.forEach(app => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    
+    // Determine content
+    let contentHTML = '';
+    if(app.type === 'url') {
+        // 'igu=1' helps Google work in iframes sometimes, but many sites block iframes.
+        contentHTML = `<iframe src="${app.path}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>`;
+    } else {
+        contentHTML = app.html || '<div style="padding:20px;">No content</div>';
+    }
+
+    card.innerHTML = `
+      <div class="card-header">${app.title}</div>
+      <div class="card-content">${contentHTML}</div>
+      <div class="click-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:15;"></div>
+    `;
+
+    // Tap Interaction
+    const overlay = card.querySelector('.click-overlay');
+    overlay.addEventListener('click', () => {
+      if(parseFloat(window.getComputedStyle(card).opacity) > 0.9) {
+        openApp(card);
+      } else {
+        card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+      }
+    });
+
+    container.appendChild(card);
+  });
+
+  // Initialize Scroll Position
+  setTimeout(() => {
+    if(container.children[0]) {
+       const firstCard = container.children[0];
+       const centerOffset = firstCard.offsetLeft - (container.clientWidth / 2) + (firstCard.offsetWidth / 2);
+       container.scrollLeft = centerOffset;
+    }
+    handleScroll();
+  }, 100);
+}
+
+// --- 3. OPEN/CLOSE LOGIC ---
+function openApp(card) {
+  activeCard = card;
+  container.style.overflow = 'hidden'; 
+  card.classList.add('is-open');
+  card.querySelector('.click-overlay').style.display = 'none';
+  closeBtn.style.display = 'flex';
+}
+
+function closeApp() {
+  if(!activeCard) return;
+  activeCard.classList.remove('is-open');
+  activeCard.querySelector('.click-overlay').style.display = 'block';
+  container.style.overflowX = 'auto';
+  closeBtn.style.display = 'none';
+  activeCard = null;
+}
+
+closeBtn.addEventListener('click', closeApp);
+
+// --- 4. SCROLL FOCUS LOGIC ---
 const handleScroll = () => {
   const containerCenter = container.scrollLeft + (container.clientWidth / 2);
   
@@ -131,31 +234,22 @@ const handleScroll = () => {
     const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
     const distance = Math.abs(containerCenter - cardCenter);
     
-    // Threshold: How close to the center to be "active"
     if (distance < card.offsetWidth / 2) {
       card.style.opacity = '1';
       card.style.transform = 'scale(1)';
+      card.style.zIndex = '100';
     } else {
       card.style.opacity = '0.4';
       card.style.transform = 'scale(0.9)';
+      card.style.zIndex = '1';
     }
   });
 };
 
-// Listen for scroll events
 container.addEventListener('scroll', handleScroll);
 
-// Initial call to set focus on load
-// We use a small timeout to ensure layout is done
-setTimeout(() => {
-    // Scroll to the first card initially (centering it)
-    const firstCard = container.children[0];
-    if(firstCard) {
-        const centerOffset = firstCard.offsetLeft - (container.clientWidth / 2) + (firstCard.offsetWidth / 2);
-        container.scrollLeft = centerOffset;
-    }
-    handleScroll();
-}, 100);
+// Start the process
+loadApps();
 
 </script>
 </body>
