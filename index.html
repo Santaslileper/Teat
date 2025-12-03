@@ -45,18 +45,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 .aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
 .ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,.3);background:linear-gradient(135deg,#333,#555)}
 
+/* Original Styles */
 .ai.files { background: linear-gradient(135deg, #1CB5E0 0%, #000851 100%); }
 .ai.news { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #93a5cf 100%); }
 .ai.info { background: linear-gradient(135deg, #e1eec3 0%, #f05053 100%); }
-.ai.chat { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-.ai.mortis { background: linear-gradient(135deg, #434343 0%, #000000 100%); border: 1px solid #444; }
-.ai.ai-learn { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-.ai.themes { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.ai.test { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
-.ai.grapple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
-.ai.cycles { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
 .ai.settings { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); color:#333; }
-.ai.calc { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+/* NEW Styles from Hybrid OS mapping */
+.ai.motion { background: linear-gradient(135deg, #5e5ce6, #3b3a99); }
+.ai.torch { background: linear-gradient(135deg, #ff9f0a, #d48200); }
+.ai.speaker { background: linear-gradient(135deg, #30d158, #1ea340); }
+.ai.camera { background: linear-gradient(135deg, #ff375f, #d61e42); }
+.ai.mic { background: linear-gradient(135deg, #0a84ff, #0056b3); }
+.ai.touch { background: linear-gradient(135deg, #32ade6, #007aff); }
 
 .al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,.8);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -74,7 +75,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;us
 /* --- APP WINDOW --- */
 .aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);pointer-events:auto;overflow:hidden;display:flex;flex-direction:column;z-index:50}
 .aw.ac{transform:translate3d(0,0,0)}
-/* App Content Container: Fixed to be black so text is visible */
+/* App Content Container */
 .awc{width:100%;height:100%;overflow:hidden;background:#000;position:relative} 
 .aif{width:100%;height:100%;border:none;display:block;background:#fff;}
 
@@ -95,11 +96,11 @@ button.ui-btn{padding:10px 20px;background:rgba(255,255,255,.2);backdrop-filter:
 #add-panel.open{bottom:0}
 .add-opt{padding:15px;background:#2c2c2e;color:#fff;border-radius:12px;display:flex;align-items:center;gap:10px;font-size:16px;cursor:pointer}
 
-/* INTERNAL APPS - Styled for Dark Mode & Settings */
+/* INTERNAL APPS */
 .tc{padding:60px 20px;color:#fff;text-align:center;background:#000;height:100%;width:100%;overflow-y:auto;}
 .fb{padding:5px 10px;background:#007aff;border-radius:5px;border:none;color:white}
 
-/* SETTINGS UI (From backup.html) */
+/* SETTINGS UI */
 .sg{width:100%;max-width:320px;margin-bottom:25px;margin-left:auto;margin-right:auto;}
 .sh{font-size:13px;color:#8e8e93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;text-align:left;padding:0 15px}
 .so{background:#1c1c1e;border-radius:10px;overflow:hidden}
@@ -161,23 +162,30 @@ let currentApp = null;
 let isSwitcherMode = false;
 
 // Keys
-const STORAGE_KEY = 'os_layout_final_v3';
+const STORAGE_KEY = 'os_layout_updated_v1'; // Changed key to force reload new apps
 const PREFS = { t:'appLauncherTheme', f:'appLauncherFont', bg:'appLauncherBg', bb:'appLauncherBattery', pw:'pwaPromptShown' };
 
-// --- INITIAL LAYOUT ---
+// --- REPLACED APP LIST (From Hybrid Card OS) ---
 const defaultApps = [
-    { title: "Files", icon: "🗃️", class: "files", path: "system:files" },
-    { title: "News", icon: "📰", class: "news", path: "system:news" },
-    { title: "Info", icon: "ℹ️", class: "info", path: "system:tutorial" },
-    { title: "Chat", icon: "💬", class: "chat", path: "system:chat" },
-    { title: "Mortis", icon: "☠️", class: "mortis", path: "system:mortis" },
-    { title: "AI Learn", icon: "🤖", class: "ai-learn", path: "system:ai" },
-    { title: "Themes", icon: "🎨", class: "themes", path: "system:themes" },
-    { title: "Test 3k", icon: "🚧", class: "test", path: "system:test" },
-    { title: "Grapple", icon: "🎮", class: "grapple", path: "system:game" },
-    { title: "Cycles", icon: "⏱️", class: "cycles", path: "system:clock" },
-    { title: "Settings", icon: "⚙️", class: "settings", path: "system:settings" },
-    { title: "Calc", icon: "🧮", class: "calc", path: "system:calc" }
+  // Mapped from Hybrid Card OS
+  { "title": "Grapple Ascent", "icon": "🎮", "path": "page3.html", "class": "motion" },
+  { "title": "Calculator", "icon": "🧮", "path": "page4.html", "class": "torch" },
+  { "title": "AI Learning", "icon": "🤖", "path": "page6.html", "class": "speaker" },
+  { "title": "News Reader", "icon": "📰", "path": "page9.html", "class": "motion" },
+  { "title": "Cycle Counter", "icon": "⏱️", "path": "page11.html", "class": "touch" },
+  
+  // Mapped "Theme Switcher" to native System Settings for full functionality
+  { "title": "Settings", "icon": "🎨", "path": "system:settings", "class": "speaker" },
+  
+  { "title": "Files", "icon": "🗃️", "path": "page17.html", "class": "camera" },
+  { "title": "Mortis Cloud", "icon": "☠️", "path": "page67.html", "class": "camera" },
+  { "title": "Secure Chat", "icon": "💬", "path": "page69.html", "class": "mic" },
+  { "title": "Test Page", "icon": "🚧", "path": "page3000.html", "class": "torch" },
+  
+  // Music Apps
+  { "title": "Spotify", "icon": "🟢", "path": "https://open.spotify.com", "class": "speaker" },
+  { "title": "SoundCloud", "icon": "☁️", "path": "https://soundcloud.com/discover", "class": "speaker" },
+  { "title": "Apple Music", "icon": "🎵", "path": "https://music.apple.com", "class": "speaker" }
 ];
 
 function init() {
@@ -189,6 +197,8 @@ function init() {
     if (savedLayout) {
         try {
             const layoutData = JSON.parse(savedLayout);
+            // Quick check if layout is valid, otherwise load defaults
+            if(layoutData.length === 0) throw new Error("Empty layout");
             layoutData.forEach(itemData => createItem(itemData.type, itemData.x, itemData.y, itemData.cols, itemData.rows, itemData));
         } catch(e) { loadDefaultApps(); }
     } else {
@@ -217,7 +227,7 @@ function init() {
     grid.addEventListener("touchend", () => clearTimeout(pressTimer));
 }
 
-// --- PREFERENCES LOGIC (Ported from backup.html) ---
+// --- PREFERENCES LOGIC ---
 function gv(k,d){return localStorage.getItem(k)||d}
 function sv(k,v){localStorage.setItem(k,v)}
 
@@ -288,8 +298,11 @@ function initPWA() {
 }
 
 function loadDefaultApps() {
+    // Widgets first
     createItem('widget', 0, 0, 2, 2, {subtype:'clock'});
     createItem('widget', 2 * COL_WIDTH, 0, 2, 2, {subtype:'weather'});
+    
+    // Apps below
     let startRow = 2; 
     defaultApps.forEach((app, index) => {
         const col = index % 4;
@@ -322,6 +335,7 @@ function createItem(type, x, y, wUnit, hUnit, data={}) {
 
     if (type === "app") {
         el.classList.add("aiw");
+        // Use data.class if present, default to 'files'
         el.innerHTML = `<div class="ai ${data.class||'files'}">${data.icon}</div><div class="al">${data.title}</div>`;
         el.onclick = () => { if(!isEditMode) launchApp(data); };
     } else {
@@ -392,7 +406,7 @@ function createInternalAppDOM(data) {
     const w = document.createElement("div");
     w.style.width = "100%"; w.style.height = "100%";
     
-    // -- SETTINGS APP WITH FEATURES FROM BACKUP --
+    // -- SETTINGS APP --
     if(data.path === "system:settings") {
         w.innerHTML = `
         <div class="tc">
@@ -415,14 +429,13 @@ function createInternalAppDOM(data) {
         </div>`;
         hydrateSettingsEvents(w);
     } 
-    // -- TUTORIAL --
-    else if (data.path === "system:tutorial") {
-        w.innerHTML = `<div class="tc"><div style="font-size:60px;margin-bottom:20px;">ℹ️</div><h2>How to Use</h2><br><div style="text-align:left;max-width:300px;margin:0 auto;line-height:1.6;color:#ccc">1. <b>Swipe Up</b> home bar to go Home.<br>2. <b>Hold & Swipe Up</b> for Recents.<br>3. <b>Hold Card</b> & Swipe Up to Close it.<br>4. <b>Long-press</b> grid to Edit/Move/Resize.<br><br><span style="color:#007aff">💡 Add to Home Screen for fullscreen!</span></div></div>`;
-    }
-    // -- DEFAULT --
+    // -- DEFAULT IFRAME LOADER --
     else {
         const i = document.createElement("iframe");
-        i.className = "aif"; i.src = data.path.includes("system") ? "about:blank" : data.path; 
+        i.className = "aif"; 
+        // Allow scripts and forms for the new apps
+        i.setAttribute("sandbox", "allow-scripts allow-forms allow-same-origin allow-modals allow-popups allow-presentation");
+        i.src = data.path.includes("system") ? "about:blank" : data.path; 
         w.appendChild(i);
     }
     return w;
@@ -557,14 +570,13 @@ function setupSwitcherGestures(touchLayer, card, app) {
     }, {passive:false});
 
     touchLayer.addEventListener('touchmove', (e) => {
-        if(isHorizontal) return; // If scrolling left/right, ignore vertical
+        if(isHorizontal) return; 
         
         const cx = e.touches[0].clientX;
         const cy = e.touches[0].clientY;
         const dx = cx - startX;
         const dy = cy - startY;
 
-        // Determine axis
         if(!isVertical && !isHorizontal) {
             if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5) {
                 isHorizontal = true;
@@ -574,7 +586,7 @@ function setupSwitcherGestures(touchLayer, card, app) {
         }
 
         if(isVertical) {
-            e.preventDefault(); // Stop scrolling, start moving card
+            e.preventDefault(); 
             if(dy < 0) {
                  card.style.transform = `scale(0.9) translateY(${dy}px)`;
                  card.style.opacity = `${1 - Math.abs(dy)/500}`;
@@ -596,7 +608,6 @@ function setupSwitcherGestures(touchLayer, card, app) {
                 card.style.opacity = "1";
             }
         } else if(!isHorizontal) {
-             // If we didn't scroll much in either direction, treat as tap
              const dy = e.changedTouches[0].clientY - startY;
              const dx = e.changedTouches[0].clientX - startX;
              if(Math.abs(dx) < 10 && Math.abs(dy) < 10) {
