@@ -2,286 +2,373 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Card OS (External JSON)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,minimum-scale=1,viewport-fit=cover">
+<title>Santaslileper OS Pro</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  
-  body {
-    background: #000;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+/* --- CORE SYSTEM --- */
+*{margin:0;padding:0;box-sizing:border-box}
+body,html{touch-action:none;overscroll-behavior:none;height:100%;overflow:hidden;background:#000;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;user-select:none;-webkit-user-select:none}
 
-  /* --- SWIPER CONTAINER --- */
-  .swiper-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    padding: 0 50vw; 
-    scrollbar-width: none; 
-    z-index: 10;
-  }
-  .swiper-container::-webkit-scrollbar { display: none; }
+.p{position:relative;width:100%;height:100%;background-color:#000;background-size:cover;background-position:center;overflow:hidden;display:flex;flex-direction:column;transition:background-image 0.3s}
+@media(min-width:768px){.p{max-width:375px;max-height:812px;margin:20px auto;border-radius:40px;box-shadow:0 0 0 12px #333;border:1px solid #111}}
 
-  /* --- CARD STYLES --- */
-  .card {
-    position: relative;
-    width: 75vw;
-    max-width: 340px;
-    height: 65vh;
-    background: #1c1c1e;
-    border-radius: 24px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-    scroll-snap-align: center;
-    flex-shrink: 0;
-    margin: 0 15px;
-    overflow: hidden;
-    transform-origin: center;
-    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
-    opacity: 0; /* Hidden until loaded */
-    transform: scale(0.9);
-    border: 1px solid #333;
-  }
+/* --- UI LAYERS --- */
+.s{position:relative;width:100%;height:100%;z-index:2;display:flex;flex-direction:column}
+.sb{height:44px;padding:0 25px;display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:10px;color:#fff;font-size:14px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.5);z-index:100}
 
-  /* Border colors mapped to JSON "class" */
-  .card[data-type="motion"] { border-color: #5e5ce6; }
-  .card[data-type="torch"] { border-color: #ff9f0a; }
-  .card[data-type="speaker"] { border-color: #30d158; }
-  .card[data-type="camera"] { border-color: #ff375f; }
-  .card[data-type="mic"] { border-color: #0a84ff; }
+/* HOME GRID */
+.h{flex:1;position:relative;width:100%;transition:transform .4s cubic-bezier(0.32,1,0.32,1), filter .4s;z-index:10}
+.h.zo{transform:scale(0.85);filter:brightness(0.5) blur(10px);pointer-events:none}
+#ag{position:relative;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;padding-top:20px;padding-bottom:120px}
 
-  /* Header */
-  .card-header {
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(28, 28, 30, 0.95);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    color: #fff;
-    font-weight: 600;
-    font-size: 15px;
-    position: absolute;
-    top: 0; left: 0; width: 100%;
-    z-index: 20;
-    pointer-events: none;
-    gap: 8px;
-  }
+/* DOCK (The Missing Piece) */
+.dock-wrap{height:95px;padding:15px;width:100%;position:absolute;bottom:0;left:0;z-index:20;pointer-events:none}
+.dock{width:100%;height:100%;background:rgba(255,255,255,0.2);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border-radius:28px;display:flex;align-items:center;justify-content:space-around;padding:0 10px;pointer-events:auto;border:1px solid rgba(255,255,255,0.1)}
 
-  /* Content Area */
-  .card-content {
-    width: 100%;
-    height: 100%;
-    padding-top: 44px; /* Space for header */
-    background: #fff;
-  }
+/* ITEMS & ICONS */
+.grid-item{position:absolute;transition:left .3s cubic-bezier(.34,1.56,.64,1),top .3s cubic-bezier(.34,1.56,.64,1);touch-action:none;z-index:10}
+.grid-item.dragging{z-index:100;transition:none;transform:scale(1.1);opacity:0.8}
+.edit-mode .grid-item:not(.dragging){animation:jiggle .3s infinite linear}
+@keyframes jiggle{0%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}100%{transform:rotate(-1.5deg)}}
 
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    pointer-events: none; /* Block clicks while swiping */
-  }
+.aiw{width:80px;height:95px;display:flex;flex-direction:column;align-items:center}
+.ai{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.3);background:#333;position:relative;overflow:hidden}
+.al{color:#fff;font-size:11px;margin-top:5px;text-shadow:0 1px 2px rgba(0,0,0,0.8);font-weight:500}
 
-  /* --- OPEN STATE --- */
-  .card.is-open {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
-    margin: 0;
-    z-index: 1000;
-    opacity: 1 !important;
-    transform: scale(1) !important;
-    border-radius: 0;
-    pointer-events: auto;
-    border: none;
-  }
-  
-  .card.is-open iframe { pointer-events: auto; }
-  .card.is-open .card-header { display: none; }
-  .card.is-open .card-content { padding-top: 0; }
+/* Icon Gradients */
+.ai.st{background:linear-gradient(135deg,#bdc3c7,#2c3e50)} /* Settings */
+.ai.ph{background:linear-gradient(135deg,#ff9a9e,#fecfef)} /* Photos */
+.ai.nt{background:linear-gradient(135deg,#f6d365,#fda085)} /* Notes */
+.ai.ca{background:linear-gradient(135deg,#84fab0,#8fd3f4)} /* Calc */
+.ai.cm{background:linear-gradient(135deg,#434343,#000000)} /* Camera */
+.ai.fl{background:linear-gradient(135deg,#a18cd1,#fbc2eb)} /* Files */
 
-  /* --- CLOSE BUTTON --- */
-  .close-btn {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 50px;
-    height: 50px;
-    background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(15px);
-    border-radius: 50%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    z-index: 1001;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.1);
-  }
+/* APP WINDOW & SWITCHER */
+.aw{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;transform:translate3d(100%,0,0);transition:transform .4s cubic-bezier(.19,1,.22,1);z-index:50;display:flex;flex-direction:column}
+.aw.ac{transform:translate3d(0,0,0)}
+.awc{flex:1;background:#fff;position:relative;overflow:hidden}
+.hi{height:25px;width:100%;position:absolute;bottom:0;display:flex;justify-content:center;align-items:center;z-index:999}
+.hi::after{content:'';width:130px;height:5px;background:rgba(255,255,255,0.5);border-radius:10px}
 
-  /* STATUS TEXT */
-  #status-msg {
-    position: absolute;
-    color: #888;
-    font-family: monospace;
-    text-align: center;
-    width: 80%;
-    line-height: 1.5;
-  }
+/* SWITCHER CARDS */
+.as{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.01);z-index:40;display:none;align-items:center;padding:0 20px;overflow-x:auto;scroll-snap-type:x mandatory;gap:20px}
+.scd{position:relative;min-width:70vw;height:65vh;background:#fff;border-radius:24px;scroll-snap-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.5);overflow:hidden;transform:scale(0.9);transition:transform 0.2s}
+.ch{height:40px;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:bold}
+
+/* WIDGETS */
+.widget{border-radius:20px;overflow:hidden;color:#fff;display:flex;flex-direction:column;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+.w-c{padding:15px;height:100%;display:flex;flex-direction:column;justify-content:center;}
+.del-btn{position:absolute;top:-8px;left:-8px;width:24px;height:24px;background:red;border-radius:50%;color:white;display:none;align-items:center;justify-content:center;font-weight:bold;z-index:99}
+.edit-mode .del-btn{display:flex}
+
+/* SETTINGS UI */
+.set-ui{padding:20px;background:#f2f2f7;height:100%;color:#000}
+.set-grp{background:#fff;border-radius:12px;margin-bottom:20px;overflow:hidden}
+.set-row{padding:15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;font-size:16px}
+.btn{background:#007aff;color:white;border:none;padding:8px 16px;border-radius:8px;font-size:14px}
 </style>
 </head>
 <body>
 
-<div id="status-msg">Connecting to apps.json...</div>
-<div class="swiper-container" id="swiper"></div>
-<div class="close-btn" id="closeBtn">✕</div>
+<div class="p" id="phone">
+    <div class="s">
+        <div class="sb"><span id="clock">12:00</span><span>5G</span><span>100%</span></div>
+        
+        <div class="h" id="h">
+            <div id="ag"></div> </div>
+
+        <div class="dock-wrap">
+            <div class="dock" id="dock"></div>
+        </div>
+
+        <div class="aw" id="win"><div class="awc" id="awc"></div><div class="hi" id="hi"></div></div>
+        
+        <div class="as" id="switcher"></div>
+    </div>
+</div>
 
 <script>
-const container = document.getElementById('swiper');
-const closeBtn = document.getElementById('closeBtn');
-const statusMsg = document.getElementById('status-msg');
-let activeCard = null;
+// --- CORE CONFIG ---
+const D=document, g=i=>D.getElementById(i);
+const COL_W = window.innerWidth < 768 ? window.innerWidth/4 : 85; 
+const ROW_H = 100;
+let items=[], running=[], activeApp=null, editMode=false;
+const K_BG='os_bg_v2', K_LO='os_layout_v2';
 
-// --- 1. MANDATORY FETCH ---
-// This will FAIL if apps.json is missing or if not running on a server
-async function loadApps() {
-  try {
-    const response = await fetch('apps.json');
-    
-    if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-    }
-    
-    const apps = await response.json();
-    statusMsg.style.display = 'none'; // Hide loading text
-    renderCards(apps);
-    
-  } catch (error) {
-    statusMsg.innerHTML = `
-      <span style="color:red">SYSTEM ERROR</span><br>
-      Failed to load <b>apps.json</b><br><br>
-      ${error.message}<br><br>
-      <small>If seeing "CORS" or "Network Error":<br>
-      You must run this on a Local Server (localhost), not as a file.</small>
-    `;
-    console.error(error);
-  }
-}
-
-// --- 2. RENDER CARDS ---
-function renderCards(appsData) {
-  container.innerHTML = ''; 
-
-  appsData.forEach(app => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    
-    // Apply styling class from JSON
-    if(app.class) card.setAttribute('data-type', app.class);
-
-    // Build HTML
-    card.innerHTML = `
-      <div class="card-header">
-        <span>${app.icon}</span>
-        <span>${app.title}</span>
-      </div>
-      <div class="card-content">
-        <iframe src="${app.path}" sandbox="allow-scripts allow-forms allow-same-origin allow-modals"></iframe>
-      </div>
-      <div class="click-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:15;"></div>
-    `;
-
-    // Add Tap Event
-    const overlay = card.querySelector('.click-overlay');
-    overlay.addEventListener('click', () => {
-      // Only open if visible/focused
-      if(parseFloat(window.getComputedStyle(card).opacity) > 0.9) {
-        openApp(card);
-      } else {
-        card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-      }
-    });
-
-    container.appendChild(card);
-  });
-
-  // Center Layout
-  setTimeout(() => {
-    if(container.children[0]) {
-       const firstCard = container.children[0];
-       const centerOffset = firstCard.offsetLeft - (container.clientWidth / 2) + (firstCard.offsetWidth / 2);
-       container.scrollLeft = centerOffset;
-    }
-    handleScroll();
-  }, 100);
-}
-
-// --- 3. OPEN/CLOSE LOGIC ---
-function openApp(card) {
-  activeCard = card;
-  container.style.overflow = 'hidden'; 
-  
-  card.classList.add('is-open'); 
-  card.querySelector('.click-overlay').style.display = 'none';
-  
-  closeBtn.style.display = 'flex';
-}
-
-function closeApp() {
-  if(!activeCard) return;
-  
-  activeCard.classList.remove('is-open');
-  activeCard.querySelector('.click-overlay').style.display = 'block';
-  
-  container.style.overflowX = 'auto';
-  closeBtn.style.display = 'none';
-  activeCard = null;
-}
-
-closeBtn.addEventListener('click', closeApp);
-
-// --- 4. SCROLL FOCUS ---
-const handleScroll = () => {
-  const containerCenter = container.scrollLeft + (container.clientWidth / 2);
-  
-  Array.from(container.children).forEach(card => {
-    const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
-    const distance = Math.abs(containerCenter - cardCenter);
-    
-    if (distance < card.offsetWidth / 2) {
-      card.style.opacity = '1';
-      card.style.transform = 'scale(1)';
-      card.style.zIndex = '100';
-    } else {
-      card.style.opacity = '0.4';
-      card.style.transform = 'scale(0.9)';
-      card.style.zIndex = '1';
-    }
-  });
+// --- INITIALIZATION ---
+const init = () => {
+    loadWallpaper();
+    loadLayout();
+    updateClock(); setInterval(updateClock,1000);
+    setupGestures();
 };
 
-container.addEventListener('scroll', handleScroll);
+const defaultApps = [
+    {id:'st', title:'Settings', icon:'⚙️', class:'st', type:'app', path:'system:settings'},
+    {id:'nt', title:'Notes', icon:'📝', class:'nt', type:'app', path:'system:notes'},
+    {id:'cm', title:'Camera', icon:'📷', class:'cm', type:'app', path:'system:camera'},
+    {id:'fl', title:'Files', icon:'📂', class:'fl', type:'app', path:'about:blank'},
+    {id:'ph', title:'Photos', icon:'🖼️', class:'ph', type:'app', path:'about:blank'},
+    {id:'ca', title:'Calc', icon:'🧮', class:'ca', type:'app', path:'https://www.desmos.com/scientific'},
+    {id:'wg', type:'widget', subtype:'weather', x:0, y:0, w:2, h:2}
+];
 
-// RUN
-loadApps();
+const dockApps = [
+    {id:'ph', title:'Phone', icon:'📞', class:'ph', path:'about:blank'},
+    {id:'ms', title:'Messages', icon:'💬', class:'nt', path:'about:blank'},
+    {id:'sf', title:'Safari', icon:'🧭', class:'fl', path:'https://www.google.com/webhp?igu=1'},
+    {id:'mu', title:'Music', icon:'🎵', class:'st', path:'about:blank'}
+];
+
+// --- RENDER ENGINE ---
+const loadLayout = () => {
+    const saved = localStorage.getItem(K_LO);
+    if(saved) {
+        items = JSON.parse(saved);
+        items.forEach(renderItem);
+    } else {
+        // Default Grid
+        defaultApps.forEach(a => {
+            if(a.type==='widget') createWidget(a);
+            else createIcon(a, g('ag'));
+        });
+        saveLayout();
+    }
+    // Render Dock
+    dockApps.forEach(a => createIcon(a, g('dock'), true));
+};
+
+const createIcon = (data, container, isDock=false) => {
+    const el = D.createElement('div');
+    if(!isDock) {
+        el.className = 'grid-item aiw';
+        // Auto-position if no coords (Simple flow layout logic)
+        if(data.x === undefined) {
+             const idx = items.length; 
+             data.x = (idx % 4) * COL_W;
+             data.y = Math.floor(idx / 4) * ROW_H + (items.some(i=>i.h>1)? 100 : 0); // rough logic
+             items.push({...data, el});
+        }
+        el.style.left = data.x + 'px';
+        el.style.top = data.y + 'px';
+        setupDrag(el, data);
+    } else {
+        el.className = 'aiw'; // Dock items don't have absolute pos
+    }
+    
+    el.innerHTML = `<div class="ai ${data.class}">${data.icon}</div>${!isDock ? `<div class="al">${data.title}</div>` : ''}`;
+    el.onclick = () => { if(!editMode) openApp(data); };
+    
+    // Edit Mode Trigger
+    let timer;
+    el.addEventListener('touchstart', () => timer = setTimeout(()=>toggleEdit(true), 800));
+    el.addEventListener('touchend', () => clearTimeout(timer));
+    
+    container.appendChild(el);
+};
+
+const createWidget = (data) => {
+    const el = D.createElement('div');
+    el.className = 'grid-item widget';
+    el.style.left = data.x * COL_W + 'px';
+    el.style.top = data.y * ROW_H + 'px';
+    el.style.width = (data.w * COL_W - 10) + 'px';
+    el.style.height = (data.h * ROW_H - 10) + 'px';
+    el.style.background = data.subtype === 'weather' ? 'linear-gradient(135deg, #3a7bd5, #00d2ff)' : '#333';
+    
+    el.innerHTML = `
+        <div class="del-btn" onclick="this.parentElement.remove()">×</div>
+        <div class="w-c">
+            ${data.subtype === 'weather' ? '<h2>18°</h2><p>San Francisco</p>' : 'Widget'}
+        </div>
+    `;
+    
+    g('ag').appendChild(el);
+    items.push({...data, el});
+    setupDrag(el, items[items.length-1]);
+};
+
+// --- DRAG ENGINE ---
+const setupDrag = (el, data) => {
+    let sx=0, sy=0, lx=0, ly=0;
+    el.addEventListener('touchstart', e => {
+        if(!editMode) return;
+        el.classList.add('dragging');
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+        lx = parseInt(el.style.left); ly = parseInt(el.style.top);
+    }, {passive:false});
+    
+    el.addEventListener('touchmove', e => {
+        if(!editMode) return;
+        e.preventDefault();
+        const dx = e.touches[0].clientX - sx;
+        const dy = e.touches[0].clientY - sy;
+        el.style.left = (lx + dx) + 'px';
+        el.style.top = (ly + dy) + 'px';
+    }, {passive:false});
+
+    el.addEventListener('touchend', () => {
+        if(!editMode) return;
+        el.classList.remove('dragging');
+        // Snap to Grid
+        const cx = parseInt(el.style.left);
+        const cy = parseInt(el.style.top);
+        data.x = Math.round(cx / COL_W) * COL_W;
+        data.y = Math.round(cy / ROW_H) * ROW_H;
+        el.style.left = data.x + 'px';
+        el.style.top = data.y + 'px';
+        saveLayout();
+    });
+};
+
+const toggleEdit = (on) => {
+    editMode = on;
+    D.body.classList.toggle('edit-mode', on);
+};
+
+const saveLayout = () => {
+    const min = items.map(i => ({id:i.id, title:i.title, icon:i.icon, class:i.class, type:i.type, subtype:i.subtype, x: parseInt(i.el.style.left), y: parseInt(i.el.style.top), w:i.w, h:i.h, path:i.path}));
+    localStorage.setItem(K_LO, JSON.stringify(min));
+};
+
+// --- APP ENGINE ---
+const openApp = (app) => {
+    activeApp = app;
+    const win = g('win');
+    const awc = g('awc');
+    awc.innerHTML = '';
+    
+    // Internal Routing
+    if(app.path === 'system:settings') renderSettings(awc);
+    else if(app.path === 'system:notes') renderNotes(awc);
+    else if(app.path === 'system:camera') renderCamera(awc);
+    else awc.innerHTML = `<iframe src="${app.path}" style="width:100%;height:100%;border:none"></iframe>`;
+    
+    win.classList.add('ac');
+    g('h').classList.add('zo');
+    
+    // Add to running
+    if(!running.find(r=>r.id===app.id)) running.push({app, snap:null});
+};
+
+const closeApp = () => {
+    g('win').classList.remove('ac');
+    g('h').classList.remove('zo');
+    activeApp = null;
+    if(editMode) toggleEdit(false);
+};
+
+// --- SYSTEM APPS ---
+
+// 1. SAFE SETTINGS (With Compression)
+const renderSettings = (ctx) => {
+    ctx.innerHTML = `
+        <div class="set-ui">
+            <h1>Settings</h1>
+            <div class="set-grp">
+                <div class="set-row">
+                    <span>Wallpaper</span>
+                    <button class="btn" onclick="g('bg-up').click()">Choose</button>
+                    <input type="file" id="bg-up" hidden accept="image/*">
+                </div>
+                <div class="set-row">
+                    <span>Reset Home</span>
+                    <button class="btn" style="background:red" onclick="localStorage.removeItem('${K_LO}');location.reload()">Reset</button>
+                </div>
+            </div>
+            <p style="text-align:center;color:#999">Santaslileper OS v2.0</p>
+        </div>
+    `;
+    setTimeout(() => {
+        g('bg-up').onchange = e => {
+            const f = e.target.files[0];
+            if(f) {
+                const r = new FileReader();
+                r.onload = ev => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // CANVAS COMPRESSION
+                        const cvs = D.createElement('canvas');
+                        const ctx = cvs.getContext('2d');
+                        const scale = 1200/img.height;
+                        cvs.width = img.width*scale; cvs.height=1200;
+                        ctx.drawImage(img,0,0,cvs.width,cvs.height);
+                        const b64 = cvs.toDataURL('image/jpeg', 0.6); // 60% quality
+                        localStorage.setItem(K_BG, b64);
+                        g('phone').style.backgroundImage = `url(${b64})`;
+                        alert('Wallpaper Updated!');
+                    };
+                    img.src = ev.target.result;
+                };
+                r.readAsDataURL(f);
+            }
+        };
+    }, 100);
+};
+
+// 2. NOTES
+const renderNotes = (ctx) => {
+    const txt = localStorage.getItem('os_note') || '';
+    ctx.innerHTML = `<textarea style="width:100%;height:100%;padding:20px;font-size:18px;border:none;resize:none;font-family:inherit" oninput="localStorage.setItem('os_note',this.value)">${txt}</textarea>`;
+};
+
+// 3. CAMERA
+const renderCamera = (ctx) => {
+    ctx.innerHTML = `<video autoplay playsinline style="width:100%;height:100%;object-fit:cover;background:#000"></video>`;
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(s => ctx.querySelector('video').srcObject = s)
+    .catch(e => ctx.innerHTML = `<div style="padding:20px">Camera Error: ${e}</div>`);
+};
+
+// --- UTILS ---
+const loadWallpaper = () => {
+    const bg = localStorage.getItem(K_BG);
+    if(bg) g('phone').style.backgroundImage = `url(${bg})`;
+};
+const updateClock = () => g('clock').innerText = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+// --- GESTURES ---
+const setupGestures = () => {
+    const hi = g('hi');
+    let sy = 0;
+    hi.addEventListener('touchstart', e => sy = e.touches[0].clientY);
+    hi.addEventListener('touchend', e => {
+        const dy = e.changedTouches[0].clientY - sy;
+        if(dy < -30) {
+            if(activeApp) closeApp();
+            else openSwitcher();
+        }
+    });
+};
+
+const openSwitcher = () => {
+    const s = g('switcher');
+    s.style.display = 'flex';
+    s.innerHTML = '';
+    g('h').classList.add('zo');
+    
+    if(running.length === 0) s.innerHTML = '<span style="color:white;width:100%;text-align:center">No Recent Apps</span>';
+    
+    running.forEach(r => {
+        const c = D.createElement('div');
+        c.className = 'scd';
+        c.innerHTML = `<div class="ch">${r.app.title}</div><div style="height:100%;background:#eee"></div>`;
+        c.onclick = () => {
+            s.style.display='none';
+            openApp(r.app);
+        };
+        s.appendChild(c);
+    });
+};
+
+g('phone').onclick = (e) => {
+    if(editMode && !e.target.closest('.grid-item') && !e.target.closest('.dock')) toggleEdit(false);
+};
+
+init();
 </script>
 </body>
 </html>
