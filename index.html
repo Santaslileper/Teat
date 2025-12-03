@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
-<title>JSON Card OS</title>
+<title>Card OS</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
@@ -17,6 +17,7 @@
     align-items: center;
   }
 
+  /* --- SWIPER CONTAINER --- */
   .swiper-container {
     width: 100%;
     height: 100%;
@@ -32,7 +33,7 @@
   }
   .swiper-container::-webkit-scrollbar { display: none; }
 
-  /* CARD STYLES */
+  /* --- CARD STYLES --- */
   .card {
     position: relative;
     width: 75vw;
@@ -52,27 +53,37 @@
     border: 1px solid #333;
   }
 
+  /* Different border colors based on your JSON "class" */
+  .card[data-type="motion"] { border-color: #5e5ce6; }
+  .card[data-type="torch"] { border-color: #ff9f0a; }
+  .card[data-type="speaker"] { border-color: #30d158; }
+  .card[data-type="camera"] { border-color: #ff375f; }
+  .card[data-type="mic"] { border-color: #0a84ff; }
+
+  /* Header */
   .card-header {
-    height: 40px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(30,30,30,0.9);
+    background: rgba(28, 28, 30, 0.95);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.1);
     color: #fff;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 15px;
     position: absolute;
     top: 0; left: 0; width: 100%;
     z-index: 20;
     pointer-events: none;
+    gap: 8px;
   }
 
+  /* Content Area */
   .card-content {
     width: 100%;
     height: 100%;
-    padding-top: 40px;
+    padding-top: 44px; /* Space for header */
     background: #fff;
   }
 
@@ -80,10 +91,10 @@
     width: 100%;
     height: 100%;
     border: none;
-    pointer-events: none; 
+    pointer-events: none; /* Block clicks while swiping */
   }
 
-  /* OPEN STATE */
+  /* --- FULLSCREEN OPEN STATE --- */
   .card.is-open {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -96,13 +107,14 @@
     transform: scale(1) !important;
     border-radius: 0;
     pointer-events: auto;
+    border: none;
   }
   
-  .card.is-open iframe { pointer-events: auto; }
-  .card.is-open .card-header { display: none; }
-  .card.is-open .card-content { padding-top: 0; }
+  .card.is-open iframe { pointer-events: auto; } /* Enable app interaction */
+  .card.is-open .card-header { display: none; } /* Hide header */
+  .card.is-open .card-content { padding-top: 0; } /* Remove padding */
 
-  /* CLOSE BUTTON */
+  /* --- CLOSE BUTTON --- */
   .close-btn {
     position: fixed;
     bottom: 30px;
@@ -111,24 +123,22 @@
     width: 50px;
     height: 50px;
     background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(15px);
     border-radius: 50%;
     display: none;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 24px;
+    font-size: 20px;
+    font-weight: bold;
     z-index: 1001;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
   }
 
-  /* Error/Loading message */
-  #status-msg {
-    position: absolute;
-    color: #666;
-    font-size: 14px;
-  }
+  /* Loading/Error Text */
+  #status-msg { position: absolute; color: #666; font-size: 14px; text-align: center;}
 </style>
 </head>
 <body>
@@ -143,51 +153,53 @@ const closeBtn = document.getElementById('closeBtn');
 const statusMsg = document.getElementById('status-msg');
 let activeCard = null;
 
-// --- 1. FETCH AND LOAD APPS ---
+// --- 1. FETCH YOUR JSON ---
 async function loadApps() {
   try {
     const response = await fetch('apps.json');
-    if (!response.ok) throw new Error("Could not load apps.json");
+    if (!response.ok) throw new Error("Could not find apps.json");
     
     const apps = await response.json();
-    statusMsg.style.display = 'none'; // Hide loading text
+    statusMsg.style.display = 'none'; 
     renderCards(apps);
     
   } catch (error) {
-    statusMsg.innerHTML = "Error: " + error.message + "<br>Make sure to run this on a Local Server.";
+    statusMsg.innerHTML = "Error: " + error.message + "<br><br>⚠️ Remember to run this on a Local Server<br>(VS Code Live Server or Python http.server)";
     console.error(error);
   }
 }
 
-// --- 2. RENDER CARDS ---
+// --- 2. RENDER CARDS FROM YOUR JSON ---
 function renderCards(appsData) {
-  container.innerHTML = ''; // Clear existing
+  container.innerHTML = ''; 
 
   appsData.forEach(app => {
     const card = document.createElement('div');
     card.className = 'card';
     
-    // Determine content
-    let contentHTML = '';
-    if(app.type === 'url') {
-        // 'igu=1' helps Google work in iframes sometimes, but many sites block iframes.
-        contentHTML = `<iframe src="${app.path}" sandbox="allow-scripts allow-forms allow-same-origin"></iframe>`;
-    } else {
-        contentHTML = app.html || '<div style="padding:20px;">No content</div>';
-    }
+    // Use the "class" field from your JSON to style the border (optional visual flare)
+    if(app.class) card.setAttribute('data-type', app.class);
 
+    // Build the HTML using YOUR fields (title, icon, path)
     card.innerHTML = `
-      <div class="card-header">${app.title}</div>
-      <div class="card-content">${contentHTML}</div>
+      <div class="card-header">
+        <span>${app.icon}</span>
+        <span>${app.title}</span>
+      </div>
+      <div class="card-content">
+        <iframe src="${app.path}" sandbox="allow-scripts allow-forms allow-same-origin allow-modals"></iframe>
+      </div>
       <div class="click-overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:15;"></div>
     `;
 
-    // Tap Interaction
+    // Add Tap Event
     const overlay = card.querySelector('.click-overlay');
     overlay.addEventListener('click', () => {
+      // If card is focused (visible), open it
       if(parseFloat(window.getComputedStyle(card).opacity) > 0.9) {
         openApp(card);
       } else {
+        // If card is on the side, scroll to it first
         card.scrollIntoView({ behavior: 'smooth', inline: 'center' });
       }
     });
@@ -195,7 +207,7 @@ function renderCards(appsData) {
     container.appendChild(card);
   });
 
-  // Initialize Scroll Position
+  // Center the first card initially
   setTimeout(() => {
     if(container.children[0]) {
        const firstCard = container.children[0];
@@ -209,24 +221,32 @@ function renderCards(appsData) {
 // --- 3. OPEN/CLOSE LOGIC ---
 function openApp(card) {
   activeCard = card;
-  container.style.overflow = 'hidden'; 
-  card.classList.add('is-open');
+  container.style.overflow = 'hidden'; // Stop background scrolling
+  
+  card.classList.add('is-open'); // Trigger CSS animation
+  
+  // Hide overlay so you can interact with the iframe
   card.querySelector('.click-overlay').style.display = 'none';
+  
   closeBtn.style.display = 'flex';
 }
 
 function closeApp() {
   if(!activeCard) return;
+  
   activeCard.classList.remove('is-open');
+  
+  // Bring back overlay so you can swipe again
   activeCard.querySelector('.click-overlay').style.display = 'block';
-  container.style.overflowX = 'auto';
+  
+  container.style.overflowX = 'auto'; // Re-enable background scrolling
   closeBtn.style.display = 'none';
   activeCard = null;
 }
 
 closeBtn.addEventListener('click', closeApp);
 
-// --- 4. SCROLL FOCUS LOGIC ---
+// --- 4. FOCUS LOGIC (SWIPE EFFECT) ---
 const handleScroll = () => {
   const containerCenter = container.scrollLeft + (container.clientWidth / 2);
   
@@ -234,6 +254,7 @@ const handleScroll = () => {
     const cardCenter = card.offsetLeft + (card.offsetWidth / 2);
     const distance = Math.abs(containerCenter - cardCenter);
     
+    // If card is near center
     if (distance < card.offsetWidth / 2) {
       card.style.opacity = '1';
       card.style.transform = 'scale(1)';
@@ -248,9 +269,8 @@ const handleScroll = () => {
 
 container.addEventListener('scroll', handleScroll);
 
-// Start the process
+// Start
 loadApps();
-
 </script>
 </body>
 </html>
