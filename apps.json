@@ -9,6 +9,6 @@
   { "id": 67, "title": "☠️ Mortis Cloud", "icon": "☠️", "path": "page67.html", "class": "camera" },
   { "id": 69, "title": "💬 Secure Chat", "icon": "💬", "path": "page69.html", "class": "mic" },
   { "id": 3000, "title": "🚧 Test Page 3000", "icon": "🚧", "path": "page3000.html", "class": "torch" },
-  { "id": 188, "title": "🗃️ Page 1hh7", "icon": "🗃️", "path": "eorth.html", "class": "camera" }
+  { "id": 188, "title": "🗃️ Page 1hh7", "icon": "🗃️", "path": "erth.html", "class": "dev" }
 
 ]
