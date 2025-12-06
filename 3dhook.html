@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Grapple Ascent - Chain Swing</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0a0c1a; font-family: 'Segoe UI', Arial, sans-serif; touch-action: none; }
+        canvas { display: block; outline: none; }
+        
+        /* UI Layer */
+        #ui {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; color: #fff;
+        }
+
+        #title {
+            font-size: 4em; font-weight: bold; 
+            text-shadow: 0 0 10px #70f, 0 0 20px #70f;
+            margin-bottom: 20px;
+        }
+        
+        #info {
+            font-size: 1.2em; white-space: pre-line; line-height: 1.5;
+            text-shadow: 0 0 5px #000;
+        }
+
+        #score-container {
+            position: absolute; top: 20px; left: 0; width: 100%;
+            text-align: center; pointer-events: none;
+        }
+        #score-display { font-size: 1.5em; font-weight: bold; text-shadow: 0 0 5px #000; }
+        #coins-display { font-size: 1.2em; color: #ffcc00; text-shadow: 0 0 5px #000; margin-top: 5px;}
+
+        /* Visual Joysticks */
+        .joystick-visual {
+            position: absolute; width: 120px; height: 120px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            display: none; pointer-events: none;
+        }
+        .joy-knob {
+            position: absolute; top: 50%; left: 50%;
+            width: 50px; height: 50px; border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+        #joy-left .joy-knob { background: rgba(0, 255, 255, 0.4); }
+        #joy-right .joy-knob { background: rgba(255, 204, 0, 0.4); }
+    </style>
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+</head>
+<body>
+
+    <div id="ui">
+        <div id="title">Grapple Swing</div>
+        <div id="info">Click/Tap to start<br><br>Desktop: WASD to move, click to grapple<br>Mobile: Left Stick Move, Right Stick Aim</div>
+    </div>
+
+    <div id="score-container" style="display:none;">
+        <div id="score-display"></div>
+        <div id="coins-display"></div>
+    </div>
+
+    <div id="joy-left" class="joystick-visual"><div class="joy-knob"></div></div>
+    <div id="joy-right" class="joystick-visual"><div class="joy-knob"></div></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- 1. SETUP THREE.JS ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0c1a);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lights
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+        dl.position.set(0, 100, 100);
+        scene.add(dl);
+
+        // Materials
+        const matPlayer = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xaaaaaa, emissiveIntensity: 0.2 });
+        const matPlatStart = new THREE.MeshStandardMaterial({ color: 0x00aa44 });
+        const matPlat = new THREE.MeshStandardMaterial({ color: 0x444444 });
+        const matCoin = new THREE.MeshStandardMaterial({ color: 0xffcc00, emissive: 0xffaa00 });
+        const matAnchor = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.5 });
+        const matHook = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const matRope = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
+        const matFlyLine = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 2 }); // Red line for flying hook
+        const matAim = new THREE.LineDashedMaterial({ color: 0xffff00, dashSize: 10, gapSize: 10, opacity: 0.5, transparent: true });
+
+        // --- 2. LOGIC & VARIABLES ---
+        const W = () => window.innerWidth;
+        const H = () => window.innerHeight;
+
+        let player = {x: 0, y: 0, vx: 0, vy: 0, r: 16};
+        
+        // ** CORE CHANGE: Rope and Hook are separate now **
+        let activeRope = null; // Stores { i: anchorIndex, len: length }
+        let flyingHook = { active: false, x: 0, y: 0, dx: 0, dy: 0 }; // Just the projectile
+        
+        let cam = {x: 0, y: 0};
+        let currentHeight = 0;
+        let highScore = 0;
+        let coinsCollected = 0;
+        let gameState = 'menu';
+        let startingPlatform = null;
+        
+        const HOOK_SPEED = 25; // Slightly faster for fluid chaining
+        const HOOK_PULL = 0.02;
+
+        let keys = {};
+        let leftJoy = {x: 0, y: 0, active: false, startX: 0, startY: 0};
+        let rightJoy = {x: 0, y: 0, active: false, startX: 0, startY: 0};
+        let touches = {};
+        let isMobile = 'ontouchstart' in window;
+
+        let anchors = [];
+        let platforms = [];
+
+        // --- 3. THREE.JS MESH MANAGEMENT ---
+        let playerMesh, hookMesh, ropeLine, flyLine, aimLine;
+        
+        function initMeshes() {
+            playerMesh = new THREE.Mesh(new THREE.SphereGeometry(16), matPlayer);
+            scene.add(playerMesh);
+            
+            hookMesh = new THREE.Mesh(new THREE.SphereGeometry(6), matHook);
+            hookMesh.visible = false;
+            scene.add(hookMesh);
+
+            // The main rope (Blue)
+            ropeLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), matRope);
+            scene.add(ropeLine);
+
+            // The flying hook line (Red)
+            flyLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), matFlyLine);
+            scene.add(flyLine);
+
+            aimLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), matAim);
+            scene.add(aimLine);
+        }
+        initMeshes();
+
+        const to3D = (x, y) => new THREE.Vector3(x, -y, 0);
+
+        function createPlatformMesh(p) {
+            const geo = new THREE.BoxGeometry(p.width, p.height, 40);
+            const mesh = new THREE.Mesh(geo, p.isStart ? matPlatStart : matPlat);
+            mesh.position.copy(to3D(p.x + p.width/2, p.y + p.height/2));
+            scene.add(mesh);
+            p.mesh = mesh;
+
+            if (p.coin) {
+                const cGeo = new THREE.CylinderGeometry(8, 8, 4, 16);
+                cGeo.rotateX(Math.PI/2);
+                const cMesh = new THREE.Mesh(cGeo, matCoin);
+                cMesh.position.copy(to3D(p.x + p.width/2, p.y - 15));
+                scene.add(cMesh);
+                p.coinMesh = cMesh;
+            }
+        }
+
+        function createAnchorMesh(a) {
+            const mesh = new THREE.Mesh(new THREE.SphereGeometry(8), matAnchor);
+            mesh.position.copy(to3D(a.x, a.y));
+            scene.add(mesh);
+            a.mesh = mesh;
+        }
+
+        function generateStaticWorld() {
+            platforms.forEach(p => { scene.remove(p.mesh); if(p.coinMesh) scene.remove(p.coinMesh); });
+            anchors.forEach(a => { scene.remove(a.mesh); });
+            platforms = [];
+            anchors = [];
+            
+            startingPlatform = {x: -100, y: -20, width: 200, height: 20, isStart: true};
+            createPlatformMesh(startingPlatform);
+            platforms.push(startingPlatform);
+            
+            for (let level = 1; level < 100; level++) {
+                if (Math.random() < 0.4) {
+                    let x = (Math.random() - 0.5) * W() * 0.8;
+                    let y = -100 - (level * 150);
+                    let width = 80 + Math.random() * 120;
+                    let p = {x, y, width, height: 20, coin: true};
+                    createPlatformMesh(p);
+                    platforms.push(p);
+                }
+            }
+
+            for (let level = 0; level < 200; level++) {
+                let baseY = -100 - (level * 100);
+                let numAnchorsThisLevel = 3 + Math.floor(Math.random() * 4);
+                
+                for (let i = 0; i < numAnchorsThisLevel; i++) {
+                    let x = (Math.random() - 0.5) * W() * 1.5;
+                    let y = baseY + (Math.random() - 0.5) * 80;
+                    let isTooClose = false;
+                    
+                    platforms.forEach(p => {
+                        const dx = Math.abs(x - (p.x + p.width / 2));
+                        const dy = Math.abs(y - (p.y + p.height / 2));
+                        if (dx < p.width / 2 + 50 && dy < p.height / 2 + 50) isTooClose = true;
+                    });
+
+                    if (!isTooClose) {
+                        let a = {x, y};
+                        createAnchorMesh(a);
+                        anchors.push(a);
+                    }
+                }
+            }
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            currentHeight = 0;
+            highScore = 0;
+            coinsCollected = 0;
+            
+            player.x = startingPlatform.x + startingPlatform.width / 2;
+            player.y = startingPlatform.y - player.r;
+            player.vx = 0; player.vy = 0;
+            
+            activeRope = null;
+            flyingHook.active = false;
+            
+            cam.x = 0; cam.y = -100;
+
+            generateStaticWorld();
+            
+            document.getElementById('title').style.display = 'none';
+            document.getElementById('info').style.display = 'none';
+            document.getElementById('score-container').style.display = 'block';
+        }
+
+        function shootHook(dx, dy) {
+            // Start the flying hook
+            flyingHook.active = true;
+            flyingHook.x = player.x;
+            flyingHook.y = player.y;
+            
+            const angle = Math.atan2(dy, dx);
+            flyingHook.dx = Math.cos(angle) * HOOK_SPEED;
+            flyingHook.dy = Math.sin(angle) * HOOK_SPEED;
+
+            // Note: We do NOT clear activeRope here. 
+            // This allows the player to stay connected to the old one while the new one flies.
+        }
+
+        // --- 5. PHYSICS LOOP ---
+        const gravity = 0.3;
+        const ropeTension = 0.15;
+        const swingDamping = 0.99;
+        const moveForce = 0.1;  
+        const friction = 0.9;  
+        const bounce = 0.98;
+        const ropeAdjustSpeed = 2; 
+        const swingForce = 0.2;
+
+        function step() {
+            if (gameState !== 'playing') return;
+
+            // Input
+            let inputX = 0;
+            let inputY = 0;
+            if (isMobile && leftJoy.active) {
+                inputX = Math.max(-1, Math.min(1, leftJoy.x / 60));
+                inputY = Math.max(-1, Math.min(1, leftJoy.y / 60));
+            } else {
+                if (keys['a'] || keys['arrowleft']) inputX -= 1;
+                if (keys['d'] || keys['arrowright']) inputX += 1;
+            }
+            
+            // Movement (Air control if not on rope)
+            if (!activeRope) player.vx += inputX * moveForce;
+            player.vy += gravity;
+            
+            // Update Flying Hook
+            if (flyingHook.active) {
+                flyingHook.x += flyingHook.dx;
+                flyingHook.y += flyingHook.dy;
+
+                // Check collisions with anchors
+                for (let i = 0; i < anchors.length; i++) {
+                    const a = anchors[i];
+                    const dist = Math.hypot(flyingHook.x - a.x, flyingHook.y - a.y);
+                    if (dist < 20) {
+                        // HIT! Chain logic:
+                        flyingHook.active = false;
+                        
+                        // Set the new rope
+                        activeRope = { 
+                            i: i, 
+                            len: Math.hypot(player.x - a.x, player.y - a.y) 
+                        };
+                        break;
+                    }
+                }
+                
+                // Max range check
+                if (Math.hypot(flyingHook.x - player.x, flyingHook.y - player.y) > 500) {
+                    flyingHook.active = false;
+                }
+            }
+
+            // Platform Collision
+            platforms.forEach(p => {
+                if (player.x + player.r > p.x && player.x - player.r < p.x + p.width &&
+                    player.y + player.r > p.y && player.y + player.r < p.y + p.height + 10 &&
+                    player.vy > 0) {
+                    player.y = p.y - player.r;
+                    player.vy = 0;
+                    player.vx *= 0.9;
+                    activeRope = null; // Landed on ground, detach rope
+                    if (p.coin) {
+                        coinsCollected++;
+                        p.coin = false;
+                        if(p.coinMesh) p.coinMesh.visible = false;
+                    }
+                }
+            });
+
+            // Rope Physics (Active Connection)
+            if (activeRope) {
+                const anchor = anchors[activeRope.i];
+                const dx = anchor.x - player.x;
+                const dy = anchor.y - player.y;
+                const dist = Math.hypot(dx, dy);
+
+                // Pull force to help ascend
+                player.vx += dx * HOOK_PULL;
+                player.vy += dy * HOOK_PULL;
+
+                if (isMobile && leftJoy.active) {
+                    activeRope.len -= inputY * ropeAdjustSpeed;
+                    if (activeRope.len < 10) activeRope.len = 10;
+                    
+                    const angle = Math.atan2(dy, dx);
+                    const perp = angle + Math.PI / 2;
+                    player.vx += Math.cos(perp) * inputX * swingForce;
+                    player.vy += Math.sin(perp) * inputX * swingForce;
+                }
+
+                if (dist > activeRope.len) {
+                    const diff = dist - activeRope.len;
+                    player.vx += (dx / dist) * diff * ropeTension;
+                    player.vy += (dy / dist) * diff * ropeTension;
+                    player.vx *= swingDamping;
+                    player.vy *= swingDamping;
+                }
+                
+                // Break rope if too far
+                if (dist > activeRope.len * 3) {
+                    activeRope = null;
+                }
+            }
+            
+            player.vx *= friction;
+            player.vy *= bounce;
+            player.x += player.vx;
+            player.y += player.vy;
+            
+            // Camera
+            const targetCamX = player.x;
+            const targetCamY = player.y - H() * 0.3;
+            const playerSpeed = Math.hypot(player.vx, player.vy);
+            const cameraSpeed = Math.min(0.15, 0.08 + playerSpeed * 0.01);
+            cam.x += (targetCamX - cam.x) * cameraSpeed;
+            cam.y += (targetCamY - cam.y) * cameraSpeed;
+            
+            currentHeight = -player.y;
+            if (currentHeight > highScore) highScore = currentHeight;
+
+            if (player.y > startingPlatform.y + 1000) startGame();
+            
+            document.getElementById('score-display').innerText = `High Score: ${Math.floor(highScore/10)}`;
+            document.getElementById('coins-display').innerText = `Coins: ${coinsCollected}`;
+        }
+
+        // --- 6. RENDER LOOP ---
+        function draw3D() {
+            if(gameState === 'playing') {
+                playerMesh.position.copy(to3D(player.x, player.y));
+                
+                camera.position.x = cam.x;
+                camera.position.y = -cam.y;
+                camera.position.z = 600;
+                camera.lookAt(cam.x, -cam.y, 0);
+
+                // Draw Flying Hook (Red)
+                if(flyingHook.active) {
+                    hookMesh.visible = true;
+                    flyLine.visible = true;
+                    let hPos = to3D(flyingHook.x, flyingHook.y);
+                    hookMesh.position.copy(hPos);
+                    
+                    const positions = new Float32Array([
+                        playerMesh.position.x, playerMesh.position.y, 0,
+                        hPos.x, hPos.y, 0
+                    ]);
+                    flyLine.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    flyLine.geometry.attributes.position.needsUpdate = true;
+                } else {
+                    hookMesh.visible = false;
+                    flyLine.visible = false;
+                }
+
+                // Draw Active Rope (Cyan)
+                if (activeRope) {
+                    ropeLine.visible = true;
+                    const a = anchors[activeRope.i];
+                    const aPos = to3D(a.x, a.y);
+                    const positions = new Float32Array([
+                        playerMesh.position.x, playerMesh.position.y, 0,
+                        aPos.x, aPos.y, 0
+                    ]);
+                    ropeLine.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    ropeLine.geometry.attributes.position.needsUpdate = true;
+                } else {
+                    ropeLine.visible = false;
+                }
+
+                // Aim Line
+                if(isMobile && rightJoy.active) {
+                    const angle = Math.atan2(rightJoy.y, rightJoy.x);
+                    const lineEndX = player.x + Math.cos(angle) * 300;
+                    const lineEndY = player.y + Math.sin(angle) * 300;
+                    
+                    aimLine.visible = true;
+                    const p1 = to3D(player.x, player.y);
+                    const p2 = to3D(lineEndX, lineEndY);
+                    const aimPos = new Float32Array([p1.x, p1.y, 0, p2.x, p2.y, 0]);
+                    aimLine.geometry.setAttribute('position', new THREE.BufferAttribute(aimPos, 3));
+                    aimLine.geometry.attributes.position.needsUpdate = true;
+                    aimLine.computeLineDistances();
+                } else {
+                    aimLine.visible = false;
+                }
+                
+                platforms.forEach(p => { if(p.coinMesh) p.coinMesh.rotation.z += 0.05; });
+            }
+            renderer.render(scene, camera);
+        }
+
+        function gameLoop() {
+            step();
+            draw3D();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- 7. INPUT ---
+        window.addEventListener('mousedown', e => {
+            if(gameState !== 'playing') { startGame(); return; }
+            if(!isMobile) {
+                const vec = new THREE.Vector3((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1, 0.5);
+                vec.unproject(camera);
+                const dir = vec.sub(camera.position).normalize();
+                const dist = -camera.position.z / dir.z;
+                const pos = camera.position.clone().add(dir.multiplyScalar(dist));
+                shootHook(pos.x - player.x, -pos.y - player.y);
+            }
+        });
+        
+        window.addEventListener('touchstart', e => {
+            if(gameState !== 'playing') { e.preventDefault(); startGame(); return; }
+        }, {passive:false});
+
+        window.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+        
+        // Manual detach with Spacebar if stuck
+        window.addEventListener('keydown', e => {
+            if(e.code === 'Space') activeRope = null;
+        });
+
+        const jl = document.getElementById('joy-left');
+        const jr = document.getElementById('joy-right');
+        const knl = jl.querySelector('.joy-knob');
+        const knr = jr.querySelector('.joy-knob');
+
+        window.addEventListener('touchstart', e => {
+            if(gameState !== 'playing') return;
+            e.preventDefault();
+            for (let t of e.changedTouches) {
+                const x = t.clientX; const y = t.clientY;
+                if (x < W() * 0.4) {
+                    leftJoy.active = true; leftJoy.startX = x; leftJoy.startY = y; leftJoy.x = 0; leftJoy.y = 0;
+                    touches[t.identifier] = 'left';
+                    jl.style.display = 'block'; jl.style.left = (x-60)+'px'; jl.style.top = (y-60)+'px';
+                    knl.style.transform = 'translate(-50%, -50%)';
+                } else if (x > W() * 0.6) {
+                    rightJoy.active = true; rightJoy.startX = x; rightJoy.startY = y; rightJoy.x = 0; rightJoy.y = 0;
+                    touches[t.identifier] = 'right';
+                    jr.style.display = 'block'; jr.style.left = (x-60)+'px'; jr.style.top = (y-60)+'px';
+                    knr.style.transform = 'translate(-50%, -50%)';
+                }
+            }
+        }, {passive:false});
+
+        window.addEventListener('touchmove', e => {
+            if(gameState !== 'playing') return;
+            e.preventDefault();
+            for (let t of e.changedTouches) {
+                const role = touches[t.identifier];
+                if(!role) continue;
+                if (role === 'left') {
+                    let dx = t.clientX - leftJoy.startX; let dy = t.clientY - leftJoy.startY;
+                    let d = Math.hypot(dx,dy); if(d>60){ dx=(dx/d)*60; dy=(dy/d)*60; }
+                    leftJoy.x = dx; leftJoy.y = dy;
+                    knl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                } else if (role === 'right') {
+                    let dx = t.clientX - rightJoy.startX; let dy = t.clientY - rightJoy.startY;
+                    let d = Math.hypot(dx,dy); if(d>60){ dx=(dx/d)*60; dy=(dy/d)*60; }
+                    rightJoy.x = dx; rightJoy.y = dy;
+                    knr.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                }
+            }
+        }, {passive:false});
+
+        window.addEventListener('touchend', e => {
+            if(gameState !== 'playing') return;
+            e.preventDefault();
+            for (let t of e.changedTouches) {
+                const role = touches[t.identifier];
+                if(!role) continue;
+                if (role === 'left') {
+                    leftJoy.active = false; leftJoy.x=0; leftJoy.y=0;
+                    jl.style.display = 'none';
+                } else if (role === 'right') {
+                    if (Math.hypot(rightJoy.x, rightJoy.y) > 10) shootHook(rightJoy.x, rightJoy.y);
+                    // Mobile user can detach by tapping right stick without dragging
+                    else if (activeRope) { activeRope = null; }
+                    rightJoy.active = false;
+                    jr.style.display = 'none';
+                }
+                delete touches[t.identifier];
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        generateStaticWorld();
+        gameLoop();
+    </script>
+</body>
+</html>
