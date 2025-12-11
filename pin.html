@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pin Art 3D</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #000; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        #container { 
+            width: 100vw; 
+            height: 100vh; 
+        }
+        
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+        }
+        
+        #source-video { 
+            display: none; 
+        }
+
+        #splash {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: #000;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            z-index: 999; 
+            color: white;
+        }
+
+        h1 { 
+            font-weight: 200; 
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+            margin-bottom: 20px; 
+        }
+
+        button {
+            background: white; 
+            color: black; 
+            border: none;
+            padding: 14px 40px; 
+            font-size: 14px; 
+            font-weight: 600;
+            border-radius: 4px; 
+            cursor: pointer;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        #warning {
+            color: #ff3b30; 
+            margin-top: 20px; 
+            font-size: 12px; 
+            display: none;
+        }
+    </style>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r136/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+</head>
+<body>
+
+    <div id="splash">
+        <h1>Pin Art</h1>
+        <button id="btn-init">Start Experience</button>
+        <div id="warning">HTTPS Connection Required</div>
+    </div>
+
+    <div id="container">
+        <video id="source-video" playsinline muted></video>
+        <canvas id="stage"></canvas>
+    </div>
+
+<script>
+    const settings = {
+        rows: 40,
+        cols: 30,
+        spacing: 0.22,
+        radius: 0.14,
+        length: 4.0
+    };
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 14);
+
+    const renderer = new THREE.WebGLRenderer({ 
+        canvas: document.getElementById('stage'), 
+        antialias: true 
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+
+    const videoElement = document.getElementById('source-video');
+    const videoTexture = new THREE.VideoTexture(videoElement);
+    scene.background = videoTexture;
+    videoTexture.center.set(0.5, 0.5);
+    videoTexture.repeat.set(-1, 1);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    sunLight.position.set(-5, 10, 10);
+    sunLight.castShadow = true;
+    scene.add(sunLight);
+
+    const pinGeometry = new THREE.CapsuleGeometry(settings.radius, settings.length, 4, 8);
+    pinGeometry.rotateX(Math.PI / 2);
+    
+    const pinMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xcccccc, 
+        metalness: 0.6, 
+        roughness: 0.3 
+    });
+
+    const totalPins = settings.rows * settings.cols;
+    const pinMesh = new THREE.InstancedMesh(pinGeometry, pinMaterial, totalPins);
+    pinMesh.castShadow = true;
+    pinMesh.receiveShadow = true;
+    
+    const dummy = new THREE.Object3D();
+    const pinStates = new Float32Array(totalPins).fill(0);
+    
+    let index = 0;
+    const offsetX = -(settings.cols * settings.spacing) / 2;
+    const offsetY = (settings.rows * settings.spacing) / 2;
+
+    for (let r = 0; r < settings.rows; r++) {
+        for (let c = 0; c < settings.cols; c++) {
+            dummy.position.set(offsetX + c * settings.spacing, offsetY - r * settings.spacing, 0);
+            dummy.updateMatrix();
+            pinMesh.setMatrixAt(index++, dummy.matrix);
+        }
+    }
+    scene.add(pinMesh);
+
+    let detectedHand = null;
+    let tiltFactor = 0;
+
+    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 0,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    
+    hands.onResults((results) => {
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            detectedHand = results.multiHandLandmarks[0];
+        } else {
+            detectedHand = null;
+        }
+    });
+
+    function renderLoop() {
+        requestAnimationFrame(renderLoop);
+        
+        let i = 0;
+        const boardWidth = settings.cols * settings.spacing;
+        const boardHeight = settings.rows * settings.spacing;
+        let gravity = 0;
+
+        if (Math.abs(tiltFactor) > 0.15) { 
+            gravity = tiltFactor * 0.2; 
+        }
+
+        for (let r = 0; r < settings.rows; r++) {
+            for (let c = 0; c < settings.cols; c++) {
+                pinMesh.getMatrixAt(i, dummy.matrix);
+                dummy.position.setFromMatrixPosition(dummy.matrix);
+
+                let targetHeight = -999;
+                let activePush = false;
+
+                if (detectedHand) {
+                    const keypoints = [4, 8, 12, 16, 20, 9];
+                    for (let k = 0; k < keypoints.length; k++) {
+                        const lm = detectedHand[keypoints[k]];
+                        const handX = (0.5 - lm.x) * (boardWidth * 1.8);
+                        const handY = (0.5 - lm.y) * (boardHeight * 1.8);
+                        const dist = Math.hypot(dummy.position.x - handX, dummy.position.y - handY);
+                        
+                        if (dist < 0.8) {
+                            const val = 2.5 * (1 - dist / 0.8);
+                            if (val > targetHeight) targetHeight = val;
+                            activePush = true;
+                        }
+                    }
+                }
+
+                if (activePush) {
+                    if (targetHeight > pinStates[i]) {
+                        pinStates[i] += (targetHeight - pinStates[i]) * 0.4;
+                    }
+                } else {
+                    pinStates[i] += gravity;
+                }
+
+                if (pinStates[i] < 0) pinStates[i] = 0;
+                if (pinStates[i] > 3.0) pinStates[i] = 3.0;
+
+                dummy.position.z = pinStates[i];
+                dummy.updateMatrix();
+                pinMesh.setMatrixAt(i, dummy.matrix);
+                i++;
+            }
+        }
+        pinMesh.instanceMatrix.needsUpdate = true;
+        renderer.render(scene, camera);
+    }
+
+    const startButton = document.getElementById('btn-init');
+    const splashScreen = document.getElementById('splash');
+    const warningMsg = document.getElementById('warning');
+
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        warningMsg.style.display = 'block';
+        startButton.disabled = true;
+        startButton.style.opacity = 0.5;
+    }
+
+    startButton.addEventListener('click', async () => {
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const response = await DeviceOrientationEvent.requestPermission();
+                if (response === 'granted') {
+                    window.addEventListener('deviceorientation', (e) => {
+                        const beta = (e.beta || 90) - 90; 
+                        tiltFactor = beta / 45;
+                    });
+                }
+            } catch (err) {
+                console.warn(err);
+            }
+        } else {
+            window.addEventListener('deviceorientation', (e) => {
+                const beta = (e.beta || 90) - 90; 
+                tiltFactor = beta / 45;
+            });
+        }
+
+        const cameraInstance = new Camera(videoElement, {
+            onFrame: async () => { await hands.send({image: videoElement}); },
+            width: 640,
+            height: 480,
+            facingMode: 'user'
+        });
+
+        await cameraInstance.start();
+        splashScreen.style.display = 'none';
+        renderLoop();
+    });
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
