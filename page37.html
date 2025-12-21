@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="neon">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI ARCADE OS</title>
+<style>
+    /* --- THEMES & CORE --- */
+    :root {
+        --bg: #050510; --panel: #151525; --text: #fff;
+        --accent: #00f3ff; --sec: #bc13fe; --dim: #475569;
+        --btn-bg: #222; --btn-border: #444;
+    }
+    html[data-theme="retro"] {
+        --bg: #1a1a00; --panel: #2b2b00; --text: #ffaa00;
+        --accent: #ffaa00; --sec: #ff5500; --dim: #664400;
+        --btn-bg: #443300; --btn-border: #ffaa00;
+        font-family: 'Courier New', monospace;
+    }
+    
+    * { box-sizing: border-box; user-select: none; }
+    body { margin: 0; height: 100vh; background: var(--bg); color: var(--text); font-family: system-ui, monospace; overflow: hidden; display: flex; justify-content: center; }
+
+    #console { 
+        width: 100%; max-width: 600px; height: 100%; 
+        background: var(--panel); display: flex; flex-direction: column; 
+        box-shadow: 0 0 50px rgba(0,0,0,0.5); border-left: 1px solid #333; border-right: 1px solid #333;
+    }
+
+    /* HEADER */
+    header { height: 60px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--dim); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+    #logo { font-weight: 900; letter-spacing: 1px; color: var(--accent); }
+    .sys-btn { background: var(--dim); border: 1px solid #555; color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; cursor: pointer; margin-left: 5px; }
+    .sys-btn.key { background: var(--sec); color: #fff; border: none; }
+
+    /* TABS */
+    #tabs { display: flex; background: rgba(0,0,0,0.2); gap: 1px; overflow-x: auto; }
+    .tab { flex: 1; min-width: 70px; background: rgba(255,255,255,0.05); border: none; color: var(--dim); padding: 10px 0; font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+    .tab.active { background: var(--panel); color: var(--accent); border-top: 2px solid var(--accent); }
+
+    /* MAIN SCREEN */
+    #screen { flex: 1; position: relative; background: var(--bg); overflow: hidden; margin: 10px; border: 2px solid var(--dim); border-radius: 4px; }
+    
+    #launcher { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; padding: 15px; overflow-y: auto; height: 100%; align-content: start; }
+    
+    /* CARTRIDGES */
+    .cart { 
+        background: rgba(255,255,255,0.05); border: 1px solid var(--dim); 
+        aspect-ratio: 1; border-radius: 12px; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        cursor: pointer; position: relative;
+    }
+    .cart svg { width: 32px; height: 32px; margin-bottom: 5px; opacity: 0.5; transition: 0.2s; }
+    .cart span { font-size: 0.6rem; font-weight: bold; text-transform: uppercase; color: #666; }
+    
+    /* INSTALLED STATE */
+    .cart.installed { background: rgba(255,255,255,0.1); border-color: #666; }
+    .cart.installed svg { opacity: 1; color: var(--accent); }
+    .cart.installed span { color: #fff; }
+    
+    /* GENERATING STATE */
+    .cart.loading { animation: pulse 1s infinite; border-color: var(--sec); }
+    @keyframes pulse { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:0.5} }
+
+    /* GAME FRAME */
+    #game-container { display: none; width: 100%; height: 100%; background: #000; flex-direction: column; }
+    iframe { width: 100%; flex: 1; border: none; }
+    #toolbar { height: 40px; background: #111; display: flex; align-items: center; padding: 0 10px; border-top: 1px solid #333; }
+
+    /* MODAL */
+    #modal { position: absolute; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    input { background: #333; border: 1px solid #555; color: #fff; padding: 10px; width: 80%; margin-bottom: 10px; border-radius: 4px; }
+
+</style>
+</head>
+<body>
+
+<div id="console">
+    <header>
+        <div id="logo">AI ARCADE</div>
+        <div>
+            <button class="sys-btn key" onclick="AI.promptKey()">🔑 API KEY</button>
+            <button class="sys-btn" onclick="UI.toggleTheme()">THEME</button>
+        </div>
+    </header>
+
+    <div id="tabs">
+        <button class="tab active" onclick="UI.tab('ARCADE')">ARCADE</button>
+        <button class="tab" onclick="UI.tab('LOGIC')">LOGIC</button>
+        <button class="tab" onclick="UI.tab('BOARD')">BOARD</button>
+        <button class="tab" onclick="UI.tab('BRAIN')">BRAIN</button>
+        <button class="tab" onclick="UI.tab('PHYSICS')">PHYSICS</button>
+    </div>
+
+    <div id="screen">
+        <div id="launcher"></div>
+        <div id="game-container">
+            <iframe id="game-frame"></iframe>
+            <div id="toolbar">
+                <button class="sys-btn" onclick="UI.exitGame()">EXIT GAME</button>
+                <button class="sys-btn" onclick="document.getElementById('game-frame').contentWindow.location.reload()">RESTART</button>
+            </div>
+        </div>
+        <div id="modal">
+            <h2 style="color:var(--accent)">GEMINI API KEY</h2>
+            <p style="font-size:0.8rem; color:#888; text-align:center; padding:0 20px">Required to generate game code.</p>
+            <input type="password" id="api-input" placeholder="Paste Key Here...">
+            <button class="sys-btn" onclick="AI.saveKey()">SAVE</button>
+            <button class="sys-btn" style="margin-top:10px;background:transparent" onclick="document.getElementById('modal').style.display='none'">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* --- 1. GAME DATABASE (100 GAMES) --- */
+const DB = [
+    // ARCADE
+    {n:"Snake",c:"ARCADE"}, {n:"Breakout",c:"ARCADE"}, {n:"Pong",c:"ARCADE"}, {n:"Tetris",c:"ARCADE"}, {n:"Invaders",c:"ARCADE"},
+    {n:"Frogger",c:"ARCADE"}, {n:"Tron",c:"ARCADE"}, {n:"Asteroids",c:"ARCADE"}, {n:"PacMaze",c:"ARCADE"}, {n:"Lander",c:"ARCADE"},
+    {n:"Flappy",c:"ARCADE"}, {n:"Stacker",c:"ARCADE"}, {n:"Dodger",c:"ARCADE"}, {n:"Whack",c:"ARCADE"}, {n:"Orbit",c:"ARCADE"},
+    {n:"Dash",c:"ARCADE"}, {n:"Catch",c:"ARCADE"}, {n:"Timber",c:"ARCADE"}, {n:"Spin",c:"ARCADE"}, {n:"QuickDraw",c:"ARCADE"},
+    // LOGIC
+    {n:"2048",c:"LOGIC"}, {n:"Mines",c:"LOGIC"}, {n:"Sudoku",c:"LOGIC"}, {n:"Picross",c:"LOGIC"}, {n:"Hanoi",c:"LOGIC"},
+    {n:"Pipes",c:"LOGIC"}, {n:"Sokoban",c:"LOGIC"}, {n:"Unblock",c:"LOGIC"}, {n:"Bridges",c:"LOGIC"}, {n:"LightsOut",c:"LOGIC"},
+    {n:"Slide",c:"LOGIC"}, {n:"Maze",c:"LOGIC"}, {n:"Loop",c:"LOGIC"}, {n:"Fill",c:"LOGIC"}, {n:"Kakuro",c:"LOGIC"},
+    {n:"Calc",c:"LOGIC"}, {n:"Binary",c:"LOGIC"}, {n:"Fifteen",c:"LOGIC"}, {n:"Balance",c:"LOGIC"}, {n:"Life",c:"LOGIC"},
+    // BOARD
+    {n:"TicTacToe",c:"BOARD"}, {n:"Connect4",c:"BOARD"}, {n:"Chess",c:"BOARD"}, {n:"Checkers",c:"BOARD"}, {n:"Go",c:"BOARD"},
+    {n:"Othello",c:"BOARD"}, {n:"Ludo",c:"BOARD"}, {n:"Backgammon",c:"BOARD"}, {n:"Mancala",c:"BOARD"}, {n:"Domino",c:"BOARD"},
+    {n:"Battleship",c:"BOARD"}, {n:"Hex",c:"BOARD"}, {n:"Mahjong",c:"BOARD"}, {n:"Solitaire",c:"BOARD"}, {n:"Poker",c:"BOARD"},
+    {n:"Slots",c:"BOARD"}, {n:"Roulette",c:"BOARD"}, {n:"Dice",c:"BOARD"}, {n:"Keno",c:"BOARD"}, {n:"Yahtzee",c:"BOARD"},
+    // BRAIN
+    {n:"Memory",c:"BRAIN"}, {n:"Simon",c:"BRAIN"}, {n:"Wordle",c:"BRAIN"}, {n:"Search",c:"BRAIN"}, {n:"Anagram",c:"BRAIN"},
+    {n:"Typist",c:"BRAIN"}, {n:"Match",c:"BRAIN"}, {n:"Pairs",c:"BRAIN"}, {n:"Sequence",c:"BRAIN"}, {n:"Math",c:"BRAIN"},
+    {n:"Stroop",c:"BRAIN"}, {n:"N-Back",c:"BRAIN"}, {n:"Faces",c:"BRAIN"}, {n:"Chimp",c:"BRAIN"}, {n:"Path",c:"BRAIN"},
+    {n:"Flash",c:"BRAIN"}, {n:"Order",c:"BRAIN"}, {n:"Pattern",c:"BRAIN"}, {n:"Music",c:"BRAIN"}, {n:"Paint",c:"BRAIN"},
+    // PHYSICS
+    {n:"Water",c:"PHYSICS"}, {n:"Sand",c:"PHYSICS"}, {n:"Gravity",c:"PHYSICS"}, {n:"Bridge",c:"PHYSICS"}, {n:"Magnet",c:"PHYSICS"},
+    {n:"Spring",c:"PHYSICS"}, {n:"Pendulum",c:"PHYSICS"}, {n:"Light",c:"PHYSICS"}, {n:"Chain",c:"PHYSICS"}, {n:"Dominoes",c:"PHYSICS"},
+    {n:"Slingshot",c:"PHYSICS"}, {n:"Bounce",c:"PHYSICS"}, {n:"Balance2",c:"PHYSICS"}, {n:"Stack2",c:"PHYSICS"}, {n:"Collapse",c:"PHYSICS"},
+    {n:"Split",c:"PHYSICS"}, {n:"Merge",c:"PHYSICS"}, {n:"Orbit2",c:"PHYSICS"}, {n:"Attract",c:"PHYSICS"}, {n:"Repel",c:"PHYSICS"}
+];
+
+/* --- 2. UI CONTROLLER --- */
+const UI = {
+    cat: 'ARCADE',
+    themeIdx: 0,
+    themes: ['neon', 'retro'],
+    
+    init() {
+        this.render();
+        // Check which games actually exist by trying to fetch them (Head request)
+        // For simplicity in this demo, we assume user manually tracks, 
+        // but practically we just assume 'installed' if the user generated it.
+    },
+
+    tab(c) {
+        this.cat = c;
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.innerText===c));
+        this.render();
+    },
+
+    render() {
+        const l = document.getElementById('launcher');
+        l.innerHTML = DB.filter(g=>g.c===this.cat).map(g => {
+            const fileName = `games/game-${g.n.toLowerCase().replace(/\s/g,'')}.html`;
+            // We check local storage to see if we've generated it before to style it
+            const exists = localStorage.getItem('gen_' + g.n);
+            return `
+            <div class="cart ${exists ? 'installed' : ''}" id="card-${g.n}" onclick="AI.handle('${g.n}', '${fileName}', ${!!exists})">
+                ${GenIcon(g.n)}
+                <span>${g.n}</span>
+            </div>`;
+        }).join('');
+    },
+
+    launch(file) {
+        document.getElementById('launcher').style.display='none';
+        document.getElementById('game-container').style.display='flex';
+        document.getElementById('game-frame').src = file + "?theme=" + document.documentElement.getAttribute('data-theme');
+    },
+
+    exitGame() {
+        document.getElementById('game-container').style.display='none';
+        document.getElementById('launcher').style.display='grid';
+        document.getElementById('game-frame').src = "";
+    },
+
+    toggleTheme() {
+        this.themeIdx = (this.themeIdx+1)%2;
+        document.documentElement.setAttribute('data-theme', this.themes[this.themeIdx]);
+    }
+};
+
+/* --- 3. AI GENERATOR (GEMINI) --- */
+const AI = {
+    key: localStorage.getItem('gemini_key'),
+
+    promptKey() {
+        document.getElementById('modal').style.display='flex';
+        document.getElementById('api-input').value = this.key || '';
+    },
+
+    saveKey() {
+        const k = document.getElementById('api-input').value;
+        if(k) {
+            this.key = k;
+            localStorage.setItem('gemini_key', k);
+            document.getElementById('modal').style.display='none';
+        }
+    },
+
+    handle(name, filename, exists) {
+        if(exists) {
+            UI.launch(filename);
+        } else {
+            if(!this.key) return this.promptKey();
+            if(confirm(`GENERATE "${name}" with AI?`)) {
+                this.generate(name, filename);
+            }
+        }
+    },
+
+    async generate(name, filename) {
+        const card = document.getElementById('card-'+name);
+        card.classList.add('loading');
+        
+        const prompt = `Write a single-file HTML5 game called "${name}". 
+        Requirements:
+        1. Use internal <style> and <script>. No external assets.
+        2. Responsive layout centered on screen.
+        3. Use these CSS variables for colors: var(--bg), var(--text), var(--acc) (accent), var(--dim).
+        4. Include a simple "Restart" button logic.
+        5. Controls: Mouse/Touch buttons for mobile compatibility.
+        6. Return ONLY the raw HTML code. Start with <!DOCTYPE html>.`;
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.key}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+
+            const data = await response.json();
+            let code = data.candidates[0].content.parts[0].text;
+            
+            // Clean Markdown
+            code = code.replace(/```html/g, '').replace(/```/g, '');
+
+            this.download(filename, code);
+            
+            // Mark as installed
+            localStorage.setItem('gen_' + name, 'true');
+            UI.render(); // Refresh grid
+
+        } catch(e) {
+            alert("Generation Failed. Check API Key.");
+            card.classList.remove('loading');
+        }
+    },
+
+    download(filename, content) {
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+};
+
+/* --- UTILS --- */
+const GenIcon = (n) => {
+    let h=0;for(let i=0;i<n.length;i++)h=Math.imul(31,h)+n.charCodeAt(i)|0;
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>`;
+};
+
+UI.init();
+</script>
+</body>
+</html>
